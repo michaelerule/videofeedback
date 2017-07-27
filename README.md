@@ -13,20 +13,17 @@ project maintainers will work to improve documentation and usability. See also t
 
 At first, this project will aggregate several different implementations of video feedback rendering. Over time, the goal is to refactor and organize these examples, and to provide supplemental documentation outlining the rendering technique.
 
-Working
--------
+#### Working
  - Javascript CPU examples
  - Jython examples
  - Jython video perceptron reimplementation (buggy, but surprisingly performant)
  
-Incomplete
-----------
+#### Incomplete
  - Javascript CPU rewrite (serious user interface bugs)
  - Java Perceptron (obsolete legacy code; unresolved instability issues)
  - Javascript webgl: coming soon, see webgpgpu project examples
  
-Future
-------
+#### Future
  - Documentation
  - Feedback tutorial
  - Collected renderings
