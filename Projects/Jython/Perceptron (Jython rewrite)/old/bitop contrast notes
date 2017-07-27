@@ -1,0 +1,133 @@
+Theory behind bitop contrast operation
+
+Contrast streaching creates negative values that are
+hard to store in bit-packed colors.
+
+(c-m)*k+b
+c*k+b-m*k
+c*k+b-b*k
+c*2-16
+c*4-16*3
+
+The subtraction of m*k is a constant. Negative values are 
+avoided if c*k+b is always greater than or equal to m*k.
+
+When m*k is a power of two this becomes practical. For example,
+fixing m to the 5-bit mean of 16 and k to 2, m*k is 32. If we
+can test which colors in c*k+b are less than 32 and set them
+to 32, then we can use subtraction.
+
+c     00 000r rrrr 0000 0ggg gg00 000b bbbb
+c*2   00 00rr rrr0 0000 gggg g000 00bb bbb0
+c*2+b 00 0rrr rrrr 000g gggg gg00 0bbb bbbb
+32    00 0100 0000 0001 0000 0000 0100 0000
+32    0x4010040
+
+colors greater than 32 will have the 32nd bit set to 1
+to clip before subtraction we should set all colors less than
+32 to 32. We can create a test mask to grab the 32 bits
+
+c & 0x4010040
+
+Colors that are too small will be missing this mask. Shift it
+right 6 bits and multiply by 0b111111 0x3f to make a mask. 
+
+000100000000010000000001000000
+000000000100000000010000000001
+000011111100001111110000111111
+
+And this mask with the color to delete numbers less than 32.
+Or shift the color right 6 bits and use a shifted mask. The
+32 bit will get zeroed out here, same as subtracting 32. So,
+you have your result.
+
+c*=2;
+c+=b;
+c&=(c>>6&0x100401)*0x3f;
+
+We have dealt with subtraction, and avoiding negative values,
+but some colors will still be too large. In this example,
+only one bit of overflow is possible. To detect overflow
+shift right by 5 and use our mask again
+
+c*=2;
+c+=b;
+c&=(c>>6&0x100401)*0x3f;
+c |= (c>>5 & 0x100401) * 0x1f;
+c &= W15M;
+
+This can be generalized by adding some value so that the
+amount we then need to subtract is a power of two. A general 
+solution suitable for homeostatic contrast and brightness.
+
+(c-m)*k+b
+c*k-m*k+b
+c*k+b-m*k
+(c*k*n+b*n+n/2-m*k*n) / n
+
+a = c*k*n+b*n+n/2
+b = m*k*n
+a = n/2
+a = 31*2*n+31*n+n/2
+b = 2^(6+n)
+
+There are five overflow bits available. The last bit is for
+subtraction. The second to last bit is for over-the-top flow.
+That leaves three bits. The multiplication can be rounded or
+rounding can be delayed. I suggest preserving two bits from
+the multiplication, temporarily using 7 bit color. Since
+contrast may be as large as 2, this is actually 8 bit color.
+
+c = c*contrast + (I15M<<2) >> 3 & I15M*0x7f;
+
+Now we have 7 bit color with 3 bits available for overflow.
+We need to adjust m and b to also be 7-bit colors
+
+b = b<<2;
+m = m*contrast + (I15M<<2) >> 3 & I15M*0x7f;
+
+add in the brightness.
+
+c = c+b;
+
+what is the smallest power of two guaranteed to be no less
+than m? The largest value m can take on is:
+
+(31*2**6 + 2**2)/2**3
+
+This is 248. So we will end up adding a factor that might be
+as large as 256, then subtracting 256. The largest value 
+before subtraction is then 628, which takes 10 bits to store.
+This is perfect. 4*13 + 248+256 = 628
+
+c = (c*contrast + (I15M<<2) >> 3 & I15M*0x7f) + (b<<2) + (I15M*0x100-m);
+
+Now we have a 10 bit number, and we want to subtract 256 from
+it, but we don't want to go negative. So, if the number is 
+less than 256=0x100, we set it to 256. We have 10 bit color,
+which means there are two bits over 256. If either of these is
+1, then our number is larger than 256. If neither is 1, our
+nuber is too small. 
+
+mask = c>>8&I15M|c>>9&I15M;
+c = (c&mask*0x3ff)|(I15M*256&(mask^I15M)*0x3FF);
+c = c-256*I15M;
+
+Now if all went well we should have a 10 bit number with
+the bottom subtracted with a zero floor. We still need to 
+clip it down to the correct value. It's supposed to be a 7-bit
+color that may go over, so by now it should be down to 8 bits.
+except because of brightness adjustment it may actually be 9
+bits. So! if it is too big we should clip it
+
+c = (c | (c>>7&I15M|c>>8&I15M)*0x7f) & W15M;
+
+The total program then is: 
+
+m = m*contrast + (I15M<<2) >> 3 & I15M*0x7f;
+c = (c*contrast + (I15M<<2) >> 3 & I15M*0x7f) + (b<<2) + (I15M*0x100-m);
+int mask = c>>8&I15M|c>>9&I15M;
+c = (c&mask*0x3ff)|(I15M*256&(mask^I15M)*0x3FF);
+c = c-256*I15M;
+c = (c | (c>>7&I15M|c>>8&I15M)*0x7f) & W15M;
+

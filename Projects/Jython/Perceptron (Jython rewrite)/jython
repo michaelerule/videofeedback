@@ -1,0 +1,25 @@
+#!/usr/bin/perl -w
+use strict;
+use Text::ParseWords;
+use Cwd qw();
+
+my $cwd    = Cwd::abs_path();
+my $java   = '/usr/bin/java';
+my $python = '/usr/lib/site-python';
+my $jython = '/usr/share/jython';
+
+# Prepare $CLASSPATH
+my $classpath = '/usr/share/java/jython.jar';
+$classpath = "$classpath:/usr/share/java/antlr3-runtime.jar";
+$classpath = "$classpath:/usr/share/java/asm3.jar";
+$classpath = "$classpath:/usr/share/java/asm3-commons.jar";
+$classpath = "$classpath:/usr/share/java/jna.jar";
+$classpath = "$classpath:/usr/share/java/jna-posix.jar";
+$classpath = "$classpath:/usr/share/java/libconstantine-java.jar";
+$classpath = "$classpath:/usr/share/java/libreadline-java.jar";
+$ENV{CLASSPATH} = $classpath;
+
+# Invoke jython
+exec "$java -server -Dpython.home=$jython -Dpython.path=$python -Dpython.cachedir=$cwd org.python.util.jython Perceptron.py" or exit(1);
+exit 0;
+

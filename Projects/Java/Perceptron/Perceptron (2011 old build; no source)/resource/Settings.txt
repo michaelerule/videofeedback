@@ -1,0 +1,137 @@
+*******************************************************************
+****************      PERCEPTRON'S SETTINGS FILE      *********************
+*
+* Perceptron reads this file at startup to set the values of key program parameters.
+*
+* The location of this file should be perceptron\resource\Settings.txt.
+* Follow the format: variable name + " " + value. Comments are marked with "*".
+* 
+* I recommend that you do not remove any files from the resource folder in order 
+* to secure the operation of Perceptron.
+
+
+*******************************************************************
+
+* SCREEN SETTINGS
+*
+* The resolution of Perceptron's screen. Perceptron runs in full screen mode at the
+* unchanged resolution at which your desktop is currently configured. However, it
+* utilizes only a small central portion due to speed issues. Possible values are
+* integer numbers greater than 0 and smaller than the current screen resolution.
+* Warning. The help screen will not fit the screen smaller than 560 x 560 entirely.
+
+screen_width  640
+screen_height 640
+
+
+*******************************************************************
+
+* PRESETS FOLDER
+*
+* By default, Perceptron loads all the presets from the folder
+* perceptron\resource\presets at startup. The first one on the list - according to
+* its name (such as 1.state), is the default one. It is necessary to have at least one
+* preset in order to run Perceptron.
+
+preset_folder <resource\presets>
+
+
+*******************************************************************
+
+
+* IMAGE FOLDER
+*
+* The default image folder from which the program automatically loads all the
+* images at startup. The default location is <resource\images>. Warning. Notice
+* the special brackets that enclose the folder name.
+
+image_folder <resource\images>
+
+
+* I recommend that you select the folder carefully and assure that it contains only
+* a few image files and nothing else. Here is an example of folder name:
+*
+* image_folder <D:\My Pictures\test>
+
+
+*******************************************************************
+
+*TREE SETTINGS
+*
+* The fractal properties of the 3D Tree.
+*
+* The "depth" or the level of tree branching. Reduce this if the program runs out
+* of memory (which may manifest as the program failing to run at all). The number
+* of computations required to draw the tree scales as 2^(1 + tree_depth), so the
+* time for rendering the tree grows rapidly as a function of depth. Possible values:
+* integer numbers greater than 0 and smaller than 30.
+
+max_tree_depth 9
+
+
+* This is the minimum branching depth. Possible values: integers numbers greater
+* than 0 and smaller than 30.
+
+min_tree_depth 3
+
+
+*******************************************************************
+
+* EQUATION DEFINITIONS (maps f(z) that produce Julia fractals)
+*
+* Expressions in terms of z - no spaces please!
+*
+* The parameter c will be added (+c) to all equations automatically. The red
+* parameter mouse cursor controls the value of c as it moves on the screen.
+*
+* The recognized constants are:
+*
+*   e = 2.71828...
+*   i = irrational unit
+*   p = pi = 3.14159265...
+*   f = golden ratio = 1.618...
+*   w = screen width
+*   h = screen height
+*
+* The equation interpreter hates unary minus.
+
+map z*z
+map z*z*z
+map z*abs(z)
+map e^z+e^(iz)
+map e^z+e^(-iz)
+map e^z+e^(z*e^(i*p/4))
+map e^z+e^(z*e^(i*p/-4))
+map 1/(z*e^(i*2*p/3)+1.4)+1/(z*e^(i*-2*p/3)+1.4)+1/(z+1.4)
+map conj(e^z+e^(iz))
+map conj(e^z+e^(-iz))
+map conj(e^z+e^(z*e^(i*p/4)))
+map conj(e^z+e^(z*e^(i*p/-4)))
+map abs(z)*e^(i*arg(z)*2)*2
+map z*z*e^(i*abs(z))
+map z*z*z*e^(i*abs(z))
+map z*e^(i*abs(z))*abs(z)/f
+map acos(z*z)*asin(z*z)*e^(i*abs(z))
+map acos(z*z)*asin(z*z)
+map f/z+i*z
+map sin(z)^2
+map cos(z)^2
+map z*z+2*ln(z)*h/p;
+map (z+1)/(z-1)+(z-1)/(z+1)
+map (z+i)/(z-i)+(z-i)/(z+i)
+map z/abs(sqrt((absz)^2-1.5))
+map z-((z^3-e^z-1)/(3*z^2-e^z))
+map z*z+w*h
+map z-((z^3-1)/(3*z^2))
+
+
+******************************************************************
+
+* AUDIO INPUT
+*
+* Turn Perceptron into a sound visualizer (EXPERIMENTAL!)
+
+audio_line 0
+
+
+******************************************************************

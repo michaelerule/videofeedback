@@ -1,0 +1,183 @@
+
+The naive method is verbose and slow
+
+ax1 = (x2&0xff);
+ay1 = (y2&0xff);
+ax2 = ax*ax+0x80>>8;
+ay2 = ay*ay+0x80>>8;
+ax3 = ax*ax*ax+0x8000>>16;
+ay3 = ay*ay*ay+0x8000>>16;
+
+c1 = bufferIn[x1+y1];
+c2 = bufferIn[x2+y1];
+c3 = bufferIn[x3+y1];
+c4 = bufferIn[x4+y1];
+int d1r = R32(c2) + (ax*(R32(c3)-R32(c1)) + axx*(2*R32(c1)-5*R32(c2)+4*R32(c3)-R32(c4)) + axxx*(3*(R32(c2)-R32(c3))-R32(c1)+R32(c4)) +0x100>>9);
+int d1g = G32(c2) + (ax*(G32(c3)-G32(c1)) + axx*(2*G32(c1)-5*G32(c2)+4*G32(c3)-G32(c4)) + axxx*(3*(G32(c2)-G32(c3))-G32(c1)+G32(c4)) +0x100>>9);
+int d1b = B32(c2) + (ax*(B32(c3)-B32(c1)) + axx*(2*B32(c1)-5*B32(c2)+4*B32(c3)-B32(c4)) + axxx*(3*(B32(c2)-B32(c3))-B32(c1)+B32(c4)) +0x100>>9);
+
+c1 = bufferIn[x1+y2];
+c2 = bufferIn[x2+y2];
+c3 = bufferIn[x3+y2];
+c4 = bufferIn[x4+y2];
+int d2r = R32(c2) + (ax*(R32(c3)-R32(c1)) + axx*(2*R32(c1)-5*R32(c2)+4*R32(c3)-R32(c4)) + axxx*(3*(R32(c2)-R32(c3))-R32(c1)+R32(c4)) +0x100>>9);
+int d2g = G32(c2) + (ax*(G32(c3)-G32(c1)) + axx*(2*G32(c1)-5*G32(c2)+4*G32(c3)-G32(c4)) + axxx*(3*(G32(c2)-G32(c3))-G32(c1)+G32(c4)) +0x100>>9);
+int d2b = B32(c2) + (ax*(B32(c3)-B32(c1)) + axx*(2*B32(c1)-5*B32(c2)+4*B32(c3)-B32(c4)) + axxx*(3*(B32(c2)-B32(c3))-B32(c1)+B32(c4)) +0x100>>9);
+
+c1 = bufferIn[x1+y3];
+c2 = bufferIn[x2+y3];
+c3 = bufferIn[x3+y3];
+c4 = bufferIn[x4+y3];
+int d3r = R32(c2) + (ax*(R32(c3)-R32(c1)) + axx*(2*R32(c1)-5*R32(c2)+4*R32(c3)-R32(c4)) + axxx*(3*(R32(c2)-R32(c3))-R32(c1)+R32(c4)) +0x100>>9);
+int d3g = G32(c2) + (ax*(G32(c3)-G32(c1)) + axx*(2*G32(c1)-5*G32(c2)+4*G32(c3)-G32(c4)) + axxx*(3*(G32(c2)-G32(c3))-G32(c1)+G32(c4)) +0x100>>9);
+int d3b = B32(c2) + (ax*(B32(c3)-B32(c1)) + axx*(2*B32(c1)-5*B32(c2)+4*B32(c3)-B32(c4)) + axxx*(3*(B32(c2)-B32(c3))-B32(c1)+B32(c4)) +0x100>>9);
+
+c1 = bufferIn[x1+y4];
+c2 = bufferIn[x2+y4];
+c3 = bufferIn[x3+y4];
+c4 = bufferIn[x4+y4];
+int d4r = R32(c2) + (ax*(R32(c3)-R32(c1)) + axx*(2*R32(c1)-5*R32(c2)+4*R32(c3)-R32(c4)) + axxx*(3*(R32(c2)-R32(c3))-R32(c1)+R32(c4)) +0x100>>9);
+int d4g = G32(c2) + (ax*(G32(c3)-G32(c1)) + axx*(2*G32(c1)-5*G32(c2)+4*G32(c3)-G32(c4)) + axxx*(3*(G32(c2)-G32(c3))-G32(c1)+G32(c4)) +0x100>>9);
+int d4b = B32(c2) + (ax*(B32(c3)-B32(c1)) + axx*(2*B32(c1)-5*B32(c2)+4*B32(c3)-B32(c4)) + axxx*(3*(B32(c2)-B32(c3))-B32(c1)+B32(c4)) +0x100>>9);
+
+r = d2r + (ay*(d3r-d1r) + ayy*(2*d1r-5*d2r+4*d3r-d4r) + ayyy*(3*d2r-d1r+d4r-3*d3r) +0x100>> 9);
+g = d2g + (ay*(d3g-d1g) + ayy*(2*d1g-5*d2g+4*d3g-d4g) + ayyy*(3*d2g-d1g+d4g-3*d3g) +0x100>> 9);
+b = d2b + (ay*(d3b-d1b) + ayy*(2*d1b-5*d2b+4*d3b-d4b) + ayyy*(3*d2b-d1b+d4b-3*d3b) +0x100>> 9);
+
+
+
+
+0xadc19
+
+The positive terms are
+
+512*c2
+ax1*c3
+ax2*2*(c1+2*c3)
+ax3*(c4+3*c2)
+
+These could be as large as 0xcda19 -- too large to use the megenta method
+Even individual terms are too large to compute using magenta method. 
+Reducing to 7-bit color and coefficients gets us within limits for single terms,
+barely. 7 bit color can also be used to free up one more overlow bit. With
+7-bit fixed point representation our largest value is 0x3ac19, which overflows
+one bit more than we have room for. Single terms will work, however. Or, we
+could tolerate 6-bit color, which both opens up an overflow bit and reduces
+the largest possible value to 0x1d259.
+
+The negative terms are
+
+ax*c1
+axx*(5*c2+c4)
+axxx*(3*c3+c1)
+
+In 8-bit these can be as large as 0xadc19 -- too large for magenta.
+7-bit is still too large at 0x2ae19. 6 bit color and 7 bit coefficients gets
+us down to 0x15459 which is within tolerance. 
+
+It seems like, by using a 6-bit model, we can evaluate the interpolation
+polynomial on magenta.
+
+
+ax1 = (x2&0xff)+1>>2;
+ay1 = (y2&0xff)+1>>2;
+ax2 = ax1*ax1+0x10>>6;
+ay2 = ay1*ay1+0x10>>6;
+ax3 = ax2*ax1+0x10>>12;
+ay3 = ay2*ay1+0x10>>12;
+
+c1 = bufferIn[x1+y1];
+c2 = bufferIn[x2+y1];
+c3 = bufferIn[x3+y1];
+c4 = bufferIn[x4+y1];
+m1 = c1&0xfc00fc;
+m2 = c2&0xfc00fc;
+m3 = c3&0xfc00fc;
+m4 = c4&0xfc00fc;
+int d1mp = 64*2*m2 + ax1*m3      + ax2*(2*m1+4*m3)         + ax3*(3*m2+m4)         + 0x10>>6 & 0xfc00fc;
+int d1mn =           ax1*m1      + ax2*(5*m2+  m4)         + ax3*(3*m3+m1)         + 0x10>>6 & 0xfc00fc;
+g1 = c1&0x00fc00;
+g2 = c2&0x00fc00;
+g3 = c3&0x00fc00;
+g4 = c4&0x00fc00;
+int d1g  = 64*2*g2 + ax1*(g3-g1) + ax2*(2*g1-5*g2+4*g3-g4) + ax3*(3*(g2-g3)-g1+g4) + 0x10>>6;
+
+c1 = bufferIn[x1+y2];
+c2 = bufferIn[x2+y2];
+c3 = bufferIn[x3+y2];
+c4 = bufferIn[x4+y2];
+m1 = c1&0xfc00fc;
+m2 = c2&0xfc00fc;
+m3 = c3&0xfc00fc;
+m4 = c4&0xfc00fc;
+int d2mp = 64*2*m2 + ax1*m3      + ax2*(2*m1+4*m3)         + ax3*(3*m2+m4)         + 0x10>>6 & 0xfc00fc;
+int d2mn =           ax1*m1      + ax2*(5*m2+  m4)         + ax3*(3*m3+m1)         + 0x10>>6 & 0xfc00fc;
+g1 = c1&0x00fc00;
+g2 = c2&0x00fc00;
+g3 = c3&0x00fc00;
+g4 = c4&0x00fc00;
+int d2g  = 64*2*g2 + ax1*(g3-g1) + ax2*(2*g1-5*g2+4*g3-g4) + ax3*(3*(g2-g3)-g1+g4) + 0x10>>6;
+
+c1 = bufferIn[x1+y3];
+c2 = bufferIn[x2+y3];
+c3 = bufferIn[x3+y3];
+c4 = bufferIn[x4+y3];
+m1 = c1&0xfc00fc;
+m2 = c2&0xfc00fc;
+m3 = c3&0xfc00fc;
+m4 = c4&0xfc00fc;
+int d3mp = 64*2*m2 + ax1*m3      + ax2*(2*m1+4*m3)         + ax3*(3*m2+m4)         + 0x10>>6 & 0xfc00fc;
+int d3mn =           ax1*m1      + ax2*(5*m2+  m4)         + ax3*(3*m3+m1)         + 0x10>>6 & 0xfc00fc;
+g1 = c1&0x00fc00;
+g2 = c2&0x00fc00;
+g3 = c3&0x00fc00;
+g4 = c4&0x00fc00;
+int d3g  = 64*2*g2 + ax1*(g3-g1) + ax2*(2*g1-5*g2+4*g3-g4) + ax3*(3*(g2-g3)-g1+g4) + 0x10>>6;
+
+c1 = bufferIn[x1+y4];
+c2 = bufferIn[x2+y4];
+c3 = bufferIn[x3+y4];
+c4 = bufferIn[x4+y4];
+m1 = c1&0xfc00fc;
+m2 = c2&0xfc00fc;
+m3 = c3&0xfc00fc;
+m4 = c4&0xfc00fc;
+int d4mp = 64*2*m2 + ax1*m3      + ax2*(2*m1+4*m3)         + ax3*(3*m2+m4)         + 0x10>>6 & 0xfc00fc;
+int d4mn =           ax1*m1      + ax2*(5*m2+  m4)         + ax3*(3*m3+m1)         + 0x10>>6 & 0xfc00fc;
+g1 = c1&0x00fc00;
+g2 = c2&0x00fc00;
+g3 = c3&0x00fc00;
+g4 = c4&0x00fc00;
+int d4g  = 64*2*g2 + ax1*(g3-g1) + ax2*(2*g1-5*g2+4*g3-g4) + ax3*(3*(g2-g3)-g1+g4) + 0x10>>6;
+
+r = d2r + (ay*(d3r-d1r) + ayy*(2*d1r-5*d2r+4*d3r-d4r) + ayyy*(3*d2r-d1r+d4r-3*d3r) +0x100>> 9);
+g = d2g + (ay*(d3g-d1g) + ayy*(2*d1g-5*d2g+4*d3g-d4g) + ayyy*(3*d2g-d1g+d4g-3*d3g) +0x100>> 9);
+b = d2b + (ay*(d3b-d1b) + ayy*(2*d1b-5*d2b+4*d3b-d4b) + ayyy*(3*d2b-d1b+d4b-3*d3b) +0x100>> 9);
+
+
+If positive and negative terms are separated we lose the benefit of the magenta method.
+It may be possible to offset negative terms until the end to avoid this. The offsets
+will need to be subtracted at the end after separating the colors. 
+
+r = y0*2*d2 + y1*(d3-d1) + y2*(2*d1-5*d2+4*d3-d4) + y3*(3*d2-d1+d4-3*d3) 
+
+r = y0*2*d2 + y1*(d3+K-d1) + y2*(2*d1+5*K-5*d2+4*d3+K-d4) + y3*(3*d2+K-d1+d4+3*K-3*d3) 
+
+worst case ( overflow test )
+r = y0*2*d2 + y1*2*K + y2*12*K + y3*8*K
+6-bit: 0x40*2*0x3f + 0x3f*2*0x3f + 0x3e*12*0x3f + 0x3d*8*0x3f 
+This comes to 0x16db2 which is within overflow tolerance for 6-bit magenta method
+However after rounding  we could have an 11-bit result 0x5b7
+
+offset factor extraction ( this will need to be subtracted later )
+y1*K + y2*6*K + y3*4*K 
+
+it is not possible to use the magenta method because the total amount of 
+overflow is too large to be compatible with even 6-bit color.
+
+
+
+
+
+
+

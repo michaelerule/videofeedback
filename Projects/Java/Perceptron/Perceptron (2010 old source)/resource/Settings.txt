@@ -1,0 +1,92 @@
+* PERCEPTRON SETTINGS FILE
+*
+* Perceptron reads this file on startup to determine the values of
+* key program parameters. You may alter these settings at will, some
+* values may cause the program to run out of memory or behave
+* unexpectedly. Try to follow the guidelines for each setting.
+* Follow the format <variable name> + " " + <value>
+
+* RESOURCE DIRECTORY
+*
+* The contents of the resource directory are best left untouched,
+* because the program will not be able to start if a file is missing.
+
+image_directory resource/images
+
+* THE AUDIO INPUT can turn Perceptron into a sound visualizer (testing!)
+
+audio_line 0
+
+* SCREEN SETTINGS
+*
+* This determines the resolution of Perceptron's screen. Perceptron 
+* attempts to set the display size to the smallest possible display
+* that supports the resolution listed here. If the screen width and
+* height listed here are greater than the maximum resolution of the 
+* monitor, then these values default to the maximum monitor resolution.
+* Set these to smaller values to increase speed at runtime. 
+* possible values : integers greater than 0
+
+screen_width  480
+screen_height 480
+
+*TREE SETTINGS
+*
+* These settings control aspects of the Tree located in the foreground
+* This is the largest depth to which to render the tree that is in
+* the foreground. Reduce this if the program runs out of memory 
+* (which may manifest as the program failing to run at all)
+* The number of computations required to draw the tree scales as
+* 2^(1 + tree_depth) so the time for rendering the tree grows rapidly 
+* as a function of depth.
+* possible values : integers greater than 0 and less than 30
+
+max_tree_depth 9
+
+* This is the minimum depth to which to render the tree.
+* possible values : integers greater than 0 and less than 30
+
+min_tree_depth 3
+
+* EQUATION DEFINITIONS (maps)
+*
+*   expressions in terms of z, no spaces please
+*
+*   Legal constants include:
+*   e = 2.71828...
+*   i = irrational unit
+*   p = pi = 3.14159...
+*   f = golden ratio = 1.618...
+*   w = field width
+*   h = field height
+*
+*   It hates unary minus.
+
+map z*z
+map z*z*z
+map z*abs(z)
+map e^z+e^(iz)
+map e^z+e^(-iz)
+map e^z+e^(z*e^(i*p/4))
+map e^z+e^(z*e^(i*p/-4))
+map 1/(z*e^(i*2*p/3)+1.4)+1/(z*e^(i*-2*p/3)+1.4)+1/(z+1.4)
+map conj(e^z+e^(iz))
+map conj(e^z+e^(-iz))
+map conj(e^z+e^(z*e^(i*p/4)))
+map conj(e^z+e^(z*e^(i*p/-4)))
+map abs(z)*e^(i*arg(z)*2)*2
+map z*z*e^(i*abs(z))
+map z*z*z*e^(i*abs(z))
+map z*e^(i*abs(z))*abs(z)/f
+map acos(z*z)*asin(z*z)*e^(i*abs(z))
+map acos(z*z)*asin(z*z)
+map f/z+i*z
+map sin(z)^2
+map cos(z)^2
+map z*z+2*ln(z)*h/p;
+map (z+1)/(z-1)+(z-1)/(z+1)
+map (z+i)/(z-i)+(z-i)/(z+i)
+map z/abs(sqrt((absz)^2-1.5))
+map z-((z^3-e^z-1)/(3*z^2-e^z))
+map z*z+w*h
+map z-((z^3-1)/(3*z^2))
