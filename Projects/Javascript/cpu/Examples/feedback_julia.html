@@ -10,18 +10,34 @@ body {
     text-decoration:none; 
 }
 .dropshadow {
+    width:827px;
     margin:0 auto;
+    -moz-box-shadow:    0px 0px 14px #555;
+	-webkit-box-shadow: 0px 0px 14px #555;
+	box-shadow:         0px 0px 14px #555;
     position: absolute;
     top: 50%;
     left: 50%;
-    -webkit-transform: translate(-50%, -50%);
-    transform: translate(-50%, -50%);
-    width: auto;
-    height: auto;
-    background-color: #f00;
+    width: 512;
+    height: 512;
+    margin-top: -256;
+    margin-left: -256;
 }
-.pcontainer {
-    float: right;
+.pcursor {
+    width: 11px;
+    height:11px;
+    margin: 0 0;
+    background-color: #333;
+    border: solid 1px #aaa;
+	position: relative;
+    /* rounded corners ( does not work in opera, IE ) */
+    -moz-border-radius:    6px;
+    -webkit-border-radius: 6px;
+    -khtml-border-radius:  6px;
+    border-radius:         6px;
+}
+.canvas {
+	position: relative;
 }
 </style>
 </head>
