@@ -1,0 +1,3 @@
+[submodule "Projects/Javascript/webgl/webgpgpu"]
+	path = Projects/Javascript/webgl/webgpgpu
+	url = https://github.com/michaelerule/webgpgpu.git
