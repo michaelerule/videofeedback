@@ -9,8 +9,6 @@
  * -- image lookups
  * -- compositing
  * 
- * The place in my heart for psychedelic rock will never harden.
- * 
  * Vector graphics may be handeled by Jython. User interface configuration as
  * well. The goal is to reduce the size and complexity of the code.
  * 
