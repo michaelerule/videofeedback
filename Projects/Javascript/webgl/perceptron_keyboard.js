@@ -40,112 +40,116 @@ function apply_perceptron_key_event(k, P) {
     // # denotes numeric keypad codes (distinct from numbers in a row
     // above QWERTY
     switch (k) {
-
-        case 19: /*PAUSE*/ 
-        case 32: /*SPACE*/ 
+        case 63: /*?: toggle this help menu */
+             // TODO
+             toggle_help();
+             break;
+        case 19: /*PAUSE: see SPACE*/ 
+        case 32: /*SPACE: play/pause*/ 
+             // Note: this bypasses the perceptron state object and
+             // just uses global variables to start / stop 
              if (perceptron_running) stop_perceptron();
              else start_perceptron();
              break;
-
-        case 44: /*,*/ 
+        case 44: /*,: decrease motion blur*/ 
             P.motion_blur = Math.max(0.0,P.motion_blur-0.1);
             console.log('less blur');
             break;
-        case 46: /*.*/ 
+        case 46: /*.: increase motion blur*/ 
             P.motion_blur = Math.min(1.0,P.motion_blur+0.1);
             console.log('more blur');
             break;
-        case 91: /*[*/ 
+        case 91: /*[: decrease noise level*/ 
             P.noise_level = Math.max(0.0,P.noise_level-0.1);
             if (P.noise_level<=0) P.do_noise=false;
             console.log('less noise');
             break;
-        case 93: /*]*/ 
+        case 93: /*]: increase noise level*/ 
             P.noise_level = Math.min(1.0,P.noise_level+0.1);
             if (P.noise_level>0) P.do_noise=true;
             console.log('more noise');
             break;
-
-        case 97 : /*a*/
+        case 97 : /*a: cycle through aux buffer sources (what?!)*/
             P.aux_mode = (P.aux_mode+1)%3;
             break;
-        case 65 : /*A*/ break;
-        case 98 : /*b*/ 
+        case 65 : /*A: not bound*/ break;
+        case 98 : /*b: cycle through boundary modes (what?!)*/ 
             P.bounds_mode = (P.bounds_mode+1)%3;
             break;
-        case 66 : /*B*/ break;
-        case 99 : /*c*/ 
+        case 66 : /*B: not bound*/ break;
+        case 99 : /*c: toggle brightness / contrast control*/ 
             P.do_conbrite ^= true;
             break;
-        case 67 : /*C*/ break;
-        case 100: /*d*/ break;
-        case 68 : /*D*/ break;
-        case 101: /*e*/ 
+        case 67 : /*C: not bound*/ break;
+        case 100: /*d: not bound*/ break;
+        case 68 : /*D: not bound*/ break;
+        case 101: /*e: not bound*/ 
             break;
-        case 69 : /*E*/ break;
-        case 102: /*f*/ break;
-        case 70 : /*F*/ break;
-        case 103: /*g*/ 
-            //P.gradient_mode = (P.gradient_mode+1)%3;
-            //P.do_gradient = P.gradient_mode!=0;
+        case 69 : /*E: not bound*/ break;
+        case 102: /*f: not bound*/ break;
+        case 70 : /*F: not bound*/ break;
+        case 103: /*g: cycle through gradient modes*/ 
+            P.gradient_mode = (P.gradient_mode+1)%3;
+            P.do_gradient = P.gradient_mode!=0;
             break;
-        case 71 : /*G*/ break;
-        case 104: /*h*/
+        case 71 : /*G: not bound*/ break;
+        case 104: /*h: toggle hue-saturation adjustment*/
             P.do_huesat ^= true;
             break;
-        case 72 : /*H*/ break;
-        case 105: /*i*/ 
+        case 72 : /*H: not bound*/ break;
+        case 105: /*i: toggle color inversion*/ 
             P.do_invert ^= true;
             break;
-        case 73 : /*I*/ break;
-        case 106: /*j*/ break;
-        case 74 : /*J*/ break;
-        case 107: /*k*/ break;
-        case 75 : /*K*/ break;
-        case 108: /*l*/ 
-        case 76 : /*L*/ 
+        case 73 : /*I: not bound*/ break;
+        case 106: /*j: not bound*/ break;
+        case 74 : /*J: not bound*/ break;
+        case 107: /*k: not bound*/ break;
+        case 75 : /*K: not bound*/ break;
+        case 108: /*l: not bound*/ 
+        case 76 : /*L: increment external image texture*/ 
+             // Note: this bypasses the perceptron state object
             next_image(); // will crash
             break;
-        case 109: /*m*/ 
+        case 109: /*m: toggle motion blur*/ 
             P.do_mblur ^= true;
             break;
-        case 77 : /*M*/ break;
-        case 110: /*n*/
+        case 77 : /*M: not bound*/ break;
+        case 110: /*n: toggle noise*/
             P.do_noise ^= true;
             break;
-        case 78 : /*N*/ break;
-        case 111: /*o*/ break;
-        case 79 : /*O*/ break;
-        case 112: /*p*/ break;
-        case 80 : /*P*/ break;
-        case 113: /*q*/ 
+        case 78 : /*N: not bound*/ break;
+        case 111: /*o: not bound*/ break;
+        case 79 : /*O: not bound*/ break;
+        case 112: /*p: not bound*/ break;
+        case 80 : /*P: not bound*/ break;
+        case 113: /*q: move to the next complex map*/ 
             P.map_index = (P.map_index+1)%(perceptron_maps.length);
             P.map = perceptron_maps[P.map_index];
             break;
-        case 81 : /*Q*/ break;
-        case 114: /*r*/ 
+        case 81 : /*Q: not bound*/ break;
+        case 114: /*r: cycle through reflection modes*/ 
             P.reflection_mode = (P.reflection_mode+1)%4;
             break;
-        case 82 : /*R*/ break;
-        case 115: /*s*/ break;
-        case 83 : /*S*/ break;
-        case 116: /*t*/ break;
-        case 84 : /*T*/ break;
-        case 117: /*u*/ break;
-        case 85 : /*U*/ break;
-        case 118: /*v*/ break;
-        case 86 : /*V*/ break;
-        case 119: /*w*/ 
+        case 82 : /*R: not bound*/ break;
+        case 115: /*s: not bound*/ break;
+        case 83 : /*S: not bound*/ break;
+        case 116: /*t: not bound*/ break;
+        case 84 : /*T: not bound*/ break;
+        case 117: /*u: not bound*/ break;
+        case 85 : /*U: not bound*/ break;
+        case 118: /*v: not bound*/ break;
+        case 86 : /*V: not bound*/ break;
+        case 119: /*w: move to previous complex map*/ 
             P.map_index = (P.map_index+perceptron_maps.length-1)%(perceptron_maps.length);
             P.map = perceptron_maps[P.map_index];
             break;
-        case 87 : /*W*/ break;
-        case 120: /*x*/ break;
-        case 88 : /*X*/ break;
-        case 121: /*y*/ break;
-        case 89 : /*Y*/ break;
-        case 122: /*z*/ break;
-        case 90 : /*Z*/ break;
+        case 87 : /*W: not bound*/ break;
+        case 120: /*x: not bound*/ break;
+        case 88 : /*X: not bound*/ break;
+        case 121: /*y: not bound*/ break;
+        case 89 : /*Y: not bound*/ break;
+        case 122: /*z: not bound*/ break;
+        case 90 : /*Z: not bound*/ break;
 
 
     }

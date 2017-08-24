@@ -10,7 +10,10 @@
 <script src="./perceptron_cursors_backup.js"></script>
 <script src="./perceptron_keyboard.js"></script>
 <script src="./perceptron_aux.js"></script>
+<script src="./help_string.js"></script>
+<script src="./perceptron_help.js"></script>
 <script src="./pako.js"></script>
+<link rel="stylesheet" type="text/css" href="pp.css">
 
 
 <script id="conformal-perceptron-parameters" type="x-fragment-parameters">
@@ -256,6 +259,21 @@ function main()
     // Retrieve a handle to the canvas element
     var canvas = $("maincanvas");
 
+    // Get handle to help menu
+    var helpmenu = $("helpmenu");
+    toggle_help = function() {
+        // Toggle keyboard help overlay
+        if (helpmenu.style.display==="none") {
+            helpmenu.style.display='';
+        }
+        else {
+            helpmenu.style.display = "none";
+        }
+    }
+    helpmenu.style.display = "none";
+    helpmenu.style.cursor = "pointer";
+    helpmenu.innerHTML = "<pre>"+perceptron_help_string+"</pre>";
+
     // See perceptron_aux.js    
     make_fullscreen();
 
@@ -264,6 +282,7 @@ function main()
  
     
     // Model (as in model-view-controller)
+    // TODO: implement save / restore state using this object
     model = {
         COMPLEX_PLANE_SCALE : 2.0,  // Size of complex domain
         MAP_PRECISION: 32.0,
@@ -370,7 +389,7 @@ function main()
             var effects_params  = get_effects_parameters  (model,cursors);
             var color_transform = get_color_transforms    (model,cursors);
             
-            console.log('effects_params:',effects_params);
+            //console.log('effects_params:',effects_params);
 
             // Apply conformal perceptron
             conformal_map({
@@ -400,26 +419,30 @@ function main()
         canvas.style.cursor = "none";
         perceptron_running = true;
         animate();
+        console.log('started');
     }
     stop_perceptron = function() { 
         // Change canvas pointer style
         canvas.style.cursor = "default";
         perceptron_running = false;
+        console.log('stopped');
     }
     pause_perceptron = function() { 
         // Change canvas pointer style
         perceptron_running = false;
+        console.log('paused');
     }
 
     start_perceptron();
 
 
 }
-//<canvas id='maincanvas' style="width:640px;height:480px;"></canvas>
-//<canvas id='maincanvas' style="width:800px;height:800px;"></canvas>
-//<canvas id='maincanvas' style="width:1280px;height:800px;"></canvas>
 </script>
 <body onload="javascript:load_images()" style="margin:0;overflow:hidden;">
-<canvas id='maincanvas' style="width:1280px;height:800px;"></canvas>
+
+<canvas id='maincanvas' style="width:640px;height:480px;" ></canvas>
+
+<div style="z-index: 2147483647; position: fixed; top: 1em; right: 1em;  background-color: rgba(255,255,255,0.9);" id="helpmenu"> THIS SHOULD FLOAT? </div>
+
 </body>
 </html>

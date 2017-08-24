@@ -1,3 +1,5 @@
+
+
 function get_color_transforms(perceptron_model,render_cursors) {
     conbrite  = render_cursors.get(3);
     huesat    = render_cursors.get(4);
@@ -5,7 +7,8 @@ function get_color_transforms(perceptron_model,render_cursors) {
     // Init default (no-op) color transform
     var ctx, cty, ctz, ctw;
     ctx = 1.0;
-    cty = ctz = 0.0;
+    cty = 0.0;
+    ctz = 0.0;
     ctw = 0.0;
     
     if (perceptron_model.do_huesat) {
