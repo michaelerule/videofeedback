@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!-- IP Cameras configuration for use with Perceptron image morphing -->
+
+<!-- To comment out a segment of this XML file, use the following symbols -->
+
+    <!--    -->
+
+        <!--  The following modes for manual IpCam configuration are available.
+
+                PULL = static JPEG (client pull image from the server)
+                PUSH = MJPEG (Motion JPEG, server push image to client)
+        -->
+
+
+<storage>
+
+    <!--
+        Dasding radio public webcams
+        http://www.dasding.de/
+    -->
+
+    <ipcam name="Dasding 01" url="http://www.dasding.de/ext/webcam/webcam770.php?cam=1"/>
+    <ipcam name="Dasding 02" url="http://www.dasding.de/ext/webcam/webcam770.php?cam=2"/>
+    <ipcam name="Dasding 04" url="http://www.dasding.de/ext/webcam/webcam770.php?cam=4"/>
+    <ipcam name="Dasding 06" url="http://www.dasding.de/ext/webcam/webcam770.php?cam=6"/>
+    <ipcam name="Dasding 07" url="http://www.dasding.de/ext/webcam/webcam770.php?cam=7"/>
+    <ipcam name="Dasding 10" url="http://www.dasding.de/ext/webcam/webcam770.php?cam=10"/>
+
+    <!--
+    <ipcam name="Demo" url="http://demo.com:80/videocam.cgi" mode="push">
+        <auth user="user" password="user"/>
+    </ipcam>
+    -->
+
+</storage>
+

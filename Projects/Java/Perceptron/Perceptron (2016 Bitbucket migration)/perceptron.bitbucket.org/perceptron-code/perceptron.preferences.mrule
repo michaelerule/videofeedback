@@ -1,0 +1,12 @@
+perceptron_location.x = 659
+perceptron_location.y = 209
+perceptron_size.width = 1922
+perceptron_size.height = 1046
+configomatics_location.x = 79
+configomatics_location.y = 0
+configomatics_size.width = 485
+configomatics_size.height = 568
+grabber_location.x = 0
+grabber_location.y = 0
+grabber_size.width = 960
+grabber_size.height = 568

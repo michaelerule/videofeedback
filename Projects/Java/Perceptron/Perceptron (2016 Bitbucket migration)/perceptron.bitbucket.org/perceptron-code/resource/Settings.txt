@@ -1,0 +1,305 @@
+*************************************************************************************
+***************************      PERCEPTRON SETTINGS      ***************************
+
+
+* Perceptron reads this file at startup to set the values of key program parameters.
+
+* The location and name of this file should be Perceptron\resource\Settings.txt.
+* We recommend that you do not remove any files from the \resource\ folder in order 
+* to secure the operation of Perceptron.
+
+* Comments begin with "*". To specify a variable value, follow the format: 
+* variable name + " " + value. 
+
+* Windows denotes paths to files by separating subfolder names with \. Linux uses /
+* between the subfolder names. In this file, we used the Windows notation for paths.
+* You can use both \ and / for paths in this file, since Perceptron converts them to
+* the version that your operating system likes. It is still required that you specify
+* paths correctly in a broader sense.
+
+
+*************************************************************************************
+
+
+* SCREEN SETTINGS
+
+
+* The size of Perceptron's canvas in pixels. Perceptron runs in full screen mode in 
+* the same resolution for which your desktop is currently configured. However, it 
+* utilizes only a small central portion due to speed issues. Possible values are 
+* integer numbers greater than 0 and smaller than your current screen resolution.
+* Warning. The help screen will not fit the canvas smaller than 580 x 580 in its
+* entirety. 
+*
+* The square canvas allows 1:1 proportion of geometric figures displayed on the
+* screen. Other proportions skew the images proportionately. In a video feedback 
+* setup, this is believed to be natural behavior. For example, a circle will remain
+* a circle on a square canvas. Typical values are from 600 to 1000.
+
+
+screen_width 960
+screen_height 600
+
+
+*************************************************************************************
+
+
+* WEBCAM SUPPORT
+
+
+* If you experience problems when starting Perceptron in Linux, disable the webcam
+* support. Options are true, false.
+
+webcam_support false
+
+
+*************************************************************************************
+
+* WINDOW SETTINGS
+
+* Perceptron was designed to a be a fullscreen application in which the central
+* portion of the screen is used as a drawing canvas. However, Perceptron can also
+* run in a window whose appearance depends from the operating system that you are
+* using. Set windowed_mode to true to use the windowed mode or false to remain in
+* fullscreen mode. Press [Enter] during operation to reset the window size and
+* position.
+
+
+windowed_mode false
+
+
+*************************************************************************************
+
+
+* FANCINESS
+
+
+* Fancy graphics are sets of settings that affect objects that are drawn onto screen
+* using graphics library. The circle around the selected cursor may appear round and
+* smooth. Other effects utilize certain power of graphics hardware. Fanciness might
+* slow down calculations significantly, although at present this does not seem to be
+* the case. Linux may be faster than Windows. Values from 0 to 4 are available.
+
+
+fancy_graphics 0
+
+
+*************************************************************************************
+
+
+* CONVOLUTION
+
+
+* Convolution is a crucial process of graphics enhancement, rounding, softening and
+* blurring of edges. Value 1 means nearly deactivated, while higher values, up to 16,
+* slow down calculations significantly. Applies to convolution modes other than 0.
+* (Press y to change convolution mode.)
+
+
+convolution_degree 1
+
+
+*************************************************************************************
+
+
+* PRESETS FOLDER
+
+
+* Perceptron loads all the presets from the folder Perceptron\resource\presets at 
+* startup. The first one on the list according to its name (such as a.state) is the 
+* default one. It is necessary to have at least one preset in the presets folder in 
+* order to run Perceptron. You can comment out this setting or you must otherwise 
+* assure that it is accurate. Perceptron continues to read image(s) denoted in each
+* individual preset from the location specified in each preset separately.
+
+
+preset_folder <resource\presets>
+
+
+*************************************************************************************
+
+
+* IMAGE FOLDER
+
+
+* Perceptron loads all images from the folder Perceptron\resource\images at startup.
+* They are available in the image mode or by using certain outside coloring methods.
+* The selection of these images that are preloaded at startup depends from the user.
+*
+* Other images are denoted in presets, Perceptron\resource\presets\*.state files.
+* Those particular images should be preserved, so that presets can be used properly.
+* You can comment out this setting or you must otherwise assure that it is accurate. 
+
+
+image_folder <resource\images>
+
+
+* I recommend that you select the folder carefully and assure that it contains only
+* image files. Here is an example of an image folder on a Windows operating system:
+* image_folder <D:\My Pictures\test>
+* This example shows path to a similar folder in Linux:
+* image_folder </home/user/d/My\ Pictures/test/>
+
+
+* When you later open a saved preset file, the denoted image file must be located on
+* your computer at the location specified in the preset file. If you give the preset
+* file to another person, you must include the image file if it was used in your 
+* artwork. Optimally, store the images that you plan to use in any folder within
+* the Perceptron folder. That way, path to image file will be relative to Perceptron 
+* and usable on different operating systems.
+
+
+*************************************************************************************
+
+
+* EQUATION EDITOR FONT
+
+
+* Choose a font that is used on screen during the equation editing mode. A list of
+* installed fonts depends from each operating system, but some universal font names
+* are often used. "Serif", "SansSerif" and "Monospaced" are the most common types.
+* Other font ideas could include "Dialog" and "DialogInput". These are all font
+* family names that are in some ways, universal.
+
+
+salvia_font "Serif"
+
+
+* You may instruct Perceptron to print out the list in a window of all the available
+* fonts by name that you have on your system.
+
+
+print_all_fonts false
+
+
+*************************************************************************************
+
+
+* HELP SCREEN TRANSPARENCY
+
+
+* Help screen is available when you press / during operation (not during the equation
+* editing mode). It consists of white text of variable transparency. Value of zero
+* gives completely transparent text and thus deactivates help. Fully visible help
+* is obtained by setting the value to 255. Values from 1 to 254 produce somewhat
+* transparent (opaque) text.
+
+
+help_font_alpha 255
+
+
+*************************************************************************************
+
+
+* TREE SETTINGS
+
+
+* The fractal properties of the 3D Tree.
+
+* The "depth" or the level of tree branching. Reduce this if the program runs out
+* of memory (which may manifest as the program failing to run at all). The number
+* of computations required to draw the tree scales as 2^(1 + tree_depth), so the
+* time for rendering the tree grows rapidly as a function of depth. Possible values:
+* integer numbers from 1 to 29.
+
+
+max_tree_depth 9
+
+
+* This is the minimum branching depth. Possible values: integers numbers from 1 to
+* 29.
+
+
+min_tree_depth 3
+
+
+*************************************************************************************
+
+
+* EQUATION DEFINITIONS 
+
+
+* Maps or in other words, functions f(z) that produce Julia fractals. Expressions in
+* terms of z. The parameter c will be added (+c) to all equations automatically.
+* The red mouse cursor controls the value of c as it moves on the screen.
+* For example, f(z) = z^2 + c is equivalent to z_n+1 = z_n^2 + c and we write it as:
+* map z*z.
+
+* The recognized constants are:
+
+*   e = 2.71828...
+*   i = irrational unit (square root of -1)
+*   p = pi = 3.14159265...
+*   f = golden ratio = 1.618...
+*   w = screen width
+*   h = screen height
+
+
+map z*z
+map z*z*z
+map z
+map z*abs(z)
+map e^z+e^(iz)
+map e^z+e^(-iz)
+map e^z+e^(z*e^(i*p/4))
+map e^z+e^(z*e^(i*p/-4))
+map 1/(z*e^(i*2*p/3)+1.4)+1/(z*e^(i*-2*p/3)+1.4)+1/(z+1.4)
+map conj(e^z+e^(iz))
+map conj(e^z+e^(-iz))
+map conj(e^z+e^(z*e^(i*p/4)))
+map conj(e^z+e^(z*e^(i*p/-4)))
+map abs(z)*e^(i*arg(z)*2)*2
+map z*z*e^(i*abs(z))
+map z*z*z*e^(i*abs(z))
+map z*e^(i*abs(z))*abs(z)/f
+map acos(z*z)*asin(z*z)*e^(i*abs(z))
+map acos(z*z)*asin(z*z)
+map f/z+i*z
+map sin(z)^2
+map cos(z)^2
+map z*z+2*ln(z)*h/p;
+map (z+1)/(z-1)+(z-1)/(z+1)
+map (z+i)/(z-i)+(z-i)/(z+i)
+map z/abs(sqrt((absz)^2-1.5))
+map z-((z^3-e^z-1)/(3*z^2-e^z))
+map z*z+w*h
+map z-((z^3-1)/(3*z^2))
+
+
+*************************************************************************************
+
+
+* SYSTEM-DEPENDENT PREFERENCES STORAGE
+
+* Window preferences such as the last location and size of Perceptron's windows can
+* be stored at a location on the local computer according to the standards used by
+* the local operating system (Windows, Linux, Mac OS...). Select true if you want
+* this type of preferences storage to be used. The advantage is that this storage is
+* defined per user and is managed by the local system. The disadvantage is that this
+* makes Perceptron leave traces at locations that are not immediately obvious. If you
+* move Perceptron to another location, you need to migrate the preferences somehow.
+* If you select false, the portable mode will be used. The advantage of portable mode
+* is that preferences are stored in perceptron.preferences.user file in Perceptron
+* folder and that it can be moved together with Perceptron folder, given to other
+* users or modified by hand. Default is false.
+* (If you switch the storage, preferences remain in the previous storage and are
+* not copied to the new storage.)
+
+
+system_based_preferences false
+
+
+*************************************************************************************
+
+
+* AUDIO INPUT
+
+* Turn Perceptron into a sound visualizer (EXPERIMENTAL!) 
+* Disabled.
+
+
+* audio_line 0
+
+
+*************************************************************************************
+

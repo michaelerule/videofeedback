@@ -10,7 +10,7 @@
 # Run this script from it's local directory
 #
 
-#git submodule update --recursive --remote
+git submodule update --recursive --remote
 
 ./maketree.py
 shopt -s extglob

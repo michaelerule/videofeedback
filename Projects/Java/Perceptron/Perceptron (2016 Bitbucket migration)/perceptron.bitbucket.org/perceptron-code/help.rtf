@@ -1,0 +1,180 @@
+{\rtf1\ansi
+{\fonttbl\f0\fnil Monospaced;\f1\fnil sansserif;\f2\fnil Arial;\f3\fnil Source Code Pro;\f4\fnil Symbol;}
+{\colortbl\red0\green0\blue0;\red0\green0\blue0;\red0\green176\blue80;\red255\green0\blue0;\red0\green176\blue240;\red0\green32\blue96;\red255\green192\blue0;\red255\green255\blue0;\red255\green229\blue153;\red196\green89\blue17;\red244\green176\blue131;\red56\green86\blue35;}
+
+\li0\ri0\fi0\sa156\sb0\f2\fs24\i0\b\ul\cf0 PERCEPTRON \tab                       \par
+\fi720\ul0\par
+\li720\sl252 Important key associations\par
+\li0\fi0\b0\sl0\cf2\par
+                               F1            help (this window)\par
+\cf3                                   /            on-screen help\par
+               Page Down            settings window\par
+\cf0                     \cf4 Page Up            grabber window\par
+\cf5                    Left Click            select next cursor\par
+                Right Click            select previous cursor\par
+\cf6                                    ]            add dot to current cursor\par
+                                   [            remove dot from current cursor\par
+                                   -            slow down current cursor\par
+                                  =            speed up current cursor\par
+\cf5                          Space            save state and screenshot\par
+                                   `            load state\par
+\cf4                                    \\            load image\par
+\cf7                               Ctrl            equation editor on/off\par
+                           Enter            execute equation\par
+\cf8                     0-9, F2\'85            built-in presets\par
+\cf0                          \cf9 Home            animation on/off\par
+\cf10                                Alt            release mouse pointer\par
+                        Pause            pause on/off\par
+\cf0                             \cf11 Esc            exit\par
+\cf0\par
+\sa0\~ \par
+The \b mouse\b0  controls any one of the four basic cursors. At startup (as well as upon loading a preset), neither cursor is selected. Click left or right mouse button to select a cursor. \par
+\fi720\~ \par
+\li720\fi0\b Red cursor\b0 : sets the parameter c of the complex function (e.g. as in f(z) = z2 + c), (mimics the camera position). \par
+\b Blue cursor\b0 : controls the pullback, (mimics the camera distance and rotation). \par
+\li0\fi720\b Yellow cursor\b0 : sets the color gradient parameters, offset and slope. \par
+\li720\fi0\b Dragonfly\b0  (black cursor): controls the amount and type of color filtering (contrast) in combination with the X switch. \par
+\li0\sa156\sl252\par
+The \b\sl0 visibility of all active cursors\b0  can be switched off and on by pressing C.\par
+\sa0\b Program options\b0  (Pressing the associated KEY cycles through options)\par
+\~ \par
+\b\~ \par
+\li720 Boundary Condition\b0  (R) \endash  the boundary condition for points f(z).\par
+\par
+\li2160\fi-720\tx2160\f3\fs20 0\tab\f2\fs24 Rectangular Window (as the limit circle)\par
+\f3\fs20 1\tab\f2\fs24 Limit Circle (for classical Julia sets)\par
+\f3\fs20 2\tab\f2\fs24 Elastic Limit Circle (the limit circle size is tied with the blue cursor)\par
+\f3\fs20 3\tab\f2\fs24 Horizontal Window\par
+\f3\fs20 4\tab\f2\fs24 Vertical Window\par
+\f3\fs20 5\tab\f2\fs24 Inverse Oval Window (the inverse check on oval window)\par
+\f3\fs20 6\tab\f2\fs24 No Window (move on to outside coloring)\par
+\f3\fs20 7\tab\f2\fs24 Framed Window (with a colored frame)\par
+\f3\fs20 8\tab\f2\fs24 Convergent bailout condition (for Newton fractals)\par
+\pard\li720\fi-720\ql\par
+\par
+\b Outside Coloring Method\b0  (E) \endash  what to do with the points f(z) that are beyond the limit according to the boundary condition check.\par
+\par
+\li2160\tx2160\f3\fs20 0\tab\f2\fs24 Fill With Fade-to Color\par
+\f3\fs20 1\tab\f2\fs24 Edge Extend (pass on the color for points within a large screen)\par
+\f3\fs20 2\tab\f2\fs24 Just Pass on the Color\par
+\f3\fs20 3\tab\f2\fs24 Paint With Image (loaded image appears on fractal contours)\par
+\f3\fs20 4\tab\f2\fs24 Paint With Image II (image with soft edges)\par
+\f3\fs20 5\tab\f2\fs24 Fuzzy (a type of color average around the location f(z))\par
+\pard\li720\fi-720\ql\par
+\par
+\b Reflection Transform\b0  (I) \endash  the contraction of points f(z) back within the screen limits.\par
+\par
+Let f(z) = z\rquote  = (x, y), while Width and Height denote the screen dimensions (W, H). The point z\rquote  can reach the positions between 0 and W \endash  1, and 0 and H \endash  1. Make x and y positive.\par
+\par
+\li2160\tx2160\f3\fs20 0\tab\f2\fs24 Shrink z\rquote  to x = W \endash  1 \endash  x modulo W, and y = H \endash  1 \endash  y modulo H.\par
+\pard\li2160\fi-720\ql Perform the pixel interpolation (rounding of pixels and enhancement of image quality).\par
+1\tab If x / W is even, x = x modulo W, otherwise x = W \endash  1 \endash  x modulo W.\par
+\fi0 If y / H is even, y = y modulo H, otherwise x = W \endash  1 \endash  x modulo W. Without the interpolation, but in use by the convolution procedure that adds a layer over images (for softening).\par
+\fi-720 2\tab Same as 1, but with pixel interpolation.\par
+3\tab x = x modulo W / 2, y = y modulo H / 2. With interpolation.\par
+4\tab If x > W \endash  1, x = x modulo W, otherwise x = W \endash  1 \endash  x modulo W.\par
+\fi0 If y > H \endash  1, y = y modulo H, otherwise y = H \endash  1 \endash  y modulo H. With interpolation.\par
+\fi-720 5\tab If x < W, x = x modulo W / 2, otherwise x = W \endash  1 \endash  x modulo W.\par
+\fi0 If y < H, y = y modulo H / 2, otherwise y = H \endash  1 \endash  y modulo H. With interpolation.\par
+\fi-720 6\tab If x / W is even, x = x modulo W / 2, otherwise x = W \endash  1 \endash  x modulo W / 2.\par
+\fi0 If y / H is even, y = y modulo H / 2, otherwise x = W \endash  1 \endash  x modulo W / 2. Performs the additional operation of making x, y positive, because they could become so large (>2147483647) that they wrap around and come up as negative numbers. With interpolation.\par
+\fi-720 7\tab If x / W is even, x = x modulo W / 2, otherwise x = (W \endash  1) / 2 \endash  x modulo W / 2.\par
+\fi0 If y / H is even, y = y modulo H / 2, otherwise x = (W \endash  1) / 2 \endash  x modulo W / 2. Performs the additional operation of making x, y positive, because they could become so large (>2147483647) that they wrap around and come up as negative numbers. With interpolation.\par
+\li720\par
+\par
+\b Color Gradient\b0  (G) \endash  the color added to the points f(z) that are beyond the limit according to the boundary condition check.\par
+\par
+\li2160\fi-720\tx2160\f3\fs20 0\tab\f2\fs24 No Gradient (do nothing)\par
+\f3\fs20 1\tab\f2\fs24 Simple Gradient (gradient affects the color)\par
+\f3\fs20 2\tab\f2\fs24 Accented Gradient (accent color plays an additional role)\par
+\pard\li720\fi-720\ql\par
+\par
+\b Gradient Shape\b0  (\lquote ) \endash  the shape of the shadow used for basic gray-scale coloring.\par
+\par
+\li1440 The gradient shape can be visible on the contours of a typical Julia fractal, which in turn can be uniformly colored (without any indication of the gradient shape), or varied (which shows the gradient shape). Each of 10 gradients was made by the calculation of various functions of two variables. The default gradient (0) is the radial shadow, black in the center and gradually whiter towards the perimeter.\par
+\par
+Suppose that the Julia set is a circle. When you change the proportions of screen (by adjusting the screen resolution), the Julia fractal becomes an ellipse. The radial shadow also becomes elliptic. This behavior is considered more natural for a video feedback system, because its displays depend from the shape of the screen. The contours of the Julia fractal behave similarly to the images of screens within screens in the classical video feedback setup.\par
+\li720\par
+\par
+\b Gradient Direction \b0 (K) \endash  whether the gradient shade is going from black to white or from white to black.\par
+\par
+\par
+\b Fade Color Mode\b0  (F) \endash  the fade-to color mixed with the existing color of the point f(z) outside the limit circle.\par
+\par
+\li2160\tx2160\f3\fs20 0\tab\f2\fs24 Black\par
+\f3\fs20 1\tab\f2\fs24 White\par
+\f3\fs20 2\tab\f2\fs24 Mid-Screen Pixel Hue (select the color from the middle of the screen)\par
+\f3\fs20 3\tab\f2\fs24 Not Mid-Screen Pixel Hue (select the negated color value of the mid-screen pixel)\par
+\f3\fs20 4\tab\f2\fs24 Mid-Screen Pixel Hue Rotate (rotate the hue through HSV color spectrum and combine it with the mid-screen pixel color)\par
+\f3\fs20 5\tab\f2\fs24 Hue Rotate (rotate the hue through HSV color spectrum)\par
+\pard\li720\fi-720\ql\par
+\par
+\b Dampen Fade-to Color \b0 (V) \endash  a small dampening of fade-to color.\par
+\par
+\par
+\b Color Accent \b0 (H) \endash  choose the accent color.\par
+\par
+\par
+\b Color Filters\b0  (X) \endash  the contrast enhancements.\par
+\par
+\li2160\tx2160\f3\fs20 0\tab\f2\fs24 None (do nothing)\par
+\f3\fs20 1\tab\f2\fs24 RGB (various filters and color functions play a role)\par
+\f3\fs20 2\tab\f2\fs24 Mush (various filters and color functions play a role)\par
+\pard\li720\fi-720\ql\par
+\par
+\b Partial Inversion\b0  (Insert) \endash  partial inversion of colors affects the fractal contours; black can become white and white black.\par
+\par
+\li1440 Thanks to the total color inversion that affects the entire visual image in each cycle, we have the interchanging Julia contours, but consequentially the Julia lake flickers. The partial inversion does not affect the flicker. It acts as the conventional color inversion of the current screen contents.\par
+\li720\par
+\par
+\b Total Inversion\b0  (J) \endash  disables the fundamental color inversion.\par
+\par
+\li1440 The flickering of the Julia lake stops, but the contours disappear as well. The visibility of fractals depends from the fractal map (since some Julia fractals do not possess any lakes), and the presence of other images on the screen (notably the screen cursors).\par
+\li720\par
+\par
+\b Initial set\b0  (B) \endash  enable or disable the treatment of cursors and text as the persistent initial set.\par
+\par
+\li1440 The mouse cursors, the letters, as well as the text cursor in the equation-editing mode are present on the screen on top of the fractal. They are persistent/unchangeable, but the video feedback inputs them and morphs them together with all other contents of the screen equally. As such, they are useful for color seeding and demonstrating the nature of video feedback flow.\par
+\li720\par
+\par
+\b Convolution \b0 (Y) \endash  methods for Gaussian image blurring (softening).\par
+\par
+\li1440 This option has the potential to improve image quality. Values are 0, 1, 2, 3. Zero is the fastest option. Other values may require adjustment of the color filter weight by using left and right arrow keys. Notice that the pixel interpolation methods are a part of reflection transformations (I). Option 3 represents full convolution. Options 1 and 2 are reduced mutant cases.\par
+\li720\par
+\b Autorotation, Autopilot and Wanderer\b0  (, . p Delete) \endash  continuous random change of different parameters.\par
+\par
+\par
+\sa156\b\par
+Program startup\par
+\sa0\b0\par
+The first preset file in the resource/presets folder is the default preset. The settings are in the resource/settings.txt file and the list of internet cameras in the resource/cameras.xml.\par
+\par
+\par
+\par
+\b Operation in concept\par
+\par
+\b0\par
+The program transforms the screen contents endlessly (recursively).\par
+\par
+It uses the complex function f(z) and the reflection transform to find the new location for each pixel.\par
+\par
+It adds the color to the pixel depending from the boundary condition check of pixel location and the coloring options.\par
+\par
+The pixel color can\par
+\par
+\li1440\fi-360\tx1440\f4\fs20\'b7\tab\f2\fs24 initially come from the gradient (gray),\par
+\f4\fs20\'b7\tab\f2\fs24 it can be color inverted,\par
+\f4\fs20\'b7\tab\f2\fs24 it can come from the middle of the screen,\par
+\f4\fs20\'b7\tab\f2\fs24 from the image in memory (denoted in preset file(s), placed in resource/images folder)\par
+\f4\fs20\'b7\tab\f2\fs24 from the image loaded from computer,\par
+\f4\fs20\'b7\tab\f2\fs24 from the screen grabber,\par
+\f4\fs20\'b7\tab\f2\fs24 live screen grabber,\par
+\f4\fs20\'b7\tab\f2\fs24 or live webcam.\par
+\pard\li720\fi-360\ql\par
+\par
+\par
+\b\par
+Visit \cf3 http://perceptron.sourceforge.net\cf0  for much more information.\par
+\li0\fi0\f1\b0\par
+\li0\ri0\fi0\ul0\sl0\par
+}
