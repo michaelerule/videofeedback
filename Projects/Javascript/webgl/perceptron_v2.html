@@ -33,7 +33,7 @@
 sampler2D buff;   // main feedback buffer
 sampler2D aux;    // auxiliary buffer: background images, etc.
 sampler2D noise;  // noise texture
-// Hard coded
+// Hard coded?
 float COMPLEX_PLANE_SCALE; 
 float MAP_PRECISION;
 // free parameters (continuous)
@@ -263,14 +263,11 @@ function main()
     var helpmenu = $("helpmenu");
     toggle_help = function() {
         // Toggle keyboard help overlay
-        if (helpmenu.style.display==="none") {
+        if (helpmenu.style.display==="none")
             helpmenu.style.display='';
-        }
-        else {
-            helpmenu.style.display = "none";
-        }
+        else helpmenu.style.display = "none";
     }
-    helpmenu.style.display = "none";
+    //helpmenu.style.display = "none";
     helpmenu.style.cursor = "pointer";
     helpmenu.innerHTML = "<pre>"+perceptron_help_string+"</pre>";
 
@@ -442,7 +439,7 @@ function main()
 
 <canvas id='maincanvas' style="width:640px;height:480px;" ></canvas>
 
-<div style="z-index: 2147483647; position: fixed; top: 1em; right: 1em;  background-color: rgba(255,255,255,0.9);" id="helpmenu"> THIS SHOULD FLOAT? </div>
+<div style="z-index: 2147483647; position: fixed; top: 1em; right: 1em;  background-color: rgba(255,255,255,0.9); padding: 10px;" id="helpmenu"> THIS SHOULD FLOAT? </div>
 
 </body>
 </html>
