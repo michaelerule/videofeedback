@@ -55,10 +55,51 @@ function get_effects_parameters(perceptron_model,render_cursors) {
 }
 
 function get_map_affine_transform(perceptron_model,render_cursors) {
+    /*
+    Retrieves rotation and offset parameters from the mouse controls
+    ( zoom, rotate, pan, in terms of camera );
+    This is for a fixed transform 
+    */
     translate = render_cursors.get(0);
     rotate    = render_cursors.get(1);
+    console.log('translate:',translate);
+    console.log('rotate:',rotate);
     // translation+rotation/scaling
     return [translate.x,translate.y,rotate.x,rotate.y];
+}
+
+function get_map_affine_transform_velocity(T,perceptron_model,render_cursors) {
+    /*
+    New mode: rotate / zoom / shift mouse controls set the velocity of 
+    the camera ( which will continue to move )
+    
+    Parameters
+    ----------
+    T : length 4 numeric array containing shift, rotate+scale params to update
+    */
+    var s    = 0.1; // scale factor relating mouse position to speed
+    
+    var pan = render_cursors.get(0);
+    var rot = render_cursors.get(1);
+    
+    // Shift/pan is a simple addition
+    var dx = T[0]+pan.x*s;
+    var dy = T[1]+pan.y*s;
+    
+    // Composing rotate/scale requires a multiplication (2D rotation/scale)
+    // Note: since scale cannot "loop around", let's keep that exact
+    // Only apply velocity to the rotation parameter
+    // y = sin(theta)*r
+    // x = cos(theta)*r
+    //var rr = rot.x*rot.x+rot.y*rot.y;
+    //var r  = Math.sqrt(rr);
+    //var ct = rot.x/r;
+    //var st = rot.y/r;
+    
+    // On second thought lets leave rotation as is
+    
+    // translation+rotation/scaling
+    return [dx,dy,rot.x,rot.y];
 }
 
 function make_fullscreen()

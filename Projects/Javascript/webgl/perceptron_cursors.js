@@ -365,10 +365,10 @@ function cursor_renderer(gl,npoint,ndots,canvas) {
         #define SPRITE_WIDTH (32.0)
         #define SPRITE_ATLASS_WIDTH_SPRITES (4.0)
         #define EDGE_SHARPNESS (1.4)
-        #define ALPHA_CUTOFF (0.2)
+        #define ALPHA_CUTOFF (0.00)
         #define W (512.0)
         #define EDGE_TAPER_START_PIXELS (1.0)
-        #define EDGE_RADIUS (0.18)
+        #define EDGE_RADIUS (0.5)
         void main() {
             // This will be a point in [0,1]x[0,1] denoting the location on the sprite
             vec2 q = gl_PointCoord;

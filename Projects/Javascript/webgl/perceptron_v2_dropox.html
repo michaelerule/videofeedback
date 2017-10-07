@@ -1,19 +1,16 @@
 <html>
-<script src="./webgpgpu/lib/colormaps.js"></script>
-<script src="./webgpgpu/lib/gpgpu.js"></script>
-<script src="./webgpgpu/lib/gpurand.js"></script>
-<script src="./webgpgpu/lib/math.js"></script>
-<script src="./webgpgpu/lib/parameters.js"></script>
-<script src="./webgpgpu/lib/complex_macros.js"></script>
-<script src="./webgpgpu/lib/complex_parser.js"></script>
-<script src="./webgpgpu/lib/sprintf.js"></script>
+<script src="../../lib/colormaps.js"></script>
+<script src="../../lib/gpgpu.js"></script>
+<script src="../../lib/gpurand.js"></script>
+<script src="../../lib/math.js"></script>
+<script src="../../lib/parameters.js"></script>
+<script src="../../lib/complex_macros.js"></script>
+<script src="../../lib/complex_parser.js"></script>
+<script src="../../lib/sprintf.js"></script>
 <script src="./perceptron_cursors_backup.js"></script>
 <script src="./perceptron_keyboard.js"></script>
 <script src="./perceptron_aux.js"></script>
-<script src="./help_string.js"></script>
-<script src="./perceptron_help.js"></script>
 <script src="./pako.js"></script>
-<link rel="stylesheet" type="text/css" href="pp.css">
 
 
 <script id="conformal-perceptron-parameters" type="x-fragment-parameters">
@@ -33,7 +30,7 @@
 sampler2D buff;   // main feedback buffer
 sampler2D aux;    // auxiliary buffer: background images, etc.
 sampler2D noise;  // noise texture
-// Hard coded?
+// Hard coded
 float COMPLEX_PLANE_SCALE; 
 float MAP_PRECISION;
 // free parameters (continuous)
@@ -252,26 +249,12 @@ function load_images() {
 // This is the main script that will run when the website loads
 function main()
 {
-    //map_affine = ''; // this breaks everything
-
     console.log('starting');
     var tulip   = images['tulip.png'];
     var sprites = images['sprites.png'];
 
     // Retrieve a handle to the canvas element
     var canvas = $("maincanvas");
-
-    // Get handle to help menu
-    var helpmenu = $("helpmenu");
-    toggle_help = function() {
-        // Toggle keyboard help overlay
-        if (helpmenu.style.display==="none")
-            helpmenu.style.display='';
-        else helpmenu.style.display = "none";
-    }
-    //helpmenu.style.display = "none";
-    helpmenu.style.cursor = "pointer";
-    helpmenu.innerHTML = "<pre>"+perceptron_help_string+"</pre>";
 
     // See perceptron_aux.js    
     make_fullscreen();
@@ -281,7 +264,6 @@ function main()
  
     
     // Model (as in model-view-controller)
-    // TODO: implement save / restore state using this object
     model = {
         COMPLEX_PLANE_SCALE : 2.0,  // Size of complex domain
         MAP_PRECISION: 32.0,
@@ -326,6 +308,7 @@ function main()
     var buff0 = newBasicFramebuffer(gl,{wrap:gl.MIRRORED_REPEAT});
     var buff1 = newBasicFramebuffer(gl,{wrap:gl.MIRRORED_REPEAT});
     var buff2 = newBasicFramebuffer(gl,{wrap:gl.MIRRORED_REPEAT});
+
     console.log('initializing buffers done');
 
     // recompute the conformal map
@@ -338,8 +321,6 @@ function main()
     }
     
     // Some parameters should be bound at compile time
-    // ( parameters connected to mouse controls are passed when calling on 
-    //   each frame )
     var conformal_map = null;
     function compile_kernel() {
         var complex_map = compile_map(model);
@@ -377,36 +358,30 @@ function main()
     function animate() {
         setTimeout(function(){
             // draw new "random" numbers (second argument is a scratch buffer)
-            if (model.do_noise && model.noise_level>0.0) gpurng(noise,buff2);
+            if (model.do_noise) gpurng(noise,buff2);
             
-            // helper functions are defined in perceptron_aux.js
+            // these helper functions are defined in perceptron_aux.js
             // shader parameters are combined into as few vec4s as possible
             // this is because each uinform takes up a vec4 slot, even if
             // it is a scalar. There's a bug in Safari that shows up for even
             // modest numbers of uniforms and local variables, so we must be
             // efficient with parameters (shader arguments). 
-            //map_affine = map_affine | get_map_affine_transform(model,cursors);
-            
             var map_affine      = get_map_affine_transform(model,cursors);
-            
-            //map_affine = get_map_affine_transform_velocity(map_affine, model, cursors);
-            
             var effects_params  = get_effects_parameters  (model,cursors);
             var color_transform = get_color_transforms    (model,cursors);
             
-            //console.log('effects_params:',effects_params);
-            
+            console.log('effects_params:',effects_params);
+
             // Apply conformal perceptron
             conformal_map({
-                 buff:buff1,            // source buffer
-                 aux:background_img,    // 
-                 noise:noise,           // noise levels
+                 buff:buff1,
+                 aux:background_img,
+                 noise:noise,
                  effects:effects_params,// special effects parameters
                  ct:color_transform,    // color affine transform
-                 hilight_color:[1,1,1], // 
+                 hilight_color:[1,1,1],
                  wv:map_affine,         // map affine transform
-            },buff2                     // destination buffer
-            );
+            },buff2);
             copy(buff2,buff1);
             
             // Render cursors on top
@@ -425,30 +400,26 @@ function main()
         canvas.style.cursor = "none";
         perceptron_running = true;
         animate();
-        console.log('started');
     }
     stop_perceptron = function() { 
         // Change canvas pointer style
         canvas.style.cursor = "default";
         perceptron_running = false;
-        console.log('stopped');
     }
     pause_perceptron = function() { 
         // Change canvas pointer style
         perceptron_running = false;
-        console.log('paused');
     }
 
     start_perceptron();
 
 
 }
+//<canvas id='maincanvas' style="width:640px;height:480px;"></canvas>
+//<canvas id='maincanvas' style="width:800px;height:800px;"></canvas>
+//<canvas id='maincanvas' style="width:1280px;height:800px;"></canvas>
 </script>
 <body onload="javascript:load_images()" style="margin:0;overflow:hidden;">
-
-<canvas id='maincanvas' style="width:640px;height:480px;" ></canvas>
-
-<div style="z-index: 2147483647; position: fixed; top: 1em; right: 1em;  background-color: rgba(255,255,255,0.9); padding: 10px;" id="helpmenu"> THIS SHOULD FLOAT? </div>
-
+<canvas id='maincanvas' style="width:1280px;height:800px;"></canvas>
 </body>
 </html>
