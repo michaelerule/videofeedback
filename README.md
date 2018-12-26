@@ -4,8 +4,6 @@ Simulated video feedback is a simple ways to generate responsive real-time fract
 
 [Browsing links here](https://michaelerule.github.io/videofeedback/)
 
-[Browsing links here](https://github.com/michaelerule/videofeedback/)
-
 
 ### Disclaimer
 
