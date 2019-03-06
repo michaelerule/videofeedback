@@ -1,3 +1,6 @@
+#define KERNELVERSION Kernel1551883364867
+#define WIDTH 1024
+#define HEIGHT 1024
 /* Kernel.java
  *
  * The plan is to re-implement perceptron with most of the fuzzy stuff in

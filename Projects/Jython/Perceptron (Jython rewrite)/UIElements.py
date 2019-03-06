@@ -12,25 +12,28 @@ from javax.swing import BorderFactory
 from java.util.Map import Entry
 from javax.swing import UIManager
 from javax.swing.plaf import ColorUIResource
-
+from java.lang import IllegalArgumentException
 BACKGROUND    = Color(0x49,0x49,0x49,0xff)
 FOREGROUND    = Color(0xce,0xce,0xce,0xff)
-SPACING       = 18
-HPADDING      = 4
-BALLRADIUS    = 5
+SPACING       = int(18*DPISCALE)
+HPADDING      = int(4*DPISCALE)
+BALLRADIUS    = int(5*DPISCALE)
 SLIDERSPACING = SPACING
 
 colorKeys = []
 for entry in UIManager.getLookAndFeelDefaults().entrySet():
-	if type(entry.value) is ColorUIResource:
-		print entry
-		if 'background' in str(entry).lower():
-			UIManager.put(entry,ColorUIResource(BACKGROUND))
-			print 'setting background to',hex(UIManager.get(entry).RGB & 0xffffff)
-		if 'foreground' in str(entry).lower():
-			print 'setting foreground'
-			UIManager.put(entry,ColorUIResource(FOREGROUND))
-
+    try:
+	    if type(entry.value) is ColorUIResource:
+		    print entry
+		    if 'background' in str(entry).lower():
+			    UIManager.put(entry,ColorUIResource(BACKGROUND))
+			    print 'setting background to',hex(UIManager.get(entry).RGB & 0xffffff)
+		    if 'foreground' in str(entry).lower():
+			    print 'setting foreground'
+			    UIManager.put(entry,ColorUIResource(FOREGROUND))
+    except IllegalArgumentException:
+        print 'java.lang.IllegalArgumentException ocurred; ignoring'
+    
 def cleantext(g):
 	try:
 		g.setRenderingHint(
@@ -47,7 +50,7 @@ def cleantext(g):
 
 dummyImage    = BufferedImage(100,100,BufferedImage.TYPE_INT_RGB)
 dummyGraphics = cleantext(dummyImage.graphics)
-metrics  = dummyGraphics.getFontMetrics(dummyGraphics.font)
+metrics  = dummyGraphics.getFontMetrics(myFont)#dummyGraphics.font)
 
 class ControlLables(JPanel):
 	def __init__(self,controls):
@@ -233,7 +236,7 @@ class Label(JPanel):
 	def __init__(self,name):
 		JPanel.__init__(self,background=BACKGROUND,foreground=FOREGROUND)
 		self.name = name
-		self.w = metrics.stringWidth(name)+HPADDING*2
+		self.w = int(metrics.stringWidth(name))+HPADDING*2
 		self.size = (self.w, SPACING)
 		self.preferredSize = self.size
 	def paintComponent(self,g):
@@ -294,7 +297,7 @@ class State(JPanel):
 		JPanel.__init__(self,background=BACKGROUND,foreground=FOREGROUND)
 		self.name = name
 		self.varname = varname
-		self.lw = metrics.stringWidth(name)+HPADDING*2
+		self.lw = int(metrics.stringWidth(name))+HPADDING*2
 		self.w = self.lw+100
 		self.size = (self.w, SPACING)
 		self.preferredSize = self.size
@@ -320,3 +323,4 @@ class delimiter(JPanel):
 			self.holder.add(c)
 		self.add(self.holder,BorderLayout.WEST)
 		
+

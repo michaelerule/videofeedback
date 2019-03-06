@@ -3,12 +3,14 @@
 NTHREADS = 2
 saveat = "./shots/"
 kerneltemplate = 'Kernel.h'
-W,H = 960,740
+#W,H = 960,740
 #W,H = 600,740
 #W,H = 500,500
-SCREENSIZE = W+400,H
+W,H = 1024,1024
+
+SCREENSIZE = W+int(400*DPISCALE),H
 CONTROLW = SCREENSIZE[0]-W
-LABELW = 100
+LABELW = int(100*DPISCALE)
 SLIDERW = CONTROLW - LABELW
 LENGTH = W*H
 rlim = (-5,5)
