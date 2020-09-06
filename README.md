@@ -7,14 +7,11 @@ Simulated video feedback is a simple ways to generate responsive real-time fract
 
 ### Disclaimer
 
-This code is uploaded to Github without curation or documentation in the hope
-that some portions of it may be found useful. If there is community interest
-in any portion or file within this project, please open an issue and the 
-project maintainers will work to improve documentation and usability. See also the License section below.
+This is all poorly maintained and incomplete hobby code.
 
-### Project contents and objective
+### Project contents
 
-At first, this project will aggregate several different implementations of video feedback rendering. Over time, the goal is to refactor and organize these examples, and to provide supplemental documentation outlining the rendering technique.
+This repository contains the following projects:
 
 #### Working
  - Javascript CPU examples
