@@ -39,18 +39,14 @@ public class Perceptron extends javax.swing.JFrame {
     Object3D fetch() {
         try {
             return (new Object3D(new BufferedReader(
-                    new FileReader(new File("resource/data/tetrahedron.txt")))));
-        } catch (Exception E) {
+                new FileReader(new File("resource/data/tetrahedron.txt")))));
+        } catch (FileNotFoundException E) {
             System.out.println("Could not load file resource/data/tetrahedron.txt");
             System.exit(1);
         }
         return null;
     }
-    /** User Editable Parameters
-     *  The following are editable parameters of this Perceptron. They have been
-     *  made public so as to allow direct initialisation from the Settings file.
-     *  modifying these after initialisation will cause undetermined
-     *  behavior.     */
+    
     long last_image_time = System.currentTimeMillis();
     long boredom_time = System.currentTimeMillis();
     long FRAME = 0;
@@ -59,8 +55,11 @@ public class Perceptron extends javax.swing.JFrame {
     public int presetRotateMS = 500000;
     public boolean rotateImages = false;
     public long frame;
+    
+    /** User Editable Parameters.
+     */
     public int screensaveTimeoutMS = 60000;
-    public int max_frame_length = 1000 / 40;
+    public int max_frame_length = 1000 / 20;
     public int audio_line = -1;
     public int min_tree_depth = 9;
     public int max_tree_depth = 6;
@@ -482,9 +481,8 @@ public class Perceptron extends javax.swing.JFrame {
                     graph2D = (Graphics2D) bufferStrategy.getDrawGraphics();
                     frame++;
                     start_time += max_frame_length;
-                    if (cap_frame_rate) {
+                    if (cap_frame_rate) 
                         while (System.currentTimeMillis() < start_time);
-                    }
                 } catch (Exception e) {
                     System.out.println("SOMETHING BAD HAPPENED in Perceptron.java go()!!!");
                     e.printStackTrace();
@@ -509,9 +507,8 @@ public class Perceptron extends javax.swing.JFrame {
                 Font old = draw_graphics.getFont();
                 Font F = new java.awt.Font("Monaco", Font.PLAIN, SIZE);
                 draw_graphics.setFont(F);
-                if (XOR_MODE) {
+                if (XOR_MODE) 
                     draw_graphics.setXORMode(new Color(0xffffff));
-                }
                 int k = 0;
                 for (int j = 0; j < ROWS; j++) {
                     for (int i = 0; i < COLUMNS; i++) {
@@ -538,7 +535,7 @@ public class Perceptron extends javax.swing.JFrame {
             } catch (Exception x) {
                 x.printStackTrace();
             }
-            /** Consciousness is evolution on infinitely faster time scales */
+            // Consciousness is evolution on infinitely faster time scales.
             draw_graphics.setPaintMode();
         }
     }

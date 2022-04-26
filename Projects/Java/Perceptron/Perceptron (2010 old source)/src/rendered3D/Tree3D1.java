@@ -6,6 +6,9 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.awt.Color;
 
+import static rendered3D.Object3D;
+import static rendered3D.Object3D.*;
+
 public class Tree3D1 extends Object3D 
 {
 	private final static int [][][] rgba = fillRgba();

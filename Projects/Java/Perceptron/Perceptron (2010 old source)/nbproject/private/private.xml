@@ -1,12 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/1"/>
-    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/1">
-        <file>file:/D:/NetBeansProjects/Perceptron/src/perceptron/FractalMap.java</file>
-        <file>file:/D:/NetBeansProjects/Perceptron/src/perceptron/ControlSet.java</file>
-        <file>file:/D:/NetBeansProjects/Perceptron/src/perceptron/Perceptron.java</file>
-        <file>file:/D:/NetBeansProjects/Perceptron/src/perceptron/Preset.java</file>
-        <file>file:/D:/NetBeansProjects/Perceptron/src/perceptron/DoubleBuffer.java</file>
-        <file>file:/D:/NetBeansProjects/Perceptron/resource/Settings.txt</file>
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/home/mer49/Desktop/Github/videofeedback/Projects/Java/Perceptron/Perceptron%20(2010%20old%20source)/src/math/ComplexVarList.java</file>
+            <file>file:/home/mer49/Desktop/Github/videofeedback/Projects/Java/Perceptron/Perceptron%20(2010%20old%20source)/src/rendered3D/Tree3D.java</file>
+            <file>file:/home/mer49/Desktop/Github/videofeedback/Projects/Java/Perceptron/Perceptron%20(2010%20old%20source)/src/rendered3D/TreeForm.java</file>
+            <file>file:/home/mer49/Desktop/Github/videofeedback/Projects/Java/Perceptron/Perceptron%20(2010%20old%20source)/src/perceptron/ControlSet.java</file>
+            <file>file:/home/mer49/Desktop/Github/videofeedback/Projects/Java/Perceptron/Perceptron%20(2010%20old%20source)/resource/Settings.txt</file>
+            <file>file:/home/mer49/Desktop/Github/videofeedback/Projects/Java/Perceptron/Perceptron%20(2010%20old%20source)/src/perceptron/Controller.java</file>
+            <file>file:/home/mer49/Desktop/Github/videofeedback/Projects/Java/Perceptron/Perceptron%20(2010%20old%20source)/src/perceptron/FractalMap.java</file>
+            <file>file:/home/mer49/Desktop/Github/videofeedback/Projects/Java/Perceptron/Perceptron%20(2010%20old%20source)/src/perceptron/Perceptron.java</file>
+            <file>file:/home/mer49/Desktop/Github/videofeedback/Projects/Java/Perceptron/Perceptron%20(2010%20old%20source)/src/automata/TriLife.java</file>
+        </group>
     </open-files>
 </project-private>

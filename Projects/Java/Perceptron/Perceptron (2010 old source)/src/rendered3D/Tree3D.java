@@ -2,11 +2,11 @@ package rendered3D;
 
 import util.Matrix;
 import util.ColorUtility;
-import perceptron.*;
 import math.complex;
 import java.awt.Color;
 import java.awt.Graphics;
-
+import perceptron.DoubleBuffer;
+        
 /* FastTree.java
  * Created on March 7, 2007, 3:43 PM
  */
@@ -21,24 +21,30 @@ public class Tree3D {
      *  user input
      */
     private boolean active;
+    
     //RENDERING DATA
+    
     /** recursion depth of this tree */
     private final int min_depth, max_depth;
+    
     /** Array for storing and buffer for computing the branches of this tree */
     private float[][] branch, branch_buffer;
+    
     /** Array and buffer for the Color indecies */
     private byte[] color, color_buffer;
+    
     /** Array and buffer for branch radii */
     private float[] radius, radius_buffer;
-    //GENERATING INFORMATION
+    
     /** {float[] start, float[] end} points of the root */
     public float[][] root;
+    
     /** The initial color of the tree */
     public int initial_color = 0;
+    
     /** Pattern for generating the tree */
     public TreeForm[] form;
-    /** current depth (bound by maximum and minimum depths */
-    private int current_depth;
+    
     /** Integer representing the first index of the branch array that
      *  has no children (the start of the last layer)
      */
@@ -66,7 +72,15 @@ public class Tree3D {
 
     ////////////////////////////////////////////////////////////////////////////
     //CONSTRUCTOR
-    /** Creates a new instance of FastTree */
+    /** Creates a new instance of FastTree
+     * @param min_tree_depth
+     * @param b
+     * @param max_tree_depth
+     * @param tree_location
+     * @param tree_root
+     * @param tree_form
+     * @param tree_color 
+     */
     public Tree3D(
             int min_tree_depth,
             int max_tree_depth,
@@ -100,8 +114,6 @@ public class Tree3D {
             max_depth = (byte) max_tree_depth;
         }
 
-        current_depth = max_tree_depth;
-
         //Store the root, initial color, location and form.
         root = tree_root;
         form = tree_form;
@@ -132,23 +144,26 @@ public class Tree3D {
     }
 
     //MEMBER FUNCTIONS
-    /** This sets weather the tree is active or not. An inactive tree
-     *  does not draw to the screen or respond to mouse events */
+    /** *  This sets weather the tree is active or not.An inactive tree
+  does not draw to the screen or respond to mouse events
+     * @param a */
     public void set_active(boolean a) {
         active = a;
     }
 
-    /** Returns weather the tree is active */
+    /** Returns weather the tree is active
+     * @return  */
     public boolean is_active() {
         return active;
     }
 
-    /** Press Y to set fancy graphics for 3D tree. */
-    public synchronized boolean toggle_fancy_graphics() {
+    /** Press Y to set fancy graphics for 3D tree.
+     * @return  */
+    public boolean toggle_fancy_graphics() {
         return fancy_graphics = !fancy_graphics;
     }
 
-    public synchronized void set_fancy_graphics(boolean anti_alias_tree) {
+    public void set_fancy_graphics(boolean anti_alias_tree) {
         fancy_graphics = anti_alias_tree;
     }
 
@@ -379,13 +394,22 @@ public class Tree3D {
     }
 
     /** Matrix multiplication simplified for linear transformation of low
-     *  percision 3D points of small value */
+     *  percision 3D points of small value
+     * @param A
+     * @param P
+     * @return  
+     */
     public static float[] multiply_3x3_point(float[][] A, float[] P) {
         return multiply_3x3_point(A, P, new float[3]);
     }
 
     /** Matrix multiplication simplified for linear transformation of low
-     *  percision 3D points of small value */
+     *  percision 3D points of small value
+     * @param A
+     * @param P
+     * @param result
+     * @return  
+     */
     public static float[] multiply_3x3_point(float[][] A, float[] P, float[] result) {
         result[0] = (float) (A[0][0] * P[0] + A[0][1] * P[1] + A[0][2] * P[2]);
         result[1] = (float) (A[1][0] * P[0] + A[1][1] * P[1] + A[1][2] * P[2]);

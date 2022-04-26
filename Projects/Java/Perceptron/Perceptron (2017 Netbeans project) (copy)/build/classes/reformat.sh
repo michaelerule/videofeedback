@@ -1,0 +1,5 @@
+perl -e 's/(&nbsp\;)*<\/TD>/<\/TD>/g;' -pi $(find ./javadoc/ -type f)
+perl -e 's/> &nbsp\;<FONT CLASS="NavBarFont1Rev"></><FONT CLASS="NavBarFont1Rev"></g;' -pi $(find ./javadoc/ -type f)
+perl -e 's/<\/BODY>/<\/div><\/div><\/div><\/BODY>/g;' -pi $(find ./javadoc/ -type f)
+perl -e 's/<BODY BGCOLOR="white" onload="windowTitle\(\)\;">/<BODY onload="windowTitle\(\)\;"><div><div id="outer_wrapper"><div id="inner_wrapper">/g;' -pi $(find ./javadoc/ -type f)
+perl -e 's/<\/BODY>/<\/div><\/div><\/div><\/BODY>/g;' -pi $(find ./javadoc/ -type f)
