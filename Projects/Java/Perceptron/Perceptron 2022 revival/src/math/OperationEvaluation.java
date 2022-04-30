@@ -13,7 +13,7 @@ interface TwoNumberOperation
 public class OperationEvaluation implements EvaluationOperation {
 	
     private final EvaluationOperation left,right;
-    private final int myOperation;
+    private final int op;
 	
     /**
      *
@@ -24,7 +24,7 @@ public class OperationEvaluation implements EvaluationOperation {
     public OperationEvaluation(MathToken opr, EvaluationOperation left,EvaluationOperation right) {
         this.left = left;
         this.right = right;
-        myOperation = opr.getToken()-1;
+        op = opr.getToken()-1;
     }
 	
     /**
@@ -44,7 +44,7 @@ public class OperationEvaluation implements EvaluationOperation {
      */
     @Override
     public complex operate(ComplexVarList variables) {
-        return TwoNumberOperations[myOperation].execute(left.operate(variables),right.operate(variables));
+        return binary_ops[op].execute(left.operate(variables),right.operate(variables));
     }
 	
     /**
@@ -53,7 +53,7 @@ public class OperationEvaluation implements EvaluationOperation {
      */
         @Override
     public String toString() {
-	return MathToken.masterTokens[myOperation][0];
+	return MathToken.masterTokens[op][0];
     }
 
     /**
@@ -63,13 +63,13 @@ public class OperationEvaluation implements EvaluationOperation {
         @Override
     public boolean is_analytic()
     {
-        return TwoNumberOperations[myOperation].is_analytic();
+        return binary_ops[op].is_analytic();
     }
 	
 	/*This constant array gold 6 implementations of the TwoNumberOperation class,
 		and allows the operation of a MathToken to be accessed with constant time 
 		based on its myToken id number.*/
-	private static final TwoNumberOperation[] TwoNumberOperations = {
+	private static final TwoNumberOperation[] binary_ops = {
 		new TwoNumberOperation() {
                         @Override
 			public complex execute(complex a, complex b) {

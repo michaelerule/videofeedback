@@ -17,43 +17,45 @@ import math.ComplexVarList;
 import java.awt.Color;
 import java.awt.image.DataBuffer;
 import java.util.ArrayList;
-import static util.ColorUtil.average;
-import static util.ColorUtil.contrast;
-import static util.ColorUtil.RGB_contrast;
-import static util.ColorUtil.mush;
 import static java.lang.Math.min;
 import static java.lang.Math.max;
 import static java.lang.Math.abs;
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
+import static math.complex.arg;
+import static math.complex.fromPolar;
+import static math.complex.mod;
 import static perceptron.Misc.clip;
 import static perceptron.Misc.wrap;
+import static util.ColorUtil.blend;
+import static util.ColorUtil.blend;
 
 /**
  * @author Michael Everett Rule
  */
 public class FractalMap {
        
-    DoubleBuffer       buf;
-    ArrayList<Mapping> mappings;
-    Perceptron         percept;
-    
-    boolean            active  = true;
+    Perceptron         P;
+    DoubleBuffer       B;
+    ArrayList<Mapping> maps;
     boolean            running = false;
     
+    boolean        active  = true;
     public boolean isActive() {return active;}
     public void    setActive(boolean active) {this.active = active;}
     
     DataBuffer 
-        output_buffer,  // current image on the screen
-        buffer_buffer,  // image buffer after mapping
-        sketch_buffer,  // external, loaded image
-        display_buffer; // cursors, circles, dots
+        out, // current image on the screen
+        buf, // image buffer after mapping
+        img, // external, loaded image
+        dsp; // cursors, circles, dots
 
-    // Control interpretation of translation, rotation cursors
-    int ortho_type = 0; // Incremented by pressing comma
-    int polar_type = 0; // Incremented by pressing period
-    public static final int 
+    // Control interpretation of translation, rotation + mirroring modes
+    public int 
+        offset_mode = 0,
+        rotate_mode = 0,
+        mirror_mode = 0;
+    public final int 
         // Constants for identifying the translation modes
         TRANSLATION_NORMAL   = 0,
         TRANSLATION_VELOCITY = 1,
@@ -61,818 +63,492 @@ public class FractalMap {
         // Constants for identifying the rotation modes
         ROTATION_NORMAL      = 0,
         ROTATION_VELOCITY    = 1,
-        ROTATION_LOCKED      = 2;
+        ROTATION_LOCKED      = 2,
+        // For identifying mirroring modes
+        MIRROR_OFF           = 0,
+        MIRROR_HORIZONTAL    = 1,
+        MIRROR_VERTICAL      = 2,
+        MIRROR_TURN          = 3,
+        MIRROR_QUADRANT      = 4;
+    public final String [] 
+        translate_modes = {"Position","Velocity","Locked"},
+        mirror_modes = {"None","Horizontal","Vertical","Turn","Quadrant"};
+    public void nextOrthoMode(int i) {offset_mode = wrap(offset_mode + i, 3);}
+    public void nextPolarMode(int i) {rotate_mode = wrap(rotate_mode + 1, 3);}
+    public void nexMirrorMode(int i) {mirror_mode = wrap(mirror_mode + 1, 5);}
     
     // Mistakes were made in this design
-    final int W, H, W2, H2, W7, H7, W8, H8, W9, H9, MEND, MLEN, MMID, HALFW, 
-        HALFH, TWOW, TWOMLEN, TWOH, WMONE, HMONE, MONE, MMROW, WPONE, BOUNDS,
-        MAXC=65535;
-    final float overW7, overH7, z_to_map_W_scalar, 
-        z_to_map_H_scalar, z_to_W_scalar, z_to_H_scalar;
+    final int W, H, W7, H7, W8, H8, MLEN, M2, MAXC=65535;
+    final float oW7, oH7, z2mapW, z2mapH, z2W, z2H;
     
     /** The upper left, the lower right, and the size of the rectangle in the
      *   complex plane. These are actually re-initialized so these values don't matter.     */
     public static final complex size = new complex(6f, 6f);
-    public static final complex upper_left = new complex();
-    public static final complex lower_right = new complex();
-        
-
+    public static final complex UL   = new complex();
+    public static final complex LR   = new complex();
+    public static final double PI_OVER_TWO = Math.PI * .5;
     
-
-    
-    /** A few more constants... */
-    static final double PI_OVER_TWO = Math.PI * .5;
-    float d_r = 0, d_i = 0;
-    float rotation_drift = .1f;
+    // Accumulators for velocity mode
+    private float dr = 0, di = 0, dtheta = .1f;
     
     /** Create new FractalMap
      * @param b
      * @param maps
      * @param parent */
     public FractalMap(DoubleBuffer b, ArrayList<Mapping> maps, Perceptron parent) {
-
-        percept = parent;
-
+        P = parent;
         vars.set(18, new complex(size));
         vars.set(22, new complex(size.real));
-        vars.set(7, new complex(size.imag));
-
-        mappings = maps;
-        if (mappings == null) 
-            mappings = new ArrayList<>();
-
+        vars.set(7 , new complex(size.imag));
+        this.maps = null==maps? new ArrayList<>() : maps;
         // FractalMap loads the buffer.
-        buf = b;
-
+        B = b;
         // Screen width and height, and related constants.
-        // We convert the 2D screen to a 1D array length M_LEN
-        W         = b.out.img.getWidth();
-        H         = b.out.img.getHeight();
-        W2        = W << 2;
-        H2        = H << 2;
-        W7        = W << 7;
-        H7        = H << 7;
-        overW7    = 1.f / W7;
-        overH7    = 1.f / H7;
-        W8        = W << 8;
-        H8        = H << 8;
-        W9        = W << 9;
-        H9        = H << 9;
-        WPONE   = W + 1;
-        WMONE   = W - 1;
-        HMONE   = H - 1;
-        MLEN     = W * H;
-        TWOMLEN = MLEN << 1;
-        MEND     = MLEN - 1;
-        MONE     = MEND - 1;
-        MMROW   = MONE - W;
-        HALFW    = W / 2;
-        HALFH    = H / 2;
-        TWOW     = W << 1;
-        TWOH     = H << 1;
-        MMID     = HALFW + W * HALFH;
-        BOUNDS    = min(W7, H7);
-        if (W >= H) {
-            size.real = 2.4f * W / H;
-            size.imag = 2.4f;
-        } else {
-            size.real = 2.4f;
-            size.imag = 2.4f * H / W;
-        }
-        lower_right.real = size.real * .5f;
-        lower_right.imag = size.imag * .5f;
-        upper_left.real  = -lower_right.real;
-        upper_left.imag  = -lower_right.imag;
-        z_to_map_W_scalar = size.real / W;
-        z_to_map_H_scalar = size.imag / H;
-        z_to_W_scalar =
-                z_to_H_scalar = (W / size.real + H / size.imag) * .5f;
-
-        initialize_functions();
-        // Prepare the buffers for the mapping f(z). 
-        initMapLookup();
-        // Prepare the mapping f(z). 
-        initMapEquation();
-    }
-
-    /** These respond to keyboard options `,` and `.`.
-     */
-    public void inc_ortho() {
-        ortho_type = (ortho_type + 1) % 3;
-    }
-    public void inc_polar() {
-        polar_type = (polar_type + 1) % 3;
-    }
-
-    /////////////////////// Initializers //////////////////////////////////
-    /** This assigns for the first time the []_function 
-     * variables, which represent adaptable code
-     * which may be switched in and out at any given
-     * time. The selection of operators.     */
-    final void initialize_functions() {
-
-        bounds_i  = wrap(bounds_i, boundary_conditions.length);
+        // We need to remove most of these
+        W      = b.out.img.getWidth();
+        H      = b.out.img.getHeight();
+        W7     = W<<7;  H7  = H<<7;
+        oW7    = 1f/W7; oH7 = 1f/H7;
+        W8     = W<<8;  H8  = H<<8;
+        MLEN   = W*H;   M2  = MLEN<<1;
+        if (W >= H) { size.real = 2.4f * W / H; size.imag = 2.4f; }
+        else        { size.real = 2.4f; size.imag = 2.4f * H / W; }
+        LR.real = size.real/2f; LR.imag = size.imag/2f;
+        UL.real = -LR.real;     UL.imag = -LR.imag;
+        z2mapW  = size.real/W;  z2mapH  = size.imag/H;
+        z2W = z2H = (W/size.real+H/size.imag) * .5f;
+        // Initialize modular rendering functions
+        bounds_i  = wrap(bounds_i, bounds.length);
         outside_i = wrap(outside_i, outside_ops.length);
-        fade_i    = wrap(fade_i, fade_colors.length);
-        grad_mode = wrap(grad_mode, gradient_modes.length);
-        color_i   = wrap(color_i, color_filters.length);
-
-        bounds_op   = boundary_conditions[bounds_i];
-        outside_op  = outside_ops[outside_i];
-        fade_op     = fade_colors[fade_i];
-        gradient_op = gradient_modes[grad_mode];
-        color_op    = color_filters[color_i];
-
-        /** Select the fractal map f(z), a.k.a. the "equation"
-         *  from the list of equations in the settings file.
-         * Later, switch them by pressing Q or W.          */
-        if (!mappings.isEmpty()) {
-            equation_i %= mappings.size();
-            mapping = mappings.get(equation_i);
+        grad_mode = wrap(grad_mode, grad_modes.length);
+        syncOps();
+        if (!maps.isEmpty()) mapping = maps.get(map_i %= maps.size());
+        // Prepare the gradient maps
+        int hW = W/2, hH=H/2;
+        grads = new char[9][MLEN];
+        int i = 0;
+        for (int y=-hH; y<hH; y++) for (int x=-hW;x<hW; x++) {
+            grads[0][i]=(char)(255-512*((float)x*x/(W*W)+(float)y*y/(H*H)));
+            grads[1][i]=(char)(255-(x+hW)*255/W);
+            grads[2][i]=(char)(255-(y+hH)*255/H);
+            grads[3][i]=(char)(255-(y+hH)*(x+hW)*255/(W*H));
+            grads[4][i]=(char)(255-(abs(x)+abs(y))*255/(hW+hH));
+            grads[5][i]=(char)(255-(abs(x)*abs(y))*255/(hW*hH));
+            grads[6][i]=(char)(255*(1-min(1,sqrt(x*x+y*y)/min(hH,hW))));
+            grads[7][i]=(char)(255*(1-pow(min(1,sqrt(x*x+y*y)/min(hH,hW)),9)));
+            grads[8][i]=(char)(255*(1-pow(max(0,min(1,1.3-(sqrt(x*x+y*y))/(min(hH,hW)))),9)));
+            i++;
         }
-
-        /** Call the initialization of gradients.
-         * gradients is a large 2D array of all the gradients
-         * (gradient shapes). radial_gradient is a 1D array 
-         * that represents one of the 10 gradients (gradient 
-         * shapes) that are M_LEN deep.          */
-        gradients = initGradients();
-
-        gradient = gradients[grad_index];
+        grad_i = 0;
+        grad  = grads[grad_i];
+        // Prepare the buffers for the mapping f(z). 
+        map     = new int[M2];
+        map_buf = new int[M2];
+        zconv   = new boolean[M2];
+        computeLookup();
+        // Prepare the mapping f(z). 
+        offset   = new complex();
+        rotation = new complex();
+        normc    = new float[]{0, 0};
+        offset.real=offset.imag=0;
     }
 
-    /** The gradient inversion. Press J. 
-     * The gradient inverts when gradient_inversion = 0.
-     * When it is 16777215, the gradient is normal.
-     * In hexadecimal, that is 0x0 and 0xFFFFFF. 
-     * This sucks inward all the contour colors and
-     * leaves only the recursive conformal mapping
-     * bending the help screen and the cursors.     */
-    public void toggleInversion() {
-        color_mask = color_mask>0? 0xff : 0;
+    public void syncOps() {
+        bound_op   = bounds[bounds_i];
+        outside_op = outside_ops[outside_i];
+        grad_op    = grad_modes[grad_mode];
     }
-    
-    /** Motion blur. Press UP or DOWN arrows. */
-    int motionblurp = 255;
-    int motionblurq = 0;
-    void setMotionBlur(int k) {
-        k = Misc.clip(k,1,255);
-        motionblurp = k;
-        motionblurq = 256 - k;
-    }
-
-    /** Spatial blur weight. */
-    int filterweight = 0;
-    void setColorFilterWeight(int k) {
-        this.filterweight = Misc.clip(k,-256,256);
-    }
-
 
     //🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛
     // Apply current map to screen raster, storing result in output raster. 
-    void operate() {
-        
-        //buffer.flip();
-        
+    public synchronized void operate() {
         if (!active) {
-            buf.out.g.drawImage(buf.buf.img, 0, 0, null);
+            B.out.g.drawImage(B.buf.img, 0, 0, null);
             return;
         }
-        output_buffer  = buf.out.buf;
-        buffer_buffer  = buf.buf.buf;
-        display_buffer = buf.dsp.buf;
-        if (buf.img != null)
-            sketch_buffer = buf.img.buf;
+        out = B.out.buf;
+        buf = B.buf.buf;
+        dsp = B.dsp.buf;
+        if (B.img != null) img = B.img.buf;
         
-        /** Update the default color of the pixel.
-         * New RenderStateMachine is created locally.
-         * This is required for the fade color function to
-         * work.         */
-        updateColor();
+        updateColorRegisters();
 
         //gradient_inversion ^= ~0;
-        final RenderStateMachine m = new RenderStateMachine();
+        final State m = new State();
 
-        // This option is contolled by pressing the COMMA key
-        // It controls how the fractal map treats the 2D point offset.
         // Mode 0: (normal) offset is converted to 8-bit fixed point. 
         // Mode 1: Velocity mode. 
         // Mode 2: Locked: the offset is clamped to zero. 
-        switch (ortho_type) {
-            case 0:
-                m.Cx = (int) (.5f + 0x100 * ((norm_c[0]))) + W7;
-                m.Cy = (int) (.5f + 0x100 * ((norm_c[1]))) + H7;
+        switch (offset_mode) {
+            case TRANSLATION_NORMAL: 
+                m.x=(int)(.5f+256*normc[0])+W7; 
+                m.y=(int)(.5f+256*normc[1])+H7; 
                 break;
-            case 1:
-                m.Cx = (int) (.5f + 0x100 * ((d_r = (abs(d_r) > MAXC) ? 0 : d_r + .1f * norm_c[0]))) + W7;
-                m.Cy = (int) (.5f + 0x100 * ((d_i = (abs(d_i) > MAXC) ? 0 : d_i + .1f * norm_c[1]))) + H7;
+            case TRANSLATION_VELOCITY:
+                m.x = (int)(.5f+256*((dr=(abs(dr)>MAXC)?0:dr+.1f*normc[0])))+W7;
+                m.y = (int)(.5f+256*((di=(abs(di)>MAXC)?0:di+.1f*normc[1])))+H7;
                 break;
-            case 2:
-                m.Cx = W7;
-                m.Cy = H7;
+            case TRANSLATION_LOCKED: 
+                m.x = W7; 
+                m.y = H7; 
                 break;
         }
-        
-        // This option is controlled by pressing the PERIOD key.
-        // It controls how the fractal map interprets the rotate/scale cursor.
         // Mode 0: Blue cursor controls scale and rotation
         // Mode 1: Blue cursor controls velocity
         // Mode 2: Scale and rotation are locked at 1, pi/2, respectively. 
         complex r = new complex();
-        switch (polar_type) {
-            case 0:
+        switch (rotate_mode) {
+            case ROTATION_NORMAL:
                 r = rotation;
                 break;
-            case 1:
-                rotation_drift += complex.arg(rotation) * 0.01f;
-                r = complex.fromPolar(
-                        complex.mod(rotation), 
-                        rotation_drift);
+            case ROTATION_VELOCITY:
+                dtheta += arg(rotation)*.01f;
+                r=fromPolar(mod(rotation),dtheta);
                 break;
-            case 2:
-                r = complex.fromPolar(1.0f, (float) (PI_OVER_TWO));
+            case ROTATION_LOCKED:
+                r = fromPolar(1f,(float)PI_OVER_TWO);
                 break;
         }
-        m.rotation_real = r.real;
-        m.rotation_imag = r.imag;
-        m.rotation_coef = m.rotation_real + m.rotation_imag;
+        m.rx = r.real;
+        m.ry = r.imag;
+        m.rc = m.rx + m.ry;
 
-        // The render state machine is more or less just a for-loop over 
-        // pixels. By passing this state to various "operators" we compose
-        // a modular rendering loop to add, remove, and change effects.
-        render_op.operate(m);
+        int hH = (H+1)/2, hW = (W+1)/2, hM = (MLEN+1)/2;
+        switch (mirror_mode) {
+            case MIRROR_OFF: {
+                render(m);
+            } break;
+            case MIRROR_HORIZONTAL: {
+                for (int y=0; y<H; y++) {
+                    m.start = y*W;
+                    m.end   = m.start + hW;
+                    render(m);
+                    int i=y*W+W-1, j=y*W;
+                    for (int x=0; x<hW; x++) buf.setElem(i--,buf.getElem(j++));
+                } 
+            } break;
+            case MIRROR_VERTICAL: {
+                m.end = W*hH;
+                render(m);
+                for (int y=0; y<hH; y++) {
+                    int i = W*(H-1-y), j = W*y;
+                    for (int x=0; x<W; x++) buf.setElem(i++, buf.getElem(j++));
+                }
+            } break;
+            case MIRROR_TURN: {
+                m.end = hM;
+                render(m);
+                int i=MLEN-1;
+                for (int j=0; j<m.end; j++) buf.setElem(i--, buf.getElem(j));
+            } break;
+            case MIRROR_QUADRANT: {
+                for (int y=0; y<hH; y++) {
+                    m.start = y*W;
+                    m.end   = m.start + hW;
+                    render(m);
+                    int i=y*W+W-1, j=y*W;
+                    for (int x=0; x<hW; x++) buf.setElem(i--,buf.getElem(j++));
+                }
+                for (int y=0; y<hH; y++) {
+                    int i = W*(H-1-y), j = W*y;
+                    for (int x=0; x<W; x++) buf.setElem(i++,buf.getElem(j++));
+                }
+            } break;
+        }
         
         // Exchange output and "buffer" operators.
         // Perceptron will
-        buf.flip();
+        B.flip();
     }
     //🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛
-    
-    
-    
-    ////////////////////////////////////////////////////////////////////////////
-    // Updates the "fade" color used to tint/accent fractal ////////////////////
-    boolean dampen_colors = true;
-    public void toggleFadeColorSmoothing() {
-        dampen_colors = !dampen_colors;
-    }
-    public void updateColor() {
-        RenderStateMachine m = new RenderStateMachine();
-        m.oldcolor = fade_color; 
-        m.color = fade_color;
-        fade_op.operate(m);
-        if (dampen_colors)
-            fade_color = average(fade_color, 56, m.color, 200);
-        // why is this line here? 
-        anti_fade_weight = 256 - fade_weight;
-    }
-    // The color mixing is adjustable but this isn't used presently.
-    int fade_weight = 128, anti_fade_weight = 128;
-    public void incrementFadeWeight(int n) {
-        fade_weight = wrap(fade_weight + n, 256);
-    }
-    /** A color generated from the an external source, like audio input */
-    // This isn't used presently
-    //int input_color = 0x00000000;
-    //public void setInputColor(int col) {
-    //    input_color = col;
-    //}
-    
-    
-    
+        
     ////////////////////////////////////////////////////////////////////////////
     // The main rendering operator /////////////////////////////////////////////
-    private final Operator render_op = new Operator("Primary Renderer") {
-        @Override
-        void operate(RenderStateMachine m) {
-            // To transition, interpolate-fade between two maps
-            if (transition_map > 0) {
-                int f1 = (int) (256 * transition_map);
-                int f2 = 256 - f1;
-                for (m.i=m.start; m.i<m.end; m.i+=m.stride) {
-                    int i = m.i<<1;
-                    setPixel(m, 
-                        (mapBuffer[i  ]*f2 + map[i  ]*f1) >> 8, 
-                        (mapBuffer[i|1]*f2 + map[i|1]*f1) >> 8);
-                }
-                // Swap to new map once done
-                transition_map -= .05f;
-                if (transition_map <= 0) {
-                    int[] temp = map;
-                    map = mapBuffer;
-                    mapBuffer = temp;
-                }
+    void render(State m) {
+        int noise = (int)((long)(Math.random()*4294967296L)&0xffffffff);
+        int f1 = (int) (256 * map_fade);
+        for (int i = m.start; i<m.end; i++) {
+            int j = i<<1;
+            int real, imag;
+            if (f1 > 0) {
+                real = map_buf[j] + (map[j]*f1 >> 8); j++;
+                imag = map_buf[j] + (map[j]*f1 >> 8);
             } 
-            // If not transitioning, use the current map
-            else for (m.i = m.start; m.i<m.end; m.i+=m.stride) {
-                int i = m.i<<1;
-                setPixel(m, map[i], map[i|1]);
-            }
-        }
-        void setPixel(RenderStateMachine m, int imag, int real) {
-            // Apply rotation to map using Gauss's method of multiplying
-            // complex numbers.
-            // This conjugates the output for some reason. 
-            float x4 = real * m.rotation_real;
-            float x5 = imag * m.rotation_imag;
-            // Set the source-pixel texture coordinates.
-            m.fx = (int)(x4+x5)+m.Cx;
-            m.fy = (int)(m.rotation_coef*(real-imag)-x4+x5)+m.Cy;
-            // Store source pixel color in m.color, if pixel in-bounds.
-            // Get a color from somewhere else otherwise.
-            if (bounds_op.test(m) != bounds_invert)
-                m.color = buf.out.grab.get(m.fx, m.fy);
-            else 
-                outside_op.operate(m);
-            // Apply the gradient mask
-            gradient_op.operate(m);
-            // Update the gradient color
-            color_op.operate(m);
-            // Set, applying inversion and motion blur if applicable.               
-            setWithMotionBlur(m);
-        }
-        void setWithMotionBlur(RenderStateMachine m) {
-            m.color ^= color_mask;  
-            // Set the output buffer pixel, applying motion-blur.
-            // We need to handle background objects as a special case
-            // We don't want to motion-blur with the over-drawn objects.
-            // We will assume the main perceptron code has saved us a
-            // copy of what we need in the buffer_buffer in this case. 
-            if (motionblurp<255) {
-                buffer_buffer.setElem(m.i, 
-                    average(m.color, 
-                        motionblurp,
-                        (percept.objects_on_top
-                                ? buf.out 
-                                : buf.buf).buf.getElem(m.i), 
-                        motionblurq));
+            else {real = map[j++]; imag = map[j]; }
+            float x4 = imag * m.rx;
+            float x5 = real * m.ry;
+            int fx = (int)(x4+x5)+m.x;
+            int fy = (int)(m.rc*(imag-real)-x4+x5)+m.y;
+            int c;
+            if (bound_op.test(fx,fy,i) != bounds_invert) {
+                c = B.out.get.it(fx, fy);
+                if (P.fore_grad) c = grad_op.go(i,c);
+                c ^= feedback_mask;
             } else {
-                buffer_buffer.setElem(m.i, m.color);
+                c = outside_op.go(fx,fy);
+                c = grad_op.go(i,c);
             }
-            // If you want to re-enable this remember to set m.color to the
-            // color used above to set the output buffer before calling.
-            //display_buffer.setElem(m.i,projectionMask(m));
-    }};
+            if (noise_level>0) {
+                noise *= 0xFD43FD;
+                noise += 0xC39EC3;
+                c = blend(noise >> 8, c, noise_level);
+            }
+            c ^= color_mask;  
+            if (tint_level >0) c = blend(tint_color, c, tint_level);
+            if (motion_blur>0) c = blend(B.buf.buf.getElem(i), c, motion_blur);
+            buf.setElem(i,c);
+        }
+        if (map_fade > 0) {
+            map_fade -= .05f;
+            if (map_fade <= 0) {int[] t=map;map=map_buf;map_buf=t;}
+        } 
+    }
     
+    ////////////////////////////////////////////////////////////////////////////
+    // Color registers /////////////////////////////////////////////////////////
+    // we'll make these available to various things, including
+    // - Gradient color 1
+    // - Gradient color 2
+    // - Boundary color
+    // - Tint color
+    // grad_accent: used as the 2nd gradient color
+    // fade_color: used as the 1st gradient color
+    // fade_color: use for outside coloring 
+    // fade_color: used for bar coloring
+    public int gcolor1_i    = 0; // Gradient color index used in modes 1 and 2
+    public int gcolor2_i    = 0; // Accent color index if in gradient mode 2
+    public int barcolor_i   = 0; // H/V bar colors (if present)
+    public int tintcolor_i  = 0; // Global (uniform) tinting
+    public int outcolor_i   = 0; // Color used to fill in for boundary mode 0
+    public int gcolor1      = 0; 
+    public int gcolor2      = 0; 
+    public int bar_color    = 0; 
+    public int tint_color   = 0; 
+    public int out_color    = 0; 
+    public int tint_level   = 0;
+    public int color_dampen = 0;
+    //public void setGColor1(int i) {fade_op = fade_colors[gradcolor1_i = wrap(i, N_COLOR_REGISTERS)];}
+    public void setGColor1   (int i) {gcolor1_i    = wrap(i, N_COLOR_REGISTERS);}
+    public void setGColor2   (int i) {gcolor2_i    = wrap(i, N_COLOR_REGISTERS);}
+    public void setBarColor  (int i) {barcolor_i   = wrap(i, N_COLOR_REGISTERS);}
+    public void setTintColor (int i) {tintcolor_i  = wrap(i, N_COLOR_REGISTERS);}
+    public void setOutColor  (int i) {outcolor_i   = wrap(i, N_COLOR_REGISTERS);}
+    public void setTintLevel (int i) {tint_level   = clip(i, 0,255);}
+    public void setColorDamp (int i) {color_dampen = clip(i, 0,255);}
+    public void nextGColor1  (int n) {setGColor1  (gcolor1_i    + n);}    
+    public void nextGColor2  (int n) {setGColor2  (gcolor2_i    + n);}    
+    public void nextBarColor (int n) {setBarColor (barcolor_i   + n);}    
+    public void nextOutColor (int n) {setOutColor (outcolor_i   + n);}    
+    public void nextTintColor(int n) {setTintColor(tintcolor_i  + n);}    
+    public void nextTintLevel(int n) {setTintLevel(tint_level   + n);}
+    public void nextColorDamp(int n) {setColorDamp(color_dampen + n);}
+    public final int N_COLOR_REGISTERS = 6;
+    public final String [] color_register_names = {
+        "Black",
+        "White",
+        "Middle Pixel Hue",
+        "Middle Pixel Inverse",
+        "Middle Pixel Hue Rotate",
+        "Hue Rotate"
+    };
+    public final int[] color_registers = new int[N_COLOR_REGISTERS];
+    private int rotation_hue = 0;
+    public void updateColorRegisters() {
+        color_registers[0] = blend(color_registers[0],0x00000000,color_dampen);
+        color_registers[1] = blend(color_registers[1],0x00ffffff,color_dampen);
+        int MMID   = (W/2) + W*(H/2);
+        int middle = buf.getElem(MMID);
+        float[] HSV = java.awt.Color.RGBtoHSB(
+                (middle >> 16) & 0xff,
+                (middle >> 8) & 0xff,
+                (middle) & 0xff,
+                new float[]{0, 0, 0});
+        int color;
+        int i = 2;
+        color = Color.HSBtoRGB(HSV[0], 1.f, 1.f);
+        color_registers[i] = blend(color_registers[i++],color,color_dampen);
+        color = ~middle;
+        color_registers[i] = blend(color_registers[i++],color,color_dampen);
+        color = Color.HSBtoRGB(HSV[0]+0.2f, 1.f, 1.f);
+        color_registers[i] = blend(color_registers[i++],color,color_dampen);
+        rotation_hue++;
+        color = Color.HSBtoRGB((float)rotation_hue*.01f, 1.f, 1.f);
+        color_registers[i] = blend(color_registers[i++],color,color_dampen);
+        gcolor1    = color_registers[gcolor1_i];
+        gcolor2    = color_registers[gcolor2_i];
+        bar_color  = color_registers[barcolor_i  ]; 
+        out_color  = color_registers[outcolor_i  ];
+        tint_color = color_registers[tintcolor_i ];
+    }
     
+    ////////////////////////////////////////////////////////////////////////////
+    // Motion blur. Press UP or DOWN arrows.
+    public int motion_blur = 0;
+    void setMotionBlur(int k) {motion_blur = clip(k,0,256);}
+    
+    ////////////////////////////////////////////////////////////////////////////
+    // Noise ///////////////////////////////////////////////////////////////////
+    public int noise_level = 0;
+    public void setNoise(int i) {noise_level = clip(i,0,256);}
+    public void nextNoise(int n) {setNoise(noise_level+n);}
+    
+    ////////////////////////////////////////////////////////////////////////////
+    // Describe what to do when a pixel is out of bounds ///////////////////////
+    public PixelOp  outside_op;
+    public int      outside_i = 0; // 0:color 1:edge  2:repeat  3:image  4:fade
+    public void nextOutside(int n) {setOutside(outside_i + n);}
+    public void setOutside(int index) {outside_op = outside_ops[outside_i = wrap(index, outside_ops.length)];}
+    public abstract class PixelOp {
+        public final String name;
+        abstract int go(int fx, int fy);
+        public PixelOp(String s){this.name=s;}
+    }
+    public final PixelOp[] outside_ops = {
+        new PixelOp("Color Fill") {int go(int x,int y) {return out_color; }},
+        new PixelOp("Edge Clamp") {int go(int x,int y) {return B.buf.get.it(clip(x,0,W8),clip(y,0,H8)); }},
+        new PixelOp("Repeat"    ) {int go(int x,int y) {return B.buf.get.it(x,y); }},
+        new PixelOp("Image"     ) {int go(int x,int y) {return B.img.get.it(x,y); }},
+        new PixelOp("Image Fade") {int go(int x,int y) {
+            float X = (float)x*oW7-1, Y = (float)y*oH7-1;
+            int   K = clip((int)((2-X*X+Y*Y) * 256),0,256);
+            return blend(B.buf.get.it(x,y),B.img.get.it(x,y),K);
+        }}};
     
     ////////////////////////////////////////////////////////////////////////////
     // Fractal map control /////////////////////////////////////////////////////
-    int       equation_i = 0; // Index into list of built-in maps
-    Mapping   mapping;        // The fractal mapping f(z)
-    int[]     map;            // Lookup table for current map
-    complex   constant;       // The "+c" in a Julia set iteration 
-    complex   rotation;       // Rotation/scale of the complex map
-    float[]   norm_c;         // Offset constant in screen coordinates
-    boolean[] z_converged;    // "converged" points LUT for Newton fractals
-    int[]     mapBuffer;      // Additional map LUT to use when transitioning
-    float     transition_map; // Frame counter used to transition maps smoothly
-    public complex getConstant() {
-        return new complex(constant);
-    }
-    public void setConstant(float real, float imag) {
-        constant.real=real; constant.imag=imag;
-    }
+    public int       map_i = 0;// Index into list of built-in maps
+    public Mapping   mapping;  // The fractal mapping f(z)
+    public int[]     map;      // Lookup table for current map
+    public complex   offset;   // The "+c" in a Julia set iteration 
+    public complex   rotation; // Rotation/scale of the complex map
+    public float[]   normc;    // Offset constant in screen coordinates
+    public boolean[] zconv;    // "converged" points LUT for Newton fractals
+    public int[]     map_buf;  // Additional map LUT to use when transitioning
+    public float     map_fade; // Frame counter used to transition maps smoothly
+    public void setMap(Mapping map) {mapping = map;computeLookup();}
+    public void setMap(int index) {setMap(maps.get(map_i=wrap(index,maps.size())));}
+    public void setMap(final String s) {setMap(makeMap(s));}
+    public void nextMap(int n) {setMap(map_i + n);}
     public void setNormalizedConstant(float x, float y) {
-        constant.real = (W - x) / z_to_W_scalar + upper_left.real;
-        constant.imag = (H - y) / z_to_H_scalar + upper_left.imag;
-        if (norm_c   == null) norm_c   = new float[]{0, 0};
-        if (constant == null) constant = new complex(0, 0);
-        norm_c[0] = (float) (constant.real * z_to_W_scalar);
-        norm_c[1] = (float) (constant.imag * z_to_H_scalar);
+        if (normc  == null) normc  = new float[]{0, 0};
+        if (offset == null) offset = new complex(0, 0);
+        offset.real = (W - x) / z2W + UL.real;
+        offset.imag = (H - y) / z2H + UL.imag;
+        normc[0] = (float)(offset.real * z2W);
+        normc[1] = (float)(offset.imag * z2H);
     }
     public void setNormalizedRotation(float x, float y) {
-        rotation.real = ((W - x) / z_to_W_scalar + upper_left.real);
-        rotation.imag = ((H - y) / z_to_H_scalar + upper_left.imag);
+        rotation.real = ((W - x) / z2W + UL.real);
+        rotation.imag = ((H - y) / z2H + UL.imag);
         float theta = complex.arg(rotation);
         float r = complex.mod(rotation) * 2;
-        // this 1/r is used for pullback
         rotation = complex.fromPolar(1 / r, theta);    
-        // Adjust radius for elastic circle boundary conditions
-        bound_radius = 1 / (r * r);
-    }
-    public void nextMap(int n) {
-        setMap(equation_i + n);
-    }
-    public void setMap(int index) {
-        loadEquation(mappings.get(equation_i = wrap(index, mappings.size())));
-    }
-    public void loadEquation(Mapping map) {
-        mapping = map;
-        computeLookup();
-    }
-    public void setMap(final String s) {
-        try {
-            mapping = makeMap(s);
-            computeLookup();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-    final void initMapLookup() {
-        map         = new int[TWOMLEN];
-        mapBuffer   = new int[TWOMLEN];
-        z_converged = new boolean[TWOMLEN];
-        computeLookup();
-    }
-    final void initMapEquation() {
-        constant = new complex();
-        rotation = new complex();
-        norm_c = new float[]{0, 0};
-        setConstant(0, 0);
+        bound_radius = 1 / (float)sqrt(r*r);
     }
     final static ComplexVarList vars = ComplexVarList.standard();
+    public static abstract class Mapping {
+        public final String s;
+        public Mapping(String S){s=S;}
+        public String toString() {return s;}
+        public abstract complex f(complex z);
+    }
     public static Mapping makeMapStatic(final String s) {
         final Equation e = MathToken.toEquation(s);
-        return new Mapping() {
-            @Override
-            public complex operate(complex z) {vars.set(25, z); return e.eval(vars);}
-            @Override
-            public String toString() {return s;}
-        };
+        return new Mapping(s) {public complex f(complex z) {vars.set(25,z);return e.eval(vars);}};
     }
     public Mapping makeMap(final String s) {
         final Equation e = MathToken.toEquation(s);
         vars.set(18,size);
         vars.set(22,new complex(size.real));
         vars.set(7, new complex(size.imag));
-        return new Mapping() {
-            @Override
-            public complex operate(complex z) {vars.set(25, z); return e.eval(vars);}
-            @Override
-            public String toString() {return s;}
-        };
+        return new Mapping(s) {public complex f(complex z) {vars.set(25,z);return e.eval(vars);}};
     }
-    private void computeLookup() {
-        if (!active || transition_map>0) return;
-        try {
-            transition_map = 1.f;
-            complex z = new complex();
-            complex Z;
-            int i = 0;
-            int k = 0;
-            float upper_left_real = upper_left.real;
-            float upper_left_imag = upper_left.imag;
-            for (int y = 0; y < H; y++) {
-                for (int x = 0; x < W; x++) {
-                    z.real = x*z_to_map_W_scalar + upper_left_real;
-                    z.imag = y*z_to_map_H_scalar + upper_left_imag;
-                    Z = mapping.operate(z); 
-                    mapBuffer[i++] = (int) (0x100 * (z_to_W_scalar
-                            * (Z.real - upper_left_real))) - W7;
-                    mapBuffer[i++] = (int) (0x100 * (z_to_H_scalar
-                            * (Z.imag - upper_left_imag))) - H7;
-                    //z_converged[k++] = Z.minus(z).rSquared() > 0.1;
-                    z_converged[k++] = (Z.real - z.real) * (Z.real - z.real) 
-                            + (Z.imag - z.imag) * (Z.imag - z.imag) > 0.1;
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+    private synchronized void computeLookup() {
+        // If we're transition freeze this intermediate state
+        // The itermediate map will be stored in the new "map" buffer
+        // If currently interpolating: 
+        //      map_buf: map we're interpolating TO
+        //      map: FROM - TO
+        // If not interpolating:
+        //      map: current map
+        //      map_buf and map_temp: ignored
+        // When we're done here:
+        //      map: current interpolated map
+        //      map_buf: most recent map we transitions TO
+        if (map_fade > 0) {
+            int f1 = (int) (256 * map_fade + 0.5);
+            for (int i=0; i<M2; i++) map[i] = map_buf[i] + (map[i]*f1 >> 8);
         }
+        // Compute new map
+        complex z = new complex();
+        int i = 0, k = 0;
+        float x0 = UL.real;
+        float y0 = UL.imag;
+        for (int y = 0; y < H; y++) {
+            for (int x = 0; x < W; x++) {
+                z.real = x*z2mapW + x0;
+                z.imag = y*z2mapH + y0;
+                complex Z = mapping.f(z); 
+                map[i] -= (map_buf[i] = ((int)(0x100*(z2W*(Z.real-x0)))-W7)); // FROM-TO
+                i++;
+                map[i] -= (map_buf[i] = ((int)(0x100*(z2H*(Z.imag-y0)))-H7));
+                i++;
+                // Precomputed convergence test (prdrag's addition)
+                zconv[k++] = (Z.real-z.real)*(Z.real-z.real)+(Z.imag-z.imag)*(Z.imag-z.imag)>0.1f;
+            }
+        }
+        map_fade = 1.f;
     }
     
-    
-        
     ////////////////////////////////////////////////////////////////////////////
     // The boundary conditions for the Julia set. "R" //////////////////////////
-    BoundsTest bounds_op;
-    int bounds_i  = 0; // 0:screen 1:circle 2:elastic 3:horizon 4:Newton 5:none
-    public void nextBounds(int n) {
-        setBounds(bounds_i + n);
-    }
-    public void setBounds(int index) {
-        if (!active) return;
-        bounds_op = boundary_conditions[bounds_i = wrap(index, boundary_conditions.length)];
-    }
+    public Bound bound_op;
+    public int     bounds_i      = 0;     // 0:screen 1:circle 2:elastic 3:horizon 4:Newton 5:none
     public boolean bounds_invert = false; // Invert boundary condition?
-    double bound_radius = 1;      // adjust radius with map scale (mode 2)
-    private abstract class BoundsTest {
+    public double  bound_radius  = 1;     // adjust radius with map scale (mode 2)
+    public void nextBound(int n) {setBound(bounds_i + n);}
+    public void setBound(int index) {bound_op = bounds[bounds_i = wrap(index, bounds.length)];}
+    public abstract class Bound {
         public final String name;
-        public BoundsTest(String name) {this.name = name;}
-        public abstract boolean test(RenderStateMachine m);
-    }
-    private final BoundsTest[] boundary_conditions = {
-        new BoundsTest("Screen Edge") {
-            @Override
-            public boolean test(RenderStateMachine m) {
-                return m.fx < W8 && m.fy < H8 && m.fx >= 0 && m.fy >= 0;
-            }},
-        new BoundsTest("Limit Circle") {
-            @Override
-            public boolean test(RenderStateMachine m) {
-                float x = (float) m.fx * overW7 - 1;
-                float y = (float) m.fy * overH7 - 1;
-                return x*x + y*y < 1;
-            }},
-        new BoundsTest("Horizontal Window") {
-            @Override
-            public boolean test(RenderStateMachine m) {
-                return m.fy > 0 && m.fy < H8;
-            }},
-        new BoundsTest("Elastic Circle") {
-            // Adjustable limit circle
-            @Override
-            public boolean test(RenderStateMachine m) {
-                float x = (float) m.fx * overW7 - 1;
-                float y = (float) m.fy * overH7 - 1;
-                return x*x + y*y < bound_radius;
-            }},
-        new BoundsTest("Newton Convergence") {
-            @Override
-            public boolean test(RenderStateMachine m) {
-                // Convergence test for Newton and nova fractals
-                return z_converged[m.i];
-                // One can combine the bailout conditions when drawing ordinary
-                // Julia set. The divergent bailout gives it it's outside 
-                // coloring, and the convergent bailout may add structure to the 
-                // inside in some formulas.
-                // return (z_divergence[i] < 0.8) && (z_convergence[i] > 0.1);
-            }},
-        new BoundsTest("No Window") {
-            @Override
-            public boolean test(RenderStateMachine m) {return false;}}};
-    
-    
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Describe what to do when a pixel is out of bounds ///////////////////////
-    Operator outside_op;
-    int      outside_i = 0; // 0:color 1:edge  2:repeat  3:image  4:fade
-    public void nextOutsideColoring(int n) {
-        setOutsideColoring(outside_i + n);
-    }
-    public void setOutsideColoring(int index) {
-        if (!active) return;
-        outside_op = outside_ops[outside_i = wrap(index, outside_ops.length)];
-    }
-    private final Operator[] outside_ops = {
-        new Operator("Color Fill") {
-            @Override
-            void operate(RenderStateMachine m) {
-                m.color = fade_color;
-            }},
-        new Operator("Edge Extend") {
-            @Override
-            void operate(RenderStateMachine m) {
-                m.color = buf.out.grab.get(
-                    (m.fx < 0) ? 0 : (m.fx > W8) ? W8 : m.fx,
-                    (m.fy < 0) ? 0 : (m.fy > H8) ? H8 : m.fy);
-            }
-        },
-        new Operator("Repeat") {
-            @Override
-            void operate(RenderStateMachine m) {
-                m.color = buf.out.grab.get(m.fx, m.fy);
-            }},
-        new Operator("Image") {
-            @Override
-            void operate(RenderStateMachine m) {
-                m.color = buf.img.grab.get(m.fx, m.fy);
-            }},
-        new Operator("Image Fade") {
-            @Override
-            void operate(RenderStateMachine m) {
-                float x = (float) m.fx * overW7 - 1;
-                float y = (float) m.fy * overH7 - 1;
-                float R = x * x + y * y;
-                int K = max(0, min(256, (int) ((2 - R) * 256)));
-                m.color = average(buf.out.grab.get(m.fx, m.fy), K, buf.img.grab.get(m.fx, m.fy), 256 - K);
-            }}};
-    
-    
-    
-    ////////////////////////////////////////////////////////////////////////////
-    // Color filters applied per-pixel during mapping operation ////////////////
-    Operator color_op;
-    int color_i = 0; // Which color filters to use
-    /** These are controlled by a cursor but I don't remember what they do.
-     *  I think we should replace this with an up/down control. 
-     */
-    int filter_param1 = 128;
-    int filter_param2 = 128;
-    public void setContrastParameters(int x, int y) {
-        this.filter_param1 = clip(x,0,0xff);
-        this.filter_param2 = clip(y,0,0xff);
-    }
-    public void nextColorFilter(int amount) {
-        setColorFilter(color_i + amount);
-    }
-    public void setColorFilter(int index) {
-        if (!active) return;
-        color_op = color_filters[color_i = wrap(index, color_filters.length)];
-    }
-    private final Operator[] color_filters = {
-        new Operator("None") {
-            @Override
-            void operate(RenderStateMachine m) {
-            }},
-        new Operator("RGB") {
-            @Override
-            void operate(RenderStateMachine m) {
-                int c1 = m.color;
-                int c2 = RGB_contrast(m.color);
-                int c3 = contrast(m.color);
-                c3 = average(c3, filter_param1, c2, 256 - filter_param1);
-                m.color = average(c1, filter_param2, c3, 256 - filter_param2);
-            }},
-        new Operator("mush") {
-            @Override
-            void operate(RenderStateMachine m) {
-                int c1 = m.color;
-                int c2 = contrast(m.color);
-                int c3 = mush(m.color);
-                c3 = average(c3, filter_param1, c2, 256 - filter_param1);
-                m.color = average(c1, filter_param2, c3, 256 - filter_param2);
-            }}};
-    
-    
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Fade Color: used to add dynamic color accents ///////////////////////////
-    Operator fade_op;   // Current fade operator
-    int fade_i;         // Index of current color fade operators
-    int fade_color = 0; // Fade color to provide to renderer
-    private final Operator[] fade_colors = {
-        new Operator("Black") {
-            @Override
-            void operate(RenderStateMachine m) {
-                fade_color = 0x00000000;
-            }},
-        new Operator("White") {
-            @Override
-            void operate(RenderStateMachine m) {
-                fade_color = 0x00FFFFFF;
-            }},
-        new Operator("Middle Pixel Hue") {
-            @Override
-            void operate(RenderStateMachine m) {
-                int temp_color = buffer_buffer.getElem(MMID);
-                float[] HSV = java.awt.Color.RGBtoHSB(
-                        (temp_color >> 16) & 0x000000FF,
-                        (temp_color >> 8) & 0x000000FF,
-                        (temp_color) & 0x000000FF,
-                        new float[]{0, 0, 0});
-                fade_color = java.awt.Color.HSBtoRGB(HSV[0], 1.f, 1.f);
-            }},
-        new Operator("Not Middle Pixel Hue") {
-            @Override
-            void operate(RenderStateMachine m) {
-                fade_color = ~buffer_buffer.getElem(MMID);
-            }},
-        new Operator("Middle Pixel Hue Rotate") {
-            float hue = 0;
-            @Override
-            void operate(RenderStateMachine m) {
-                int temp_color = buffer_buffer.getElem(MMID);
-                float[] HSV = java.awt.Color.RGBtoHSB(
-                        (temp_color >> 16) & 0xFF,
-                        (temp_color >> 8) & 0xFF,
-                        (temp_color) & 0xFF,
-                        new float[]{0, 0, 0});
-                HSV[0] += .2f;
-                fade_color = java.awt.Color.HSBtoRGB(HSV[0], 1.f, 1.f);
-            }},
-        new Operator("Hue Rotate") {
-            int HUE = 0;
-            @Override
-            void operate(RenderStateMachine m) {
-                fade_color = Color.HSBtoRGB((float) HUE * .01f, 1.f, 1.f);
-                HUE++;
-            }}};
-    public void setFader(int index) {
-        fade_op = fade_colors[fade_i = wrap(index, fade_colors.length)];
-    }
-    public void nextFader(int n) {
-        setFader(fade_i + n);
-    }
-
-    
-    
-    ////////////////////////////////////////////////////////////////////////////
-    // These are used to manipulate the accent color I think? //////////////////
-    private final Operator[] ColorPermutations = {
-        new Operator("None") {
-            @Override
-            void operate(RenderStateMachine m) {}},
-        new Operator("invert") {
-            @Override
-            void operate(RenderStateMachine m) {
-                m.color ^= 0xffffff;
-            }},
-        new Operator("permute") {
-            @Override
-            void operate(RenderStateMachine m) {
-                m.color = 0xffff & (m.color >> 8) | (0xff0000 & (m.color << 8));
-            }},
-        new Operator("just weird") {
-            @Override
-            void operate(RenderStateMachine m) {
-                int q = 0xffff & (m.color >> 8) | (0xff0000 & (m.color << 8));
-                m.color = average(q, m.color);
-            }}
-    };
-    
-    
+        public Bound(String name) {this.name = name;}
+        abstract boolean test(int fx, int fy, int i);
+        float r2(int X, int Y) {float x=(float)X*oW7-1,y=(float)Y*oH7-1; return x*x+y*y;}}
+    private final Bound[] bounds = {
+        new Bound("Screen") {boolean test(int X,int Y,int i) {return X<W8&&Y<H8&&X>=0&&Y>=0;}},
+        new Bound("Oval")   {boolean test(int X,int Y,int i) {return r2(X,Y)<1;}},
+        new Bound("Horizon"){boolean test(int X,int Y,int i) {return Y>0&&Y<H8;}},
+        new Bound("Radius") {boolean test(int X,int Y,int i) {return r2(X,Y)<bound_radius;}},
+        new Bound("Newton") {boolean test(int X,int Y,int i) {return zconv[i];}},
+        new Bound("None")   {boolean test(int X,int Y,int i) {return false;}}};
     
     ////////////////////////////////////////////////////////////////////////////
     // Gradient ////////////////////////////////////////////////////////////////
-    Operator gradient_op;
-    int[] gradient_accents = new int[]{0x0, 0xFFFFFF}; // Accent colors (mode 2)
-    char[][] gradients;          // All gradient tables; see initGradients()
-    char[]   gradient;           // Active gradient lookup table
-    int      grad_accent_i = 0;  // Accent color if in gradient mode 2
-    float    grad_slope    = 1f; // Cursor-controlled gradient rate
-    float    grad_offset   = 0f; // Cursor-controlled gradient size
-    int      color_mask    = 0;  // Flip gradient transparency weight
-    int      grad_switch   = 0;  // Flip color order if accented; "K"
-    int      grad_accent   = 0;  // Usually accent_colors[accent_color_i]
-    int      grad_index    = 0;  // In-use gradient lookup table
-    int      grad_mode     = 0;  // Modes; 0: off 1: one-color 2: two-color
-    public void setGradientParam(float slope, float offset) {
-        grad_slope = slope;
-        grad_offset = offset;
-    }
-    public void setGradientShape(int n) {
-        gradient = gradients[grad_index = wrap(n, gradients.length)];
-    }
-    public void nextGradientShape(int n) {
-        setGradientShape(grad_index + n);
-    }
-    public void setAccent(int color_accent) {
-        grad_accent = gradient_accents[grad_accent_i=wrap(color_accent, gradient_accents.length)];
-    }
-    public void nextAccent(int n) {
-        setAccent(grad_accent_i + n);
-    }
-    public void setGradient(int index) {
-        if (!active) return;
-        gradient_op = gradient_modes[grad_mode = wrap(index, gradient_modes.length)];
-    }
-    public void nextGradient(int amount) {
-        setGradient(grad_mode + amount);
-    }
-    char[][] initGradients() {
-        char[][] result = new char[10][MLEN];
-        int index = 0;
-        for (int y = -HALFH; y < HALFH; y++) {
-            for (int x = -HALFW; x < HALFW; x++) {
-                /** These are the gradient shapes. */
-                result[0][index] = (char) (255 - 512 * ((float) x * x / (W * W) + (float) y * y / (H * H)));
-                result[1][index] = (char) (255 - (x + HALFW) * 255 / W);
-                result[2][index] = (char) (255 - (y + HALFH) * 255 / H);
-                result[3][index] = (char) (255 - (y + HALFH) * (x + HALFW) * 255 / (W * H));
-                result[4][index] = (char) (255 - (abs(x) + abs(y)) * 255 / (HALFW + HALFH));
-                result[5][index] = (char) (255 - (abs(x) * abs(y)) * 255 / (HALFW * HALFH));
-                result[6][index] = (char) (255 * (1 - min(1, sqrt(x * x + y * y) / min(HALFH, HALFW))));
-                result[7][index] = (char) (255 * (1 - pow(min(1, sqrt(x * x + y * y) / min(HALFH, HALFW)), 9)));
-                result[8][index] = (char) (255 * (1 - pow(max(0, min(1, 1.3 - (sqrt(x * x + y * y)) / (min(HALFH, HALFW)))), 9)));
-                result[9][index] = (char) (result[7][index]);
-                index++;
-            }
-        }
-        grad_index = 0;
-        return result;
-    }
-    private final Operator[] gradient_modes = {
-        new Operator("None") {
-            @Override
-            void operate(RenderStateMachine m) {
-            }},
-        new Operator("1 Color") {
-            @Override
-            void operate(RenderStateMachine m) {
-                int grad = 0xFF - (char) min(0xFF, max(0, gradient[m.i]
-                        * grad_slope
-                        - grad_offset));
-                m.color = average(m.color, 0xFF ^ grad, fade_color, grad); 
-            }},
-        new Operator("2 Color") {
-            @Override
-            void operate(RenderStateMachine m) {
-                int grad = 255 - (char)clip((int)(
-                    gradient[m.i] * grad_slope - grad_offset
-                        ), 0, 255);
-                m.color =
-                    average(m.color, 0xFF^grad,
-                        average(grad_accent, 0xFF^grad^grad_switch, 
-                                fade_color     , grad^grad_switch),
-                        grad);
-            }}};
-    
-    
-    
-    ////////////////////////////////////////////////////////////////////////////
-    // Abstract definition of an image-processing operation. 
-    private long opcount = 0L;
-    private abstract class Operator {
-        final String name;
-        Operator() {name = "Operator" + (opcount++);}
-        Operator(String s) {name = s == null ? ("Operator" + (opcount++)) : s;}
-        abstract void operate(RenderStateMachine m);
-        @Override
-        public String toString() {return name;}
-    }
+    public GradOp   grad_op;
+    public int[]    accents = new int[]{0x0, 0xFFFFFF}; // Accent colors (mode 2)
+    public char[][] grads;          // All gradient tables; see initGradients()
+    public char[]   grad;           // Active gradient lookup table
+    public float    gslope    = 1f; // Cursor-controlled gradient rate
+    public float    goffset   = 0f; // Cursor-controlled gradient size
+    public int      color_mask    = 0;  // XOR this with output color
+    public int      feedback_mask = 0;  // XOR this with feedback color
+    public int      grad_i        = 0;  // In-use gradient lookup table
+    public int      grad_mode     = 0;  // Modes; 0: off 1: one-color 2: two-color
+    public void setGradientParam (float slope, float offset) {gslope=slope;goffset=offset;}
+    public void setGradientShape (int n) {grad    = grads [grad_i    = wrap(n, grads.length )];}
+    public void setGradient      (int i) {grad_op     = grad_modes[grad_mode = wrap(i, grad_modes.length)];}
+    public void nextGradientShape(int n) {setGradientShape(grad_i+n);}
+    public void nextGradient     (int n) {setGradient(grad_mode+n);  }
+    public void toggleInversion()      {color_mask    ^= 0xffffff; }
+    public void toggleFeedbackInvert() {feedback_mask ^= 0xffffff; }
+    public abstract class GradOp {
+        public final String name; 
+        public GradOp(String s) {name=s;}
+        abstract int go(int i, int c);
+        int w(int i){return clip((int)(grad[i]*gslope-goffset),0,255);}}
+    public final GradOp[] grad_modes = {
+        new GradOp("None")   {int go(int i,int c){return c;}},
+        new GradOp("1-Color"){int go(int i,int c){return blend(c,gcolor1,w(i));}},
+        new GradOp("2-Color"){int go(int i,int c){int g=w(i); return blend(c,blend(gcolor2,gcolor1,g),g);}}};
     
     ////////////////////////////////////////////////////////////////////////////
     // RenderState machine structure contains the instance variables that 
@@ -880,8 +556,8 @@ public class FractalMap {
     // color at the appropriate location in the screen buffer.
     // Various effect functions are then called to calculate
     // the color of the map element, and hence the pixel.
-    class RenderStateMachine {
-        int color, oldcolor;   
+    class State {
+        int c, oldcolor;   
         // 8-bit fixed point coordinates of mapped pixel
         int fx, fy;
         // index of target pixel in the output buffer
@@ -889,21 +565,14 @@ public class FractalMap {
         // Render indecies from start to end-1, skipping every `stride` pixels
         int start = 0;
         int end = MLEN;     
-        int stride = 1;
         // Constant offset in 8-bit fixed point screen coordinates
-        int Cx, Cy;
+        int x, y;
         // Precomputed rotation constants
-        float rotation_real; // Rotate/scale normalized to screen coordinates
-        float rotation_imag; // Rotate/scale normalized to screen coordinates
-        float rotation_coef; // Intermediate term used for Gauss multiply
+        float rx; // Rotate/scale normalized to screen coordinates
+        float ry; // Rotate/scale normalized to screen coordinates
+        float rc; // Intermediate term used for Gauss multiply
+        // Weak RNG state
+        int noise;
     }
     
-    ////////////////////////////////////////////////////////////////////////////
-    // Dead code. //////////////////////////////////////////////////////////////
-    
-    /** Image mode-related projection mask. */
-    int projectionMask(RenderStateMachine m) {
-        int grad = gradients[9][m.i];
-        return average(m.color, grad, 0, 256 - grad);
-    }
 }

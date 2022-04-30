@@ -354,7 +354,7 @@ public abstract class ColorScheme {
         @Override
         public int toRGB(float f) {
             int weight = clip((int)(.5f+f*255f));
-            return ColorUtil.average(color1, weight, color2, 256-weight);
+            return ColorUtil.average(color1, color2, weight);
         }
 
         /**

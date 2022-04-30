@@ -18,12 +18,12 @@ import static util.ColorUtil.fast;
 public class ImageRenderContext 
 {
     public BufferedImage img;
-    public Graphics      g0;
+    public Graphics2D    g0;
     public Graphics2D    g2D;
-    public Graphics      g;
+    public Graphics2D    g;
     public DataBuffer    buf;
     public Samplers      samplers;
-    public Samplers.Grabber     grab;
+    public Samplers.Sampler get;
     int W, H;
     
     boolean is_scaled = false;
@@ -48,7 +48,7 @@ public class ImageRenderContext
         
         setInterpolatedAndReflected(interpolate, reflect);
         
-        grab = samplers.getFixed8Bit;
+        get = samplers.getFixed8Bit;
         W = b.getWidth();
         H = b.getHeight();
     }
@@ -58,7 +58,7 @@ public class ImageRenderContext
         this(b, interpolate, reflect);
         this.is_scaled = true;
         this.scale = scale;
-        grab = Samplers.makeScaledGrabber(grab, scale);
+        get = Samplers.makeScaledGrabber(get, scale);
     }
     
     /** The following return statement decides which
@@ -89,11 +89,11 @@ public class ImageRenderContext
      * @param reflect
      */
     public final void setInterpolatedAndReflected(boolean inter, boolean reflect) {
-        grab = inter 
+        get = inter 
             ? (reflect? samplers.getFixed8Bit : samplers.getFixed8BitNoReflect)
             : (reflect? samplers.get          : samplers.getNoReflect);
         if (is_scaled)    
-            grab = Samplers.makeScaledGrabber(grab, scale);
+            get = Samplers.makeScaledGrabber(get, scale);
     }
     
 }

@@ -75,6 +75,10 @@ public class ImageCache {
     public int current() {
         return images.indexOf(current);
     }
+    
+    public String name() {
+        return current!=null? current.getName() : "(none)";
+    }
 
     /**
      *

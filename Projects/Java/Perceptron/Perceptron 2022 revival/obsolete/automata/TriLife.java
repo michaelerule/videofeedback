@@ -207,7 +207,7 @@ public class TriLife extends JPanel
      */
     public final void scan()
     {
-        ImageRenderContext [] image = {perceptron.buff.out,perceptron.buff.fde};
+        ImageRenderContext [] image = {perceptron.buf.out,perceptron.buf.fde};
         if ( image[1] == null || image[0] == null ) {
             for ( int i = 0 ; i < lookup.length ; i ++ )
             {

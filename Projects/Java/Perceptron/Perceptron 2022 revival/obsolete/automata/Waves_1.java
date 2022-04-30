@@ -98,8 +98,8 @@ public class Waves_1 {
                 int weight = color2;//(V-VMIN)/(VMAX-VMIN) ;
                 color2 <<= 16 ;
                 data.setElem((i<<SIZE)+j,
-                  ColorUtil.average(perceptron.buff.out.grab.get(j<<8,i<<8), 256-weight, 
-                          perceptron.buff.fde.grab.get(j<<8,i<<8), weight)
+                  ColorUtil.average(perceptron.buf.out.grab.get(j<<8,i<<8), 256-weight, 
+                          perceptron.buf.fde.grab.get(j<<8,i<<8), weight)
                 );
                 
                 

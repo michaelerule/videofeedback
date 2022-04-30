@@ -21,20 +21,20 @@ public class Samplers {
             G  = 0x00FF00, 
             B  = 0x0000FF, 
             M  = 0xFF00FF,
-            Mr = 0x800080,
-            Gr = 0x008000;
+            MR = 0x800080,
+            GR = 0x008000;
         
     /** Grabber is an abstract class that retrieves pixel data from a 
      *  texture.
      */
-    public static abstract class Grabber {
+    public static abstract class Sampler {
         /** Retrieve color data at given (x,y) coordinate.
          *
          * @param x
          * @param y
          * @return RRGGBB packed color data
          */
-        public abstract int get(int x, int y);
+        public abstract int it(int x, int y);
     }
     
     /**
@@ -74,19 +74,13 @@ public class Samplers {
     
     /** Nearest-neighbor interpolation with reflected boundaries.
      */
-    public final Grabber get = new Grabber() {
+    public final Sampler get = new Sampler() {
         @Override
-        public int get(int x, int y) {
+        public int it(int x, int y) {
             // The input is in 8-bit fixed point; Here, we round it to the
             // nearest integer pixel. 
             x = (x + 127) >> 8;
             y = (y + 127) >> 8;
-            // The sign-preserving right shift will move the sign bit
-            // into all bit-indecies if the number is negative. 
-            // Flipping all the bits essentially negates the integer
-            // Well actually, abs(x)-1, which is good enough.
-            //x ^= x >> 31;
-            //y ^= y >> 31;
             x = x<0? -x : x;
             y = y<0? -y : y;
             // If we're an even number of screens in the horizontal/vertical
@@ -102,9 +96,9 @@ public class Samplers {
     /** Nearest-neighbor with periodic boundaries.
      *  This is not used at the moment; 
      */
-    public final Grabber getNoReflect = new Grabber() {
+    public final Sampler getNoReflect = new Sampler() {
         @Override
-        public int get(int x, int y) {
+        public int it(int x, int y) {
             // The input is in 8-bit fixed point; Here, we round it to the
             // nearest integer pixel. 
             x = (x + 127) >> 8;
@@ -117,13 +111,11 @@ public class Samplers {
     
     /** Linear interpolation with 8-bit fixed point and reflection.
      */
-    public final Grabber getFixed8Bit = new Grabber() {
+    public final Sampler getFixed8Bit = new Sampler() {
         @Override
-        public int get(int dx, int dy) {
+        public int it(int dx, int dy) {
             int x1, x2, y1, y2;
             // Take absolute value (approximately)
-            //dy ^= dy >> 31;
-            //dx ^= dx >> 31;
             dx = dx<0? -dx : dx;
             dy = dy<0? -dy : dy;
             // Get the integer part of the pixel locations
@@ -152,14 +144,24 @@ public class Samplers {
             int Bx = 256 - Ax;
             int By = 256 - Ay;
             // Compute per-pixe weights
-            int C1 = Bx*By + 127 >> 8;
-            int C2 = Ax*By + 127 >> 8;
-            int C3 = Bx*Ay + 127 >> 8;
-            int C4 = Ax*Ay + 127 >> 8;
-            assert C1+C2+C3+C4<=256;
+            int C1 = Bx*By >> 8;
+            int C2 = Ax*By >> 8;
+            int C3 = Bx*Ay >> 8;
+            int M1 = M&c1;
+            int M2 = M&c2;
+            int M3 = M&c3;
+            int M4 = M&c4;
+            int G1 = G&c1;
+            int G2 = G&c2;
+            int G3 = G&c3;
+            int G4 = G&c4;
+            return M & (M4 + ((M1-M4)*C1 + (M2-M4)*C2 + (M3-M4)*C3 + MR >> 8))
+                 | G & (G4 + ((G1-G4)*C1 + (G2-G4)*C2 + (G3-G4)*C3 + GR >> 8));
+            //int C4 = Ax*Ay + 127 >> 8;
+            //assert C1+C2+C3+C4<=256;
             // Interpolated color averaging
-            return M & ((M&c1)*C1 + (M&c2)*C2 + (M&c3)*C3 + (M&c4)*C4 + Mr >> 8)
-                 | G & ((G&c1)*C1 + (G&c2)*C2 + (G&c3)*C3 + (G&c4)*C4 + Gr >> 8);
+            //return M & ((M&c1)*C1 + (M&c2)*C2 + (M&c3)*C3 + (M&c4)*C4 + Mr >> 8)
+            //     | G & ((G&c1)*C1 + (G&c2)*C2 + (G&c3)*C3 + (G&c4)*C4 + Gr >> 8);
         }
     };
 
@@ -167,9 +169,9 @@ public class Samplers {
     /** Linear interpolation with fixed-point and no reflection
      * 
      */
-    public final Grabber getFixed8BitNoReflect = new Grabber() {
+    public final Sampler getFixed8BitNoReflect = new Sampler() {
         @Override
-        public int get(int dx, int dy) {
+        public int it(int dx, int dy) {
             int x1, x2, y1, y2;
             // Integer part
             x1 = dx >> 8;
@@ -184,24 +186,47 @@ public class Samplers {
             y2 *= W;
             y1 *= W;
             // Retrieve color data for 2x2 neighborhood
-            int c1 = buffer.getElem((y1 + x1));
-            int c2 = buffer.getElem((y1 + x2));
-            int c3 = buffer.getElem((y2 + x1));
-            int c4 = buffer.getElem((y2 + x2));
+            int c1 = buffer.getElem(y1 + x1);
+            int c2 = buffer.getElem(y1 + x2);
+            int c3 = buffer.getElem(y2 + x1);
+            int c4 = buffer.getElem(y2 + x2);
             // Get fractional part and 1-fractional part
             int Ax = dx & 0xFF;
             int Ay = dy & 0xFF;
             int Bx = 256 - Ax;
             int By = 256 - Ay;
-            // Compute per-pixe weights
-            int C1 = Bx*By + 127 >> 8;
-            int C2 = Ax*By + 127 >> 8;
-            int C3 = Bx*Ay + 127 >> 8;
-            int C4 = Ax*Ay + 127 >> 8;
-            assert C1+C2+C3+C4<=256;
+            // Compute per-pixel weights
+            int C1 = Bx*By >> 8;
+            int C2 = Ax*By >> 8;
+            int C3 = Bx*Ay >> 8;
+            int M1 = M&c1;
+            int M2 = M&c2;
+            int M3 = M&c3;
+            int M4 = M&c4;
+            int G4 = G&c4;
+            int G1 = G&c1;
+            int G2 = G&c2;
+            int G3 = G&c3;
+            return M & (M4 + ((M1-M4)*C1 + (M2-M4)*C2 + (M3-M4)*C3 + MR >> 8))
+                 | G & (G4 + ((G1-G4)*C1 + (G2-G4)*C2 + (G3-G4)*C3 + GR >> 8));
+            
+            //int C4 = Ax*Ay + 127 >> 8;
+            //assert C1+C2+C3+C4<=256;
             // Interpolated color averaging
-            return M & ((M&c1)*C1 + (M&c2)*C2 + (M&c3)*C3 + (M&c4)*C4 + Mr >> 8)
-                 | G & ((G&c1)*C1 + (G&c2)*C2 + (G&c3)*C3 + (G&c4)*C4 + Gr >> 8);
+            //return M & ((M&c1)*C1 + (M&c2)*C2 + (M&c3)*C3 + (M&c4)*C4 + MR >> 8)
+            //     | G & ((G&c1)*C1 + (G&c2)*C2 + (G&c3)*C3 + (G&c4)*C4 + GR >> 8);
+            /*
+            int C1 = Bx*By  >> 12;
+            int C2 = Ax*By  >> 12;
+            int C3 = Bx*Ay  >> 12;
+            int C4 = Ax*Ay  >> 12;
+            assert C1+C2+C3+C4<=16;
+            // Interpolated color averaging
+            return (0xF0F0F0&c1)*C1+
+                   (0xF0F0F0&c2)*C2+
+                   (0xF0F0F0&c3)*C3+
+                   (0xF0F0F0&c4)*C4  >> 4;
+            */
         }
     };
     
@@ -211,11 +236,11 @@ public class Samplers {
      * @param scale
      * @return
      */
-    public static Grabber makeScaledGrabber(final Grabber original, final float scale) {
-        return new Grabber() {
+    public static Sampler makeScaledGrabber(final Sampler original, final float scale) {
+        return new Sampler() {
             @Override
-            public int get(int x, int y) {
-                return original.get((int)(x*scale),(int)(y*scale));
+            public int it(int x, int y) {
+                return original.it((int)(x*scale),(int)(y*scale));
             }
         };
     }

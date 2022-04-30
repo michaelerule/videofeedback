@@ -7,6 +7,9 @@ import math.complex;
 import java.awt.Color;
 import java.awt.Graphics;
 import static perceptron.Misc.clip;
+import static util.Matrix.distance;
+import static util.Matrix.multiply_3x3_point;
+import static util.Matrix.scale_point;
 
 /* FastTree.java
  * Created on March 7, 2007, 3:43 PM
@@ -22,7 +25,7 @@ public class Tree3D {
     /** weather or not the three should actively render and respond to
      *  user input
      */
-    private boolean active;
+    public boolean active;
     
     //RENDERING DATA
     /** recursion depth of this tree */
@@ -340,59 +343,11 @@ public class Tree3D {
      */
     public int set_initial_color(int col) {
         if (col > 0) {
-            initial_color = ColorUtil.Hue(col);
+            initial_color = ColorUtil.hue(col);
             return col;
         } else return ColorUtil.HSVtoRGB_lookup[
             initial_color = (color[1] + 2) % ColorUtil.MAXLUTINDEX
             ][ColorUtil.MAXLUTINDEX];
     }
 
-    ///////////////////////////////////////////////////////////////////////////
-    //CONVIENIENT STATIC METHODS
-    /** Calculate the float distance between two float points. 
-     */
-    private static float distance(float[] a, float[] b) {
-        float 
-        x = a[0] - b[0],
-        y = a[1] - b[1],
-        z = a[2] - b[2];
-        return (float) (StrictMath.sqrt(x * x + y * y + z * z));
-    }
-
-    /** Matrix multiplication simplified for linear transformation of low
-     *  percision 3D points of small value
-     * @param A
-     * @param P
-     * @return  
-     */
-    public static float[] multiply_3x3_point(float[][] A, float[] P) {
-        return multiply_3x3_point(A, P, new float[3]);
-    }
-
-    /** Matrix multiplication simplified for linear transformation of low
-     *  percision 3D points of small value
-     * @param A
-     * @param P
-     * @param result
-     * @return  
-     */
-    public static float[] multiply_3x3_point(float[][] A, float[] P, float[] result) {
-        result[0] = (float) (A[0][0] * P[0] + A[0][1] * P[1] + A[0][2] * P[2]);
-        result[1] = (float) (A[1][0] * P[0] + A[1][1] * P[1] + A[1][2] * P[2]);
-        result[2] = (float) (A[2][0] * P[0] + A[2][1] * P[1] + A[2][2] * P[2]);
-        return result;
-    }
-
-    /**
-     * 
-     * @param P
-     * @param dr
-     * @return 
-     */
-    public static float[] scale_point(float[] P, double dr) {
-        P[0] *= dr;
-        P[1] *= dr;
-        P[2] *= dr;
-        return P;
-    }
 }

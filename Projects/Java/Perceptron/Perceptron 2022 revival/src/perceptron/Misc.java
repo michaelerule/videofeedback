@@ -14,7 +14,10 @@ import java.awt.HeadlessException;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.Window;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import javax.swing.JFrame;
 import math.complex;
 
@@ -51,10 +54,6 @@ public class Misc {
             p.setBounds(0, 0, m.getWidth(), m.getHeight());
             p.setVisible(true);
         }
-        //Setting up Double Buffering
-        p.createBufferStrategy(2);
-        p.bufferStrategy = p.getBufferStrategy();
-        p.graph2D = (Graphics2D)p.bufferStrategy.getDrawGraphics();
     }
     
     
@@ -110,6 +109,9 @@ public class Misc {
     public static int clip(int x,int low, int hi) {
         return x<low? low : x>hi? hi : x;
     }
+    public static float clip(float x,float low, float hi) {
+        return x<low? low : x>hi? hi : x;
+    }
     
     
     /** Periodically wrap integer to range
@@ -119,6 +121,12 @@ public class Misc {
      * @return 
      */
     public static int wrap(int n, int m) {
+        return n < 0 ? m - (-n % m) : n % m;
+    }
+    public static float wrap(float n, float m) {
+        return n < 0 ? m - (-n % m) : n % m;
+    }
+    public static double wrap(double n, double m) {
         return n < 0 ? m - (-n % m) : n % m;
     }
     
@@ -136,21 +144,14 @@ public class Misc {
     }
     
     
-    /**
-     *
-     */
     public static final Set<String> trueNames  = Set.of("TRUE", "YES", "Y", "T", "SI", "ON", "1");
-    
-    /**
-     * 
-     */
     public static final Set<String> falseNames = Set.of("FALSE", "NO", "N", "F", "NON", "OFF", "0");
     
     /** There must be a better way to write a best-effort parser?
      * @param val
      * @return 
      */
-    public static Object hackyParse(String val) {
+    public static Object bestEffortParse(String val) {
         
         try {
             return new Byte(val);
@@ -191,4 +192,13 @@ public class Misc {
         
         return val;
     }
+    
+    public static <T,U> void zip(Collection<T> A, Collection<U> B, BiConsumer<T, U> c) {
+        Iterator<T> it = A.iterator();
+        Iterator<U> iu = B.iterator();
+        while (it.hasNext() && iu.hasNext()) {
+            c.accept(it.next(), iu.next());
+        }
+    }
+    
 }

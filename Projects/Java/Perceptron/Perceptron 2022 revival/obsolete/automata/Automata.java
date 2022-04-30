@@ -97,7 +97,7 @@ public class Automata {
             int fade ;
             @Override
             public int toRGB(float f) {
-                return average( oldc.toRGB(f), fade, newc.toRGB(f), 256-fade );
+                return average( oldc.toRGB(f), newc.toRGB(f), fade );
             }
             @Override
             public float fromRGB(int RGB) {

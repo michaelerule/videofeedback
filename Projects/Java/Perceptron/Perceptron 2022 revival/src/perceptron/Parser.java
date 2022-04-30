@@ -12,35 +12,40 @@ public class Parser {
 
     /**
      *
-     * @param o
+     * @param ps
      * @param in
      * @param fractal
      * @throws IOException
      */
-    public static void parse(Preset o, BufferedReader in) throws IOException {
+    public static void parse(Preset ps, BufferedReader in) throws IOException {
 
-        String current_line;
+        String line;
 
-        while ((current_line = in.readLine()) != null
-                && current_line.indexOf('}') < 0) {
-            if (current_line.length() > 0  && current_line.charAt(0) != '*') {
+        while ((line = in.readLine()) != null
+                && line.indexOf('}') < 0) {
+            if (line.length() > 0  && line.charAt(0) != '*') {
 
-                StringTokenizer token = new StringTokenizer(current_line);
-                if (token.countTokens() >= 2) {
+                StringTokenizer T = new StringTokenizer(line);
+                if (T.countTokens() >= 2) {
 
-                    String var = token.nextToken();
-                    String val = token.nextToken().toLowerCase();
+                    String var = T.nextToken();
+                    String val = T.nextToken().toLowerCase();
 
-                    if (var.equals("fractal_map")) o.fractal_map = FractalMap.makeMapStatic(val);
+                    if (var.equals("fractal_map")) {
+                        ps.fractal_map = FractalMap.makeMapStatic(val).toString();
+                        System.out.println("set fractal_map to "+val);
+                    }
                     else {
-                        Object value = Misc.hackyParse(val);
+                        Object value = Misc.bestEffortParse(val);
                         try {
-                            o.getClass().getField(var).set(o, value);
+                            ps.getClass().getField(var).set(ps, value);
+                            System.out.println("set "+var+" to "+value);
                         } catch (IllegalAccessException 
                                 | IllegalArgumentException 
                                 | NoSuchFieldException 
                                 | SecurityException e) {
                             System.err.println("failed to assign " + value + " to " + var);
+                            //e.printStackTrace();
                         }
                     }
                 }

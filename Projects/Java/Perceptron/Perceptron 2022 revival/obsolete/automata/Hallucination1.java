@@ -90,8 +90,7 @@ public class Hallucination1 {
                 else if ( newval < -128 ) newval = -128 ;
                 buffer[i] = newval ;
                 int color = newval + 128 & 0xff ;
-                data.setElem(i, ColorUtil.average(ColorUtil.average(color1,color,color2,0xff&~color),24,
-                  data.getElem(i),232));
+                data.setElem(i, ColorUtil.average(ColorUtil.average(color1,color2,color),data.getElem(i),24));
                 //data.setElem(i, ColorUtility.average(color1,color,color2,0xff&~color));
                 i++ ;
             }

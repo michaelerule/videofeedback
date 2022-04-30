@@ -15,7 +15,7 @@ and right sub equation.*/
 public class Equation
 {
     //Stores the MathToken at this node
-    private EvaluationOperation myEvaluationOperation;
+    private EvaluationOperation eval_op;
     
     //Stores the right and left sub equations, if they exist
     private Equation left, right ;
@@ -23,7 +23,7 @@ public class Equation
     /** initializes an empty equation*/
     public Equation()
     {
-        myEvaluationOperation = null;
+        eval_op = null;
         left = right = null;
     }
     
@@ -33,14 +33,14 @@ public class Equation
         if (opr.isOperator())
         {
             if (opr.isFunction())
-                myEvaluationOperation = new FunctionEvaluation(opr,left.getOperation());
+                eval_op = new FunctionEvaluation(opr,left.getOperation());
             else
-                myEvaluationOperation = new OperationEvaluation(opr,left.getOperation(),right.getOperation());
+                eval_op = new OperationEvaluation(opr,left.getOperation(),right.getOperation());
         }
         else if (opr.isVariable())
-            myEvaluationOperation = new VariableEvaluation(opr.getVar());
+            eval_op = new VariableEvaluation(opr.getVar());
         else
-            myEvaluationOperation = new ConstantEvaluation(opr.getNumber());
+            eval_op = new ConstantEvaluation(opr.getNumber());
     }
     
     /** cobmines two equations with a perscribed operation
@@ -81,7 +81,7 @@ public class Equation
      */
     public Equation( Equation equ )
     {
-        myEvaluationOperation = equ.getOperation();
+        eval_op = equ.getOperation();
         if (equ.getLeft() != null) left = new Equation(equ.getLeft());
         if (equ.getRight() != null) right = new Equation(equ.getRight());
     }
@@ -90,7 +90,7 @@ public class Equation
      * @return s*/
     public EvaluationOperation getOperation()
     {
-        return myEvaluationOperation;
+        return eval_op;
     }
     
     /**
@@ -125,7 +125,7 @@ public class Equation
      */
     public EvaluationOperation getEvaluationOperation()
     {
-        return myEvaluationOperation;
+        return eval_op;
     }
     
     //Sets the left subEquation of this Equation
@@ -159,7 +159,7 @@ public class Equation
      */
     public complex eval(ComplexVarList variables)
     {
-        return myEvaluationOperation.operate(variables);
+        return eval_op.operate(variables);
     }
     
     /**
@@ -170,11 +170,11 @@ public class Equation
     public void substitute(char Variable, complex number)
     {
         if (
-                myEvaluationOperation.equals(1) &&
-                myEvaluationOperation.toString().equals("o"))
+                eval_op.equals(1) &&
+                eval_op.toString().equals("o"))
         {
             System.out.println("substituted");
-            myEvaluationOperation = new ConstantEvaluation(number);
+            eval_op = new ConstantEvaluation(number);
         }
         else
         {
@@ -190,7 +190,7 @@ public class Equation
     public boolean is_analytic()
     {
         return !(
-                ( ! myEvaluationOperation.is_analytic() ) || 
+                ( ! eval_op.is_analytic() ) || 
                 ( left != null  && ! left .is_analytic() ) || 
                 ( right != null && ! right.is_analytic() )) ;
     }
@@ -233,7 +233,7 @@ public class Equation
         {
             if (left == null)
             {
-                if (myEvaluationOperation.equals(EvaluationOperation.VARIABLE)) result += myEvaluationOperation;
+                if (eval_op.equals(EvaluationOperation.VARIABLE)) result += eval_op;
             }
             else result += left.getVariables();
         }
@@ -265,16 +265,16 @@ public class Equation
         String result = "";
         try
         {
-            if (myEvaluationOperation.equals(EvaluationOperation.FUNCTION))
+            if (eval_op.equals(EvaluationOperation.FUNCTION))
             {
-                result += myEvaluationOperation;
+                result += eval_op;
                 if (left != null)
                     result += '('+left.toStringHelper()+')';
             }
             else
             {
                 if (left != null) result += left.toStringHelper();
-                result += myEvaluationOperation;
+                result += eval_op;
                 if (right != null) result += right.toStringHelper();
             }
         }
@@ -294,16 +294,16 @@ public class Equation
         String result = "";
         try
         {
-            if (myEvaluationOperation.equals(EvaluationOperation.FUNCTION))
+            if (eval_op.equals(EvaluationOperation.FUNCTION))
             {
-                if (myEvaluationOperation.equals(9))
+                if (eval_op.equals(9))
                 {
                     if (left != null) result += '('+left.toStringHelper()+')';
-                    result += myEvaluationOperation;
+                    result += eval_op;
                 }
                 else
                 {
-                    result += myEvaluationOperation;
+                    result += eval_op;
                     if (left != null) result += '('+left.toStringHelper()+')';
                 }
             }
@@ -311,7 +311,7 @@ public class Equation
             {
                 if (left != null)
                     result += "("+left.toStringHelper();
-                result += myEvaluationOperation;
+                result += eval_op;
                 if (right != null)
                     result += right.toStringHelper()+")";
             }

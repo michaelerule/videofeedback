@@ -29,8 +29,8 @@ public class TextBuffer {
     //Text Editor Data
     char[]  buf = new char[ROWS * COLUMNS];
     int     idx = 0;
-    boolean on   = true;
-    boolean cursor_on = true;
+    public boolean on   = true;
+    public boolean cursor_on = true;
     
     Perceptron perceptron;
     
@@ -158,7 +158,7 @@ public class TextBuffer {
     }
 
     /** Press C to turn off/on cursors. */
-    void toggle_cursor() {
+    void toggleCursor() {
         cursor_on = !cursor_on;
     }
 }
