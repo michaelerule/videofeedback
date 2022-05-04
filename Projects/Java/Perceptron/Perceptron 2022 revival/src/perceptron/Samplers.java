@@ -157,11 +157,6 @@ public class Samplers {
             int G4 = G&c4;
             return M & (M4 + ((M1-M4)*C1 + (M2-M4)*C2 + (M3-M4)*C3 + MR >> 8))
                  | G & (G4 + ((G1-G4)*C1 + (G2-G4)*C2 + (G3-G4)*C3 + GR >> 8));
-            //int C4 = Ax*Ay + 127 >> 8;
-            //assert C1+C2+C3+C4<=256;
-            // Interpolated color averaging
-            //return M & ((M&c1)*C1 + (M&c2)*C2 + (M&c3)*C3 + (M&c4)*C4 + Mr >> 8)
-            //     | G & ((G&c1)*C1 + (G&c2)*C2 + (G&c3)*C3 + (G&c4)*C4 + Gr >> 8);
         }
     };
 
@@ -209,24 +204,6 @@ public class Samplers {
             int G3 = G&c3;
             return M & (M4 + ((M1-M4)*C1 + (M2-M4)*C2 + (M3-M4)*C3 + MR >> 8))
                  | G & (G4 + ((G1-G4)*C1 + (G2-G4)*C2 + (G3-G4)*C3 + GR >> 8));
-            
-            //int C4 = Ax*Ay + 127 >> 8;
-            //assert C1+C2+C3+C4<=256;
-            // Interpolated color averaging
-            //return M & ((M&c1)*C1 + (M&c2)*C2 + (M&c3)*C3 + (M&c4)*C4 + MR >> 8)
-            //     | G & ((G&c1)*C1 + (G&c2)*C2 + (G&c3)*C3 + (G&c4)*C4 + GR >> 8);
-            /*
-            int C1 = Bx*By  >> 12;
-            int C2 = Ax*By  >> 12;
-            int C3 = Bx*Ay  >> 12;
-            int C4 = Ax*Ay  >> 12;
-            assert C1+C2+C3+C4<=16;
-            // Interpolated color averaging
-            return (0xF0F0F0&c1)*C1+
-                   (0xF0F0F0&c2)*C2+
-                   (0xF0F0F0&c3)*C3+
-                   (0xF0F0F0&c4)*C4  >> 4;
-            */
         }
     };
     

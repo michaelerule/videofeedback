@@ -21,6 +21,7 @@ import static java.lang.Math.min;
 import static java.lang.Math.cos;
 import static java.lang.Math.max;
 import static java.lang.Math.abs;
+import static java.lang.Math.hypot;
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 import static math.complex.arg;
@@ -35,6 +36,8 @@ import static util.ColorUtil.blend;
  */
 public class FractalMap {
        
+    public static final float ZSCALE = 2.8f;//2.4f;
+    
     Perceptron         P;
     DoubleBuffer       B;
     ArrayList<Mapping> maps;
@@ -75,7 +78,7 @@ public class FractalMap {
     
     // Mistakes were made in this design
     final int W, H, W7, H7, W8, H8, MLEN, M2, MAXC=65535;
-    final float oW7, oH7, z2mapW, z2mapH, z2W, z2H;
+    final float cW, cH, oW2, oH2, oW7, oH7, z2mapW, z2mapH, z2W, z2H;
     
     /** The upper left, the lower right, and the size of the rectangle in the
      *   complex plane. These are actually re-initialized so these values don't matter.     */
@@ -87,7 +90,9 @@ public class FractalMap {
     // Accumulators for velocity mode
     private float dr = 0, di = 0, dtheta = .1f;
     
-    public static final float ZSCALE = 2.8f;//2.4f;
+    // Coordinate lookup tables
+    float [] PX,PY,PR,AX,AY,FW;
+    boolean [] in_circle;
     
     /** Create new FractalMap
      * @param b
@@ -104,8 +109,10 @@ public class FractalMap {
         B   = b;
         W   = b.out.img.getWidth();
         H   = b.out.img.getHeight();
+        oW2 = 2f/W;  oH2 = 2f/H;
         W7  = W<<7;  H7  = H<<7;
         oW7 = 1f/W7; oH7 = 1f/H7;
+        cW  = oW7*oW7;  cH  = oH7*oH7;
         W8  = W<<8;  H8  = H<<8;
         MLEN= W*H;   M2  = MLEN<<1;
         if (W >= H) { size.real = ZSCALE * W / H; size.imag = ZSCALE; }
@@ -116,7 +123,7 @@ public class FractalMap {
         z2W = z2H = (W/size.real+H/size.imag) * .5f;
         // Initialize modular rendering functions
         bounds_i  = wrap(bounds_i, bounds.length);
-        outside_i = wrap(outside_i, outside_ops.length);
+        outi = wrap(outi, outops.length);
         grad_mode = wrap(grad_mode, grad_modes.length);
         syncOps();
         if (!maps.isEmpty()) mapping = maps.get(map_i %= maps.size());
@@ -148,11 +155,36 @@ public class FractalMap {
         rotation = new complex();
         normc    = new float[]{0, 0};
         offset.real=offset.imag=0;
+        // Prepare radius lookup tables
+        i=0;
+        PX = new float[MLEN];
+        PY = new float[MLEN];
+        PR = new float[MLEN];
+        AX = new float[MLEN];
+        AY = new float[MLEN];
+        FW = new float[MLEN];
+        in_circle = new boolean[MLEN];
+        for (int y=0; y<H; y++) for (int x=0; x<W; x++) {
+            PX[i] = (float)x/(float)W*2-1;
+            PY[i] = (float)y/(float)H*2-1;
+            PR[i] = (float)hypot(PX[i],PY[i]);
+            AX[i] = abs(PX[i]);
+            AY[i] = abs(PY[i]);
+            in_circle[i] = PR[i]<0.995;
+            
+            int fx = x*256+128;
+            int fy = y*256+128;
+            float qx = (float)fx*oW7-1;
+            float qy = (float)fy*oH7-1;
+            float qr = (float)sqrt(qx*qx+qy*qy);
+            FW[i] = qr;
+            i++;
+        }
     }
 
     public void syncOps() {
         bound_op   = bounds[bounds_i];
-        outside_op = outside_ops[outside_i];
+        outop = outops[outi];
         grad_op    = grad_modes[grad_mode];
     }
 
@@ -265,13 +297,13 @@ public class FractalMap {
             int   fx = (int)(x4+x5)+cx;
             int   fy = (int)(rc*(imag-real)-x4+x5)+cy;
             int   c;
-            if (bound_op.test(fx,fy,i) != bounds_invert) {
+            if (bound_op.test(fx,fy,i) != invert_bound) {
                 // Within bounds for feedback unless bounds_invert = true
                 c = B.out.get.it(fx, fy);
                 if (P.fore_grad) c = grad_op.go(i,c);
                 c ^= feedback_mask;
             } else {
-                c = outside_op.go(fx,fy,i);
+                c = outop.go(fx,fy,i);
                 c = grad_op.go(i,c);
             }
             if (noise_level>0) {
@@ -362,6 +394,7 @@ public class FractalMap {
         rotation_hue++;
         color = Color.HSBtoRGB((float)rotation_hue*.01f, 1.f, 1.f);
         color_registers[i] = blend(color_registers[i++],color,color_dampen);
+        // TODO: need to also apply color transform and tint from previous frame here?
         pout_color = out_color^feedback_mask^color_mask; // needed for special edge mode
         gcolor1    = color_registers[gcolor1_i];
         gcolor2    = color_registers[gcolor2_i];
@@ -371,22 +404,19 @@ public class FractalMap {
     }
     
     ////////////////////////////////////////////////////////////////////////////
-    // Motion blur. Press UP or DOWN arrows.
+    // Noise and Motion blur. //////////////////////////////////////////////////
     public int motion_blur = 0;
-    void setMotionBlur(int k) {motion_blur = clip(k,0,256);}
-    
-    ////////////////////////////////////////////////////////////////////////////
-    // Noise ///////////////////////////////////////////////////////////////////
     public int noise_level = 0;
-    public void setNoise(int i) {noise_level = clip(i,0,256);}
-    public void nextNoise(int n) {setNoise(noise_level+n);}
+    public void setMotionBlur(int k) {motion_blur = clip(k,0,256);}
+    public void setNoise     (int i) {noise_level = clip(i,0,256);}
+    public void nextNoise    (int n) {setNoise(noise_level+n);}
     
     ////////////////////////////////////////////////////////////////////////////
     // Describe what to do when a pixel is out of bounds ///////////////////////
-    public PixelOp  outside_op;
-    public int      outside_i = 5; // 0:color 1:edge  2:repeat  3:image  4:fade 5:special
-    public void nextOutside(int n) {setOutside(outside_i + n);}
-    public void setOutside(int index) {outside_op = outside_ops[outside_i = wrap(index, outside_ops.length)];}
+    public PixelOp  outop;
+    public int      outi = 4; // 0:color 1:edge  2:repeat  3:image  4:fade 5:special
+    public void nextOutside(int n) {setOutside(outi + n);}
+    public void setOutside(int index) {outop = outops[outi = wrap(index, outops.length)];}
     public abstract class PixelOp {
         public final String name;
         abstract int go(int fx, int fy, int i);
@@ -394,66 +424,61 @@ public class FractalMap {
     }    
     public abstract class SpecialOp extends PixelOp {
         public SpecialOp(String s){super(s);}
-        final float weight(int fx,int fy,int i) {
-            int x = i%W;
-            int y = i/W;
-            float px = (float)x/(float)W*2-1;
-            float py = (float)y/(float)H*2-1;
-            float qx = (float)fx*oW7-1;
-            float qy = (float)fy*oH7-1;
+        final int weight(int fx,int fy,int i) {
+            //if (fx<0) fx=-fx;
+            //if (fy<0) fy=-fy;
             float pr,qr;
             switch (FractalMap.this.bounds_i) {
+                case 2: {// Horizon
+                    pr = AY[i];
+                    qr = (float)abs((float)fy*oH7-1);
+                } break;
+                case 1: {// Oval
+                    pr = PR[i];
+                    fx-= W7; fy-= H7;
+                    qr = (float)sqrt(fx*(fx*cW)+fy*(fy*cH));
+                } break;
+                case 3: {// Radius
+                    pr = PR[i];
+                    fx-= W7; fy-= H7;
+                    qr = (float)sqrt(fx*(fx*cW)+fy*(fy*cH));
+                    pr *= inverse_radius;
+                    qr *= inverse_radius;
+                } break;
                 case 0: // Screen
-                    pr = (float)max(abs(px),abs(py));
-                    qr = (float)max(abs(qx),abs(qy));
-                    break;
-                case 1: // Oval
-                    pr = (float)sqrt(px*px+py*py);
-                    qr = (float)sqrt(qx*qx+qy*qy);
-                    break;
-                case 2: // Horizon
-                    pr = (float)abs(py);
-                    qr = (float)abs(qy);
-                    break;
-                case 3: // Radius
-                    pr = (float)sqrt(px*px+py*py)/bound_radius;
-                    qr = (float)sqrt(qx*qx+qy*qy)/bound_radius;
-                    break;
                 case 4: // Newton
                 case 5: // None
-                default:
-                    pr = (float)max(abs(px),abs(py));
-                    qr = (float)max(abs(qx),abs(qy));
-                }
-            float  w1 = clip(bounds_invert?pr-1:1-pr,0f,1f);
-            float  w2 = clip(bounds_invert?1-qr:qr-1,0f,1f);
-            return w1/(w1+w2);
+                default: {
+                    pr = (float)max(AX[i],AY[i]);
+                    qr = (float)max(abs((float)fx*oW7-1),abs((float)fy*oH7-1));
+                }}
+            float w1 = clip(invert_bound?pr-1:1-pr,0f,1f);
+            float w2 = clip(invert_bound?1-qr:qr-1,0f,1f);
+            w1 /= w1+w2;
+            return (int)(256f*w1+0.5f);
         }
     }
-    public final PixelOp[] outside_ops = {
+    public final PixelOp[] outops = {
         new PixelOp("Color"){int go(int x,int y,int i){return out_color; }},
-        new PixelOp("Edge" ){int go(int x,int y,int i){return B.buf.get.it(clip(x,0,W8),clip(y,0,H8)); }},
-        new PixelOp("Tile" ){int go(int x,int y,int i){return B.buf.get.it(x,y); }},
-        new PixelOp("Image"){int go(int x,int y,int i){return B.img.get.it(x,y); }},
-        new PixelOp("Fade" ){int go(int x,int y,int i){
-            float X = (float)x*oW7-1, Y = (float)y*oH7-1;
-            int   K = clip((int)((2-X*X+Y*Y) * 256),0,256);
-            return blend(B.buf.get.it(x,y),B.img.get.it(x,y),K);
+        new PixelOp("Edge" ){int go(int x,int y,int i){return B.buf.get.it(clip(x,0,W8),clip(y,0,H8));}},
+        new PixelOp("Tile" ){int go(int x,int y,int i){return B.buf.get.it(x,y);}},
+        new PixelOp("Image"){int go(int x,int y,int i){return B.img.get.it(x,y);}},
+        new SpecialOp("Fade"){int go(int x,int y,int i){
+            return blend(B.buf.get.it(x,y),B.img.get.it(x,y),weight(x,y,i));
         }},
         new SpecialOp("Special1"){int go(int fx,int fy,int i){
-            float w = weight(fx,fy,i);
-            return blend(bar_color,out_color,(int)(256*w+0.5));
+            return blend(bar_color,out_color,weight(fx,fy,i));
         }},
         new SpecialOp("Special2"){int go(int fx,int fy,int i){
-            float w = weight(fx,fy,i);
-            w = (w*2-1);
-            w *= w;
-            return blend(bar_color,out_color,(int)(256*w+0.5));
+            int x = weight(fx,fy,i); x=(256-x)*x;
+            return blend(bar_color,out_color,(x*x)>>20);
         }},
         new SpecialOp("Special3"){int go(int fx,int fy,int i){
-            float w = weight(fx,fy,i);
-            w = 1-((float)cos(w*(float)(Math.PI))+1)*.5f;
-            return blend(pout_color,out_color,(int)(256*w+0.5));
+            int x = weight(fx,fy,i);
+            x = ((768 - 2*x)*x*x)>>16;
+            //fx>>=8; fy>>=8;
+            //B.buf.buf.getElem(clip(fx,0,W-1)+W*clip(fy,0,H-1))
+            return blend(B.buf.get.it(fx,clip(fy,0,H8-1)),blend(out_color,bar_color,x),x);
         }},
     };
     
@@ -485,7 +510,8 @@ public class FractalMap {
         rotation.imag = ((H - y) / z2H + UL.imag);
         float theta = complex.arg(rotation);
         float r = complex.mod(rotation) * 2; 
-        bound_radius = 1 / complex.mod(rotation);
+        inverse_radius = complex.mod(rotation);
+        bound_radius = 1 / inverse_radius;
         rotation = complex.fromPolar(1 / r, theta);   
     }
     final static ComplexVarList vars = ComplexVarList.standard();
@@ -546,23 +572,24 @@ public class FractalMap {
     ////////////////////////////////////////////////////////////////////////////
     // The boundary conditions for the Julia set. "R" //////////////////////////
     public Bound   bound_op;
-    public int     bounds_i      = 1;     // 0:screen 1:circle 2:elastic 3:horizon 4:Newton 5:none
-    public boolean bounds_invert = false; // Invert boundary condition?
-    public float   bound_radius  = 1;     // adjust radius with map scale (mode 2)
+    public int     bounds_i       = 1;     // 0:screen 1:circle 2:elastic 3:horizon 4:Newton 5:none
+    public boolean invert_bound   = false; // Invert boundary condition?
+    public float   bound_radius   = 1;     // adjust radius with map scale (mode 2)
+    public float   inverse_radius = 1;     // adjust radius with map scale (mode 2)
     public void nextBound(int n) {setBound(bounds_i + n);}
     public void setBound(int index) {bound_op = bounds[bounds_i = wrap(index, bounds.length)];}
     public abstract class Bound {
         public final String name;
         public Bound(String name) {this.name = name;}
         abstract boolean test(int fx, int fy, int i);
-        float r2(int X, int Y) {float x=(float)X*oW7-1,y=(float)Y*oH7-1; return (float)sqrt(x*x+y*y);}}
+        float r1(int X, int Y) {float x_=(float)X*oW7-1, y_=(float)Y*oH7-1; return (float)sqrt(x_*x_+y_*y_);}}
     private final Bound[] bounds = {
-        new Bound("Screen") {boolean test(int X,int Y,int i) {return X<W8&&Y<H8&&X>=0&&Y>=0;}},
-        new Bound("Oval")   {boolean test(int X,int Y,int i) {return r2(X,Y)<1;}},
-        new Bound("Horizon"){boolean test(int X,int Y,int i) {return Y>0&&Y<H8;}},
-        new Bound("Radius") {boolean test(int X,int Y,int i) {return r2(X,Y)<bound_radius;}},
-        new Bound("Newton") {boolean test(int X,int Y,int i) {return zconv[i];}},
-        new Bound("None")   {boolean test(int X,int Y,int i) {return false;}}};
+        new Bound("Screen") {boolean test(int x,int y,int i) {return x<W8&&y<H8&&x>=0&&y>=0;}},
+        new Bound("Oval")   {boolean test(int x,int y,int i) {return x<W8&&y<H8&&x>=0&&y>=0&&in_circle[(x>>8)+W*(y>>8)];}},
+        new Bound("Horizon"){boolean test(int x,int y,int i) {return y>0&&y<H8;}},
+        new Bound("Radius") {boolean test(int x,int y,int i) {return r1(x,y) < bound_radius;}},
+        new Bound("Newton") {boolean test(int x,int y,int i) {return zconv[i];}},
+        new Bound("None")   {boolean test(int x,int y,int i) {return false;}}};
     
     ////////////////////////////////////////////////////////////////////////////
     // Gradient ////////////////////////////////////////////////////////////////

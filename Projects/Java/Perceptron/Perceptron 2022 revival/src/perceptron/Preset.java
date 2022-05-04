@@ -163,8 +163,8 @@ public class Preset {
         out += GAP + "color_dampen           " + F.color_dampen + "\n";
         out += GAP + "fractal_map            " + F.mapping + "\n";
         out += GAP + "bounds_i               " + F.bounds_i + "\n";
-        out += GAP + "bounds_invert          " + F.bounds_invert + "\n";
-        out += GAP + "outside_i              " + F.outside_i + "\n";
+        out += GAP + "bounds_invert          " + F.invert_bound + "\n";
+        out += GAP + "outside_i              " + F.outi + "\n";
         out += GAP + "fade_i                 " + F.gcolor1_i + "\n";
         out += GAP + "grad_accent_i          " + F.gcolor2_i + "\n";
         out += GAP + "grad_slope             " + F.gslope + "\n";
@@ -223,10 +223,10 @@ public class Preset {
         out += "Ctl @type equation         @" + C.entry_mode + "\n";
         out += "?/  @show help             @" + P.show_help + "\n";
         out += "qQ  @± fractal map         @" + F.mapping + "\n";
-        out += "wW  @± outside coloring    @" + F.outside_i + " " + F.outside_op.name+"\n";
+        out += "wW  @± outside coloring    @" + F.outi + " " + F.outop.name+"\n";
         out += "eE  @± boundary test       @" + F.bounds_i  + " " + F.bound_op.name+"\n";
         out += "r   @reflection            @" + P.buf.reflect + "\n";
-        out += "R   @reverse bounds test   @" + F.bounds_invert + "\n";
+        out += "R   @reverse bounds test   @" + F.invert_bound + "\n";
         out += "t   @draw tree             @" + P.draw_tree + "\n";
         out += "T   @objects on top        @" + P.objects_on_top + "\n";
         out += "yY  @± outer color (w=0)   @" + F.outcolor_i + " " + F.color_register_names[F.outcolor_i] + "\n";
@@ -314,8 +314,8 @@ public class Preset {
         F.motion_blur = motion_blur;
         F.setMap(fractal_map);
         F.bounds_i = bounds_i;
-        F.bounds_invert = bounds_invert;
-        F.outside_i = outside_i;
+        F.invert_bound = bounds_invert;
+        F.outi = outside_i;
         F.gslope = grad_slope;
         F.goffset = grad_offset;
         F.color_mask = color_mask;

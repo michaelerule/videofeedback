@@ -25,6 +25,7 @@ public class ColorUtil {
 
     /** The size of lookup arrays */
     public static final int LUTSIZE = 128;
+    
     /** Largest lookup index */
     public static final int MAXLUTINDEX = LUTSIZE - 1;
 
@@ -161,18 +162,22 @@ public class ColorUtil {
         return M & (((c1 & M) + (c2 & M) + 0x00010001) >> 1)
              | G & (((c1 & G) + (c2 & G) + 0x00000100) >> 1);
     }
+    
     /** average two colors based on two given weights
      * @param p
      * @param q
      * @param w
      * @return  */
     public static int blend(int p, int q, int w) {
+        /*
         // Faster 12-bit version
-        //w1>>=4;
-        //if (w1>16) w1=16;
-        //c1&=0xf0f0f0;
-        //c2&=0xf0f0f0;
-        //return w1*(c1-c2) + (c2<<4) + 0x808080 >> 4;
+        w>>=4;
+        if (w>16) w=16;
+        p&=0xf0f0f0;
+        q&=0xf0f0f0;
+        return w*(p-q) + (q<<4) + 0x808080 >> 4;
+        */
+                
         // 24 bit version
         int m1 = p&M;
         int m2 = q&M;
@@ -460,7 +465,7 @@ public class ColorUtil {
         return floatRGBtoIntRGB( multiply_3x3_point(M,intRGBtoFloatRGB(color)));
     }
     
-    public static final int applyColorAffine(float [][] M, float []D, int color) {
+    public static final int applyColorAffine(float [][] M,float []D,int color) {
         float [] c = multiply_3x3_point(M,intRGBtoFloatRGB(color));
         c[0] += D[0];
         c[1] += D[1];
@@ -468,7 +473,7 @@ public class ColorUtil {
         return floatRGBtoIntRGB(c);
     }
     
-    public static final int applyColorAffine8bit(int [][] M, int []D, int c) {
+    public static final int applyColorAffine8bit(int [][] M,int []D,int c) {
         int r0 = (c & 0xff0000) >> 16;
         int g0 = (c & 0xff00) >> 8;
         int b0 = (c & 0xff);

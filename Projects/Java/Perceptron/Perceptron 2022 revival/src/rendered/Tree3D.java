@@ -6,10 +6,13 @@ import perceptron.*;
 import math.complex;
 import java.awt.Color;
 import java.awt.Graphics;
-import static util.Misc.clip;
+import static util.Matrix.change_basis_3x3;
 import static util.Matrix.distance;
+import static util.Matrix.multiply;
 import static util.Matrix.multiply_3x3_point;
+import static util.Matrix.rotation;
 import static util.Matrix.scale_point;
+import static util.Misc.clip;
 
 /* FastTree.java
  * Created on March 7, 2007, 3:43 PM
@@ -143,13 +146,13 @@ public class Tree3D {
         theta = (float) ((theta + .01) % complex.TWOPI);
 
         //Combine rotations into a single transform
-        float[][] LT = Matrix.multiply(Matrix.multiply(Y, X), Matrix.rotation(3, 0, 2, theta));
+        float[][] LT = multiply(multiply(Y, X), rotation(3, 0, 2, theta));
 
         //transform root into the first branches
         multiply_3x3_point(LT, root[0], branch[0]);
         multiply_3x3_point(LT, root[1], branch[1]);
-        scale_point(branch[0], 1 / form[0].d_r);
-        scale_point(branch[1], 1 / form[1].d_r);
+        scale_point(branch[0], 1/form[0].d_r);
+        scale_point(branch[1], 1/form[1].d_r);
 
         //draw root in both directions
         //output_Graphics.setColor(Color.BLACK);
@@ -175,8 +178,8 @@ public class Tree3D {
         float[] L = branch[1];
 
         //Rotations
-        float[][] T1 = Matrix.change_basis_3x3(form[0].T, LT);
-        float[][] T2 = Matrix.change_basis_3x3(form[1].T, LT);
+        float[][] T1 = change_basis_3x3(form[0].T, LT);
+        float[][] T2 = change_basis_3x3(form[1].T, LT);
 
         //Temporary point arrays
         float[] p, q;

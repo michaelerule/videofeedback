@@ -64,7 +64,11 @@ public class TreeForm {
     
     /** Update the rotation matrix */
     private void update_matrix() {
-        T = Matrix.scale(Matrix.multiply(Matrix.rotation(3,0,2,alpha),Matrix.rotation(3,0,1,beta)), d_r);
+        T = Matrix.scale(
+                Matrix.multiply(
+                        Matrix.rotation(3,0,2,alpha),// about Y axis (the tricky one?)
+                        Matrix.rotation(3,0,1,beta)),// about Z axis
+                d_r);
     }
     
     /** Set the axial rotation angle

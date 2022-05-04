@@ -134,7 +134,6 @@ public class Misc {
         return n < 0 ? m - (-n % m) : n % m;
     }
     
-    
     /** Hide the mouse pointer, if possible
      * @param c */
     public static void hideCursor(Component c) {

@@ -72,7 +72,7 @@ public final class Perceptron extends javax.swing.JFrame {
     TextBuffer                text;
     ArrayList<Mapping>        maps;
     Preset[]                  presets;
-    BlurSharpen               blursharpen;
+    BlurSharpen               blursharp;
     Moths                     moths;
     Microphone                mic;
     JFileChooser              savers;
@@ -95,10 +95,10 @@ public final class Perceptron extends javax.swing.JFrame {
         
     ////////////////////////////////////////////////////////////////////////////
     // modifying these after initialization may cause undefined behavior.
-    int physical_width;
-    int physical_height; 
-    int half_screen_width;
-    int half_screen_height;
+    int display_w;
+    int display_h; 
+    int half_screen_w;
+    int half_screen_h;
     public int image_rotate_ms   = 5000;
     public int boredome_ms       = 100000;
     public int preset_rotate_ms  = 500000;
@@ -112,7 +112,7 @@ public final class Perceptron extends javax.swing.JFrame {
     
     ////////////////////////////////////////////////////////////////////////////
     // Render control flags
-    public boolean objects_on_top     = false;
+    public boolean objects_on_top     = true;
     public boolean cap_frame_rate     = true;
     public boolean write_animation    = false;
     public boolean show_help          = false;
@@ -134,11 +134,6 @@ public final class Perceptron extends javax.swing.JFrame {
     
     JFileChooser saver;
     
-    ////////////////////////////////////////////////////////////////////////////
-    public int blursharp_rate = 0;
-    void setColorFilterWeight(int k) {
-        this.blursharp_rate = clip(k,-256,256);
-    }
     
     ////////////////////////////////////////////////////////////////////////////
     // Try to pull in the object data from disk (static)
@@ -157,10 +152,10 @@ public final class Perceptron extends javax.swing.JFrame {
     // Getters and Setters (boilerplate!) //////////////////////////////////////
     public int     screenWidth()              { return screen_width; }
     public int     screenHeight()             { return screen_height; }
-    public int     halfScreenWidth()          { return half_screen_width; }
-    public int     halfScreenHeight()         { return half_screen_height; }
-    public int     physical_width()           { return physical_width; }
-    public int     physical_height()          { return physical_height; }
+    public int     halfScreenWidth()          { return half_screen_w; }
+    public int     halfScreenHeight()         { return half_screen_h; }
+    public int     physical_width()           { return display_w; }
+    public int     physical_height()          { return display_h; }
     public boolean isFancy()                  { return buf.fancy; }
     public void    setObjectsOnTop(boolean b) { objects_on_top = b; }
     public void    setFancy(boolean s)        { if (s != isFancy()) toggleFancy(); }
@@ -202,7 +197,7 @@ public final class Perceptron extends javax.swing.JFrame {
 
         // Make the saver window and remember its (smaller) size)
         saver = new JFileChooser("Save State");
-        saver.setBounds(0,0,this.physical_width,this.physical_height);
+        saver.setBounds(0,0,this.display_w,this.display_h);
 
         // We must parse the settings file before going to full-screen,
         // because we need to know the desired canvas size to choose a
@@ -213,36 +208,29 @@ public final class Perceptron extends javax.swing.JFrame {
         // Make us full-screen
         makeUndecoratedMainFrame(this); //FRAME SETUP
         makeFullscreen(this);           //FULLSCREEN INITIALISATION
-        physical_width  = getWidth();
-        physical_height = getHeight();
-        half_screen_width  = (short) (screen_width / 2);
-        half_screen_height = (short) (screen_height / 2);
+        display_w    = getWidth();
+        display_h    = getHeight();
+        half_screen_w = (short) (screen_width / 2);
+        half_screen_h = (short) (screen_height / 2);
         System.out.println("buffer width : "+screen_width+" height : "+screen_height);
-        System.out.println("screen width : "+physical_width+" height : "+physical_height);
+        System.out.println("screen width : "+display_w+" height : "+display_h);
         moths = new Moths(screen_width,screen_height);
         
         // screen_height and screen_width are only initialized AFTER parsing
         // the settings file. 
         // Initialise the frame rendering,background,and display buffers
-        BufferedImage output = new BufferedImage(
-                screen_width,screen_height,BufferedImage.TYPE_INT_RGB);
-        BufferedImage bkgnd  = new BufferedImage(
-                screen_width,screen_height,BufferedImage.TYPE_INT_RGB);
-        BufferedImage dsply  = new BufferedImage(
-                screen_width,screen_height,BufferedImage.TYPE_INT_RGB);
-
-        buf = new DoubleBuffer(this,output,bkgnd,null,dsply);
-        blursharpen = new BlurSharpen(buf);
+        BufferedImage o = new BufferedImage(screen_width,screen_height,BufferedImage.TYPE_INT_RGB);
+        BufferedImage b = new BufferedImage(screen_width,screen_height,BufferedImage.TYPE_INT_RGB);
+        BufferedImage d = new BufferedImage(screen_width,screen_height,BufferedImage.TYPE_INT_RGB);
+        buf = new DoubleBuffer(this,o,b,null,d);
         
-        text = new TextBuffer(this);
-        text.loadString(CrashLog);     
-        
-        imgdir  = requireNonNull(imgdir);
-        images  = new ImageCache(imgdir);
-        
-        fractal = new FractalMap(buf,maps,this);
-        
-        mic = new Microphone(buf, 0);
+        blursharp = new BlurSharpen(buf);
+        text      = new TextBuffer(this);  
+        imgdir    = requireNonNull(imgdir);
+        images    = new ImageCache(imgdir);
+        fractal   = new FractalMap(buf,maps,this);
+        mic       = new Microphone(buf, 0);
+        text.loadString(CrashLog);   
         //mic.start();
         
         tree = new Tree3D(
@@ -250,7 +238,7 @@ public final class Perceptron extends javax.swing.JFrame {
             max_tree_depth,
             new float[][]{{0,0,0},{0,(float) (-(screen_height / 10)),0}},0,
             new TreeForm[]{new TreeForm(.5f,-.2f,.7f,7),new TreeForm(.5f,.2f,.7f,-7)},
-            new Point(half_screen_width,half_screen_height),buf);
+            new Point(half_screen_w,half_screen_h),buf);
         
         control = new ControlSet(this,presets);
         this.addMouseListener(control);
@@ -261,7 +249,9 @@ public final class Perceptron extends javax.swing.JFrame {
 
     
     ////////////////////////////////////////////////////////////////////////////
-    // Lightness is redundant to brightness so we don't expose that one.
+    // Color transform /////////////////////////////////////////////////////////
+    public int blursharp_rate = 0;
+    void setColorFilterWeight(int k) {this.blursharp_rate = clip(k,-256,256);}
     private void colorTransform(DataBuffer b) {
         hue_rate = wrap(hue_rate,256);
         sat_rate = clip(sat_rate,-256,256);
@@ -309,9 +299,9 @@ public final class Perceptron extends javax.swing.JFrame {
             int r0 = (c & 0xff0000) >> 16;
             int g0 = (c & 0xff00) >> 8;
             int b0 = (c & 0xff);
-            int r1 = M00 * r0+M01 * g0+M02 * b0+beta8;
-            int g1 = M10 * r0+M11 * g0+M12 * b0+beta8;
-            int b1 = M20 * r0+M21 * g0+M22 * b0+beta8;
+            int r1 = M00*r0+M01*g0+M02*b0+beta8;
+            int g1 = M10*r0+M11*g0+M12*b0+beta8;
+            int b1 = M20*r0+M21*g0+M22*b0+beta8;
             r1 = clip((r1+127)>>8,0,255);
             g1 = clip((g1+127)>>8,0,255);
             b1 = clip((b1+127)>>8,0,255);
@@ -335,8 +325,8 @@ public final class Perceptron extends javax.swing.JFrame {
         // If our virtual screen is smaller than the physical screen,we will
         // pad the edges with blac. These are the (x,y) coordinates of the
         // virtual screen on the physica screen device.
-        int x_offset = (physical_width  - screen_width) / 2;
-        int y_offset = (physical_height - screen_height) / 2;
+        int x_offset = (display_w  - screen_width) / 2;
+        int y_offset = (display_h - screen_height) / 2;
         System.out.println(" x_offset : "+x_offset);
         System.out.println(" y_offset : "+y_offset);
         long last_time = System.currentTimeMillis();
@@ -418,7 +408,7 @@ public final class Perceptron extends javax.swing.JFrame {
                     
                     // Applies the blur or sharpen convolution operation.
                     // This acts in-place on the output buffer.
-                    blursharpen.operate(blursharp_rate);
+                    blursharp.operate(blursharp_rate);
                     
                     // Frame counters and framerate monitoring
                     frame++;
@@ -450,8 +440,14 @@ public final class Perceptron extends javax.swing.JFrame {
     }
     
     ////////////////////////////////////////////////////////////////////////////
+    private float tree_spinner = 0f;
     private void drawObjects() {
-        if (draw_tree) tree.render();
+        if (draw_tree) {
+            tree_spinner = wrap(tree_spinner-0.01f,2f*(float)Math.PI);
+            tree.form[0].setAlpha(tree_spinner);
+            tree.form[1].setAlpha(tree_spinner+(float)Math.PI);
+            tree.render();
+        }
         text.renderTextBuffer(buf.out.g2D);
         if (draw_moths) {
             moths.step((float)(20.0/framerate));

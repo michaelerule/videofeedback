@@ -85,8 +85,8 @@ public final class ControlSet implements MouseListener, MouseMotionListener, Key
         presets = user_presets;
 
         P = P_;
-        xscale = (float)(P.screen_width )/P.physical_width ;
-        yscale = (float)(P.screen_height)/P.physical_height;
+        xscale = (float)(P.screen_width )/P.display_w ;
+        yscale = (float)(P.screen_height)/P.display_h;
 
         try {robot = new Robot();} catch (AWTException e) {}
 
@@ -114,7 +114,8 @@ public final class ControlSet implements MouseListener, MouseMotionListener, Key
         }};
         alpha_cursor = new Cursor("c4.png") {public void step(float rate) {
             super.step(rate);
-            var xo = x - P.halfScreenWidth();
+            // DISABLED FOR AUTOSPIN SEE Perceptron.tree_spinner;
+            /*var xo = x - P.halfScreenWidth();
             var yo = y - P.halfScreenHeight();
             if (xo*xo + yo*yo < 5) {
                 P.tree.form[0].setAlpha(0);
@@ -125,6 +126,7 @@ public final class ControlSet implements MouseListener, MouseMotionListener, Key
                 P.tree.form[0].setAlpha(a1 + a2 / 2);
                 P.tree.form[1].setAlpha(a1 - a2 / 2);
             }
+            */
         }};
         branch_length_cursor = new Cursor("c3.png") {
         public void step(float rate) {
@@ -150,9 +152,9 @@ public final class ControlSet implements MouseListener, MouseMotionListener, Key
                 gradient_cursor, 
                 map_rotation_cursor);
         tree_cursors = Set.of(
-                tree_orientation_cursor, 
+                //tree_orientation_cursor, 
                 branching_cursor, 
-                alpha_cursor, 
+                //alpha_cursor, 
                 branch_length_cursor, 
                 tree_location_cursor);
         audio_cursors = Set.of();
@@ -371,7 +373,7 @@ public final class ControlSet implements MouseListener, MouseMotionListener, Key
             case 'e':F.nextBound(1); break;
             case 'E':F.nextBound(-1); break;
             case 'r':P.buf.toggleReflection(); break;
-            case 'R':F.bounds_invert=!F.bounds_invert; break;
+            case 'R':F.invert_bound=!F.invert_bound; break;
             case 't':setTree(!P.draw_tree); break;
             case 'T':P.toggleObjectsOnTop(); break;
             case 'y':F.nextOutColor(1); break;
@@ -645,11 +647,11 @@ public final class ControlSet implements MouseListener, MouseMotionListener, Key
         }
 
         public synchronized void setDestination(int x, int y) {
-            to.x = clip(x,0,P.physical_width);
-            to.y = clip(y,0,P.physical_height);
+            to.x = clip(x,0,P.display_w);
+            to.y = clip(y,0,P.display_h);
             if (current!=this) return;
-            int X = clip((int) (x/xscale + .5f), 0, P.physical_width);
-            int Y = clip((int) (y/yscale + .5f), 0, P.physical_height);
+            int X = clip((int) (x/xscale + .5f), 0, P.display_w);
+            int Y = clip((int) (y/yscale + .5f), 0, P.display_h);
             moveTheMouse(X, Y);
         }
         
@@ -658,8 +660,8 @@ public final class ControlSet implements MouseListener, MouseMotionListener, Key
         }
 
         public void walk() {
-            to.x = clip(to.x + (int)((random()-.5)*33), 0, P.physical_width);
-            to.y = clip(to.y + (int)((random()-.5)*33), 0, P.physical_height);
+            to.x = clip(to.x + (int)((random()-.5)*33), 0, P.display_w);
+            to.y = clip(to.y + (int)((random()-.5)*33), 0, P.display_h);
         }
 
         public synchronized void step(float drift_rate) {
@@ -708,8 +710,8 @@ public final class ControlSet implements MouseListener, MouseMotionListener, Key
     private synchronized void catchup() {
         if (current==null) return;
         if (robot  ==null) return;
-        int x = clip((int) (current.to.x / xscale + 0.5), 0, P.physical_width);
-        int y = clip((int) (current.to.y / yscale + 0.5), 0, P.physical_height);
+        int x = clip((int) (current.to.x / xscale + 0.5), 0, P.display_w);
+        int y = clip((int) (current.to.y / yscale + 0.5), 0, P.display_h);
         robot.mouseMove(x, y);
     }
 
