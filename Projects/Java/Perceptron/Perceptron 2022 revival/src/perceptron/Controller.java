@@ -13,7 +13,7 @@ import java.lang.reflect.InvocationTargetException;
  *
  * @author mer49
  */
-public class Controller implements AbstractController {
+public class Controller {
 
     private final Object object;
     private final Point C;
@@ -94,7 +94,6 @@ public class Controller implements AbstractController {
      *
      * @param i
      */
-    @Override
     public void stepControl(int i) {
         activeControl = (activeControl + i + controls.size()) % +controls.size();
         active = controls.get(activeControl);
@@ -104,36 +103,25 @@ public class Controller implements AbstractController {
      *
      * @param dR
      */
-    @Override
     public void stepActive(double dR) {
-        if (active != null) {
-            active.moveDR(dR);
-        }
+        if (active != null) active.moveDR(dR);
     }
 
     /**
      *
      * @param dt
      */
-    @Override
     public void stepFrame(double dt) {
-        for (RadialControl R : controls) {
-            R.stepValue(dt);
-        }
+        for (RadialControl R : controls) R.stepValue(dt);
     }
 
     /**
      *
      * @param g
      */
-    @Override
     public void paint(Graphics g) {
-        if (g == null) {
-            return;
-        }
-        for (RadialControl R : controls) {
-            R.paint(g);
-        }
+        if (g == null) return;
+        for (RadialControl R : controls) R.paint(g);
     }
 
     /**

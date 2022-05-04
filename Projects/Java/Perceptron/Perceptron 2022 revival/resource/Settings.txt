@@ -73,8 +73,8 @@ min_tree_depth 4
 *   the workaround for now is to use underscore _, so say _cost(x) instead. 
 *   or write as 0-cos(x). 1000 points if you can fix this bug (:
 
-map z
 map z*z
+map z*1.1*e^(0.1*i)
 map z*z*z
 map z*abs(z)
 map sin(z)^2

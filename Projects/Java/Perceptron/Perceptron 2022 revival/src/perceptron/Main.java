@@ -25,29 +25,33 @@ public class Main {
         System.out.println("Welcome to Perceptron...");
 
         SwingUtilities.invokeLater(() -> {
-            System.out.println("Starting GUI.");
             try {
-                javax.swing.UIManager.setLookAndFeel(
-                        javax.swing.UIManager.
-                                getSystemLookAndFeelClassName());
-                System.out.println("Set system L&F");
-            } catch (ClassNotFoundException
-                    | IllegalAccessException
-                    | InstantiationException
-                    | UnsupportedLookAndFeelException e) {
-            }
-            final Perceptron m = new Perceptron(
-                    "resource/Settings.txt",
-                    "resource/CrashReport.txt",
-                    "resource/presets/");
-            Thread go = new Thread() {
-                @Override
-                public void run() {
-                    m.go();
+                System.out.println("Starting GUI.");
+                try {
+                    javax.swing.UIManager.setLookAndFeel(
+                            javax.swing.UIManager.
+                                    getSystemLookAndFeelClassName());
+                    System.out.println("Set system L&F");
+                } catch (ClassNotFoundException
+                        | IllegalAccessException
+                        | InstantiationException
+                        | UnsupportedLookAndFeelException e) {
                 }
-            };
-            go.setPriority(Thread.MIN_PRIORITY);
-            go.start();
+                final Perceptron m = new Perceptron(
+                        "resource/Settings.txt",
+                        "resource/CrashReport.txt",
+                        "resource/presets/");
+                Thread go = new Thread() {
+                    @Override
+                    public void run() {
+                        m.go();
+                    }
+                };
+                go.setPriority(Thread.MIN_PRIORITY);
+                go.start();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
         
     }

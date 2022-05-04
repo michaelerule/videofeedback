@@ -20,8 +20,8 @@ public class TextBuffer {
     
     // Configrable constants
     static final int COLUMNS = 48;
-    static final int ROWS = 18;
-    static final int SIZE = 24;
+    static final int ROWS    = 18;
+    static final int SIZE    = 24;
     static final int[] COLORS = {
         0x00ff00, 0xff0000, 0x0000ff, 0xffff00, 0x00ffff, 0xff00ff
     };
@@ -29,9 +29,8 @@ public class TextBuffer {
     //Text Editor Data
     char[]  buf = new char[ROWS * COLUMNS];
     int     idx = 0;
-    public boolean on   = true;
+    public boolean on        = false;
     public boolean cursor_on = true;
-    
     Perceptron perceptron;
     
     /**

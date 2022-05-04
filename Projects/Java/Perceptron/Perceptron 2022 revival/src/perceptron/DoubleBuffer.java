@@ -10,7 +10,7 @@ package perceptron;
 import util.ColorUtil;
 import java.awt.image.*;
 import perceptron.Samplers.Sampler;
-import static perceptron.Misc.clip;
+import static util.Misc.clip;
 
 /**
  *

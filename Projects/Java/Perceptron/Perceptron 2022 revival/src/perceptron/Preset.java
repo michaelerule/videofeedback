@@ -5,7 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import static java.lang.Math.max;
-import rendered3D.Tree3D;
+import rendered.Tree3D;
 
 /**
  * Preset.java
@@ -19,7 +19,6 @@ import rendered3D.Tree3D;
 public class Preset {
     
     final static String [] gradient_names  = {"Circle","Horizontal","Vertical","Diagonal","Diamond","Cross","Ring","Sharp Ring","Eye"};
-    final static String [] gradient_accent_names  = {"Black","White"};
 
     ////////////////////////////////////////////////////////////////////////////
     // Mirror of every state in perceptron
@@ -67,7 +66,6 @@ public class Preset {
     public boolean interpolate = true;
     public boolean fancy       = true;
     // ControlSet
-    //public boolean draw_cursors = true;
     public boolean draw_futures = true;
     public double  XBranchingCursor;
     public double  XAlphaCursor;
@@ -92,6 +90,15 @@ public class Preset {
     // TextBuffer
     public boolean on   = true;
     public boolean cursor_on = true;
+    // New features
+    public boolean tree_leaves = false;
+    public boolean tree_symmetry = true;
+    public boolean draw_dino = false;
+    public boolean mic_active = false ;
+    public int     mic_visualization = 0;
+    public float   mic_speed = .05f;
+    public float   mic_volume = 1.0f;
+    
     
 
     /** Read the preset.
@@ -122,7 +129,6 @@ public class Preset {
     public static String settings(Perceptron P) {
         FractalMap F = P.fractal;
         DoubleBuffer B = P.buf;
-        Tree3D R = P.tree;
         TextBuffer T = P.text;
         ControlSet C = P.control;
         String GAP = "      ";
@@ -131,16 +137,19 @@ public class Preset {
         out += GAP + "cap_frame_rate         " + P.cap_frame_rate + "\n";
         out += GAP + "rotate_images          " + P.rotate_images + "\n";
         out += GAP + "fore_grad              " + P.fore_grad + "\n";
+        
         out += GAP + "draw_moths             " + P.draw_moths + "\n";
         out += GAP + "draw_top_bars          " + P.draw_top_bars + "\n";
         out += GAP + "draw_side_bars         " + P.draw_side_bars + "\n";
         out += GAP + "do_hue_rotation        " + P.do_color_transform + "\n";
+        
         out += GAP + "hue_rate               " + P.hue_rate + "\n";
         out += GAP + "sat_rate               " + P.sat_rate + "\n";
         out += GAP + "lum_rate               " + P.lum_rate + "\n";
         out += GAP + "bri_rate               " + P.bri_rate + "\n";
         out += GAP + "con_rate               " + P.con_rate + "\n";
         out += GAP + "blursharp_rate         " + P.blursharp_rate + "\n";
+        
         out += GAP + "offset_type            " + F.offset_mode + "\n";
         out += GAP + "rotate_type            " + F.rotate_mode + "\n";
         out += GAP + "mirror_type            " + F.rotate_mode + "\n";
@@ -168,11 +177,22 @@ public class Preset {
         out += GAP + "reflect                " + B.reflect + "\n";
         out += GAP + "interpolate            " + B.interpolate + "\n";
         out += GAP + "fancy                  " + B.fancy + "\n";
-        out += GAP + "tree_active            " + R.active + "\n";
+        out += GAP + "tree_active            " + P.draw_tree + "\n";
+        
         out += GAP + "on                     " + T.on + "\n";
         out += GAP + "cursor_on              " + T.cursor_on + "\n";
         out += GAP + "draw_cursors           " + C.draw_cursors + "\n";
         out += GAP + "draw_futures           " + C.draw_futures + "\n";
+        
+        // New features
+        out += GAP + "tree_leaves            " + P.tree.getLeaves() + "\n";
+        out += GAP + "tree_symmetry          " + P.tree.getSymmetry() + "\n";
+        out += GAP + "draw_dino              " + P.draw_dino + "\n";
+        out += GAP + "mic_active             " + P.mic.isActive() + "\n";
+        out += GAP + "mic_visualization      " + P.mic.getVis() + "\n";
+        out += GAP + "mic_speed              " + P.mic.getSpeed() + "\n";
+        out += GAP + "mic_volume             " + P.mic.getVolume() + "\n";
+        
         out += GAP + "XBranchingCursor       " + C.XBranchingCursor() + "\n";
         out += GAP + "XAlphaCursor           " + C.XAlphaCursor() + "\n";
         out += GAP + "XBranchLengthCursor    " + C.XBranchLengthCursor() + "\n";
@@ -207,18 +227,23 @@ public class Preset {
         out += "eE  @± boundary test       @" + F.bounds_i  + " " + F.bound_op.name+"\n";
         out += "r   @reflection            @" + P.buf.reflect + "\n";
         out += "R   @reverse bounds test   @" + F.bounds_invert + "\n";
-        out += "t   @draw tree             @" + P.tree.isActive() + "\n";
+        out += "t   @draw tree             @" + P.draw_tree + "\n";
         out += "T   @objects on top        @" + P.objects_on_top + "\n";
         out += "yY  @± outer color (w=0)   @" + F.outcolor_i + " " + F.color_register_names[F.outcolor_i] + "\n";
-        out += "u   @show frame rate       @" + P.show_framerate + "\n";
+        out += "u   @show frame rate       @" + P.draw_framerate + "\n";
         out += "U   @cap frame rate        @" + P.cap_frame_rate + "\n";
         out += "iI  @± input image         @" + P.image_i + " " + P.images.name() + "\n";
         out += "oO  @± translate mode      @" + F.offset_mode + " " + F.translate_modes[F.offset_mode] + "\n";
         out += "pP  @± rotate mode         @" + F.rotate_mode + " " + F.translate_modes[F.rotate_mode] + "\n";
+        out += "&   @tree leaves (t=true)  @" + P.tree.getLeaves() + "\n";
+        out += "*   @tree symmetry (t=true)@" + P.tree.getSymmetry() + "\n";
+        out += "a   @+ audio visualizer    @" + P.mic.getVis() + " " + P.mic.vis.name + "\n";
+        out += "A   @Mic enabled?          @" + P.mic.isActive() + "\n";
+        out += "s   @Stegosaurus?          @" + P.draw_dino + "\n";
         out += "S   @save (shift+s)        @ \n";
         out += "dD  @± fade color damping  @" + F.color_dampen + "\n";
-        out += "f   @± grad color 1 (g>0)  @" + F.gcolor1_i + " " + F.color_register_names[F.gcolor1_i] + "\n";
-        out += "F   @± grad color 2 (g=2)  @" + F.gcolor2_i + " " + F.color_register_names[F.gcolor2_i] + "\n";
+        out += "f   @+ grad color 1 (g>0)  @" + F.gcolor1_i + " " + F.color_register_names[F.gcolor1_i] + "\n";
+        out += "F   @+ grad color 2 (g=2)  @" + F.gcolor2_i + " " + F.color_register_names[F.gcolor2_i] + "\n";
         out += "gG  @± gradient mode       @" + F.grad_mode + " " + F.grad_op.name  + "\n";
         out += "hH  @± gradient shape      @" + F.grad_i + " " + gradient_names[F.grad_i] + "\n";
         out += "j   @invert output         @" + F.color_mask + "\n";
@@ -232,10 +257,10 @@ public class Preset {
         out += ",.  @± Δcontrast (n)       @" + P.con_rate + '\n';
         out += "<>  @± Δbrightness (n)     @" + P.bri_rate + '\n';
         out += "zZ  @± tint color          @" + F.tintcolor_i + " " + F.color_register_names[F.tintcolor_i] + "\n";
-        out += "xX  @± tint level          @" + F.tint_level + "\n";
+        out += "xX  @± tint amount         @" + F.tint_level + "\n";
         out += "C   @cursor futures        @" + C.draw_futures + "\n";
         out += "c   @show cursors          @" + C.draw_cursors + "\n";
-        out += "v   @wander                @" + (C.current==null?"(none)":C.current.wanderer) + "\n";
+        out += "v   @wander                @" + (C.current==null?"(none)":C.current.name+": "+C.current.wanderer) + "\n";
         out += "V   @autopilot             @" + C.screensaver + "\n";
         out += "b   @show text buffer      @" + P.text.on + "\n";
         out += "B   @text buffer cursor    @" + P.text.cursor_on + "\n";
@@ -250,10 +275,12 @@ public class Preset {
         out += "[]  @± HV edge color       @" + F.barcolor_i + " " + F.color_register_names[F.barcolor_i] + "\n";
         out += "()  @± noise level         @" + F.noise_level + '\n';
         out += "↑↓  @± motion blur         @" + F.motion_blur + '\n';
-        out += "←   @sharpen               @" + max(0,-P.blursharp_rate) + '\n';
-        out += "→   @blur                  @" + max(0, P.blursharp_rate) + '\n';
-        out += "Home  @.... animate (!)  @" + P.write_animation + "\n";
+        out += "←→  @sharpen/blur          @" + P.blursharp_rate + '\n';
+        out += "PgUp/Dn @± mic volume      @" + P.mic.getVolume() + "\n";
+        out += "Home/End@± mic speed       @" + P.mic.getSpeed() + "\n";
+        out += "Del   @write animation     @" + P.write_animation + "\n";
         out += "Enter @presets mode        @" + (C.presets_mode? "true ("+C.preset_i+")" : "false") + "\n";
+        
         return out;
     }
     
@@ -264,7 +291,6 @@ public class Preset {
     public void set(Perceptron P) {
         FractalMap F = P.fractal;
         DoubleBuffer B = P.buf;
-        Tree3D R = P.tree;
         TextBuffer T = P.text;
         ControlSet C = P.control;
         P.objects_on_top = objects_on_top;
@@ -311,10 +337,20 @@ public class Preset {
         B.reflect = reflect;
         B.fancy = fancy;
         B.interpolate = interpolate;
-        R.active = tree_active;
+        P.draw_tree = tree_active;
+        
         T.on = on;
         T.cursor_on = cursor_on;
 
+        // New features
+        P.tree.setLeaves(tree_leaves);
+        P.tree.setSymmetry(tree_symmetry);
+        P.draw_dino = draw_dino;
+        P.mic.setActive(mic_active);
+        P.mic.setVis(mic_visualization);
+        P.mic.setSpeed(mic_speed);
+        P.mic.setVolume(mic_volume);
+                
         C.draw_futures = draw_futures;
         C.setFractal(true);
         C.setTree(tree_active);
@@ -392,6 +428,14 @@ public class Preset {
         out += GAP + "YMapRotationCursor     = " + YMapRotationCursor + "\n";
         out += GAP + "YGradintCursor         = " + YGradintCursor + "\n";
         out += GAP + "YTreeLocationCursor    = " + YTreeLocationCursor + "\n";
+        // New features
+        out += GAP + "tree_leaves            = " + tree_leaves + "\n";
+        out += GAP + "tree_symmetry          = " + tree_symmetry + "\n";
+        out += GAP + "draw_dino              = " + draw_dino + "\n";
+        out += GAP + "mic_active             = " + mic_active + "\n";
+        out += GAP + "mic_visualization      = " + mic_visualization + "\n";
+        out += GAP + "mic_speed              = " + mic_speed + "\n";
+        out += GAP + "mic_volume             = " + mic_volume + "\n";
         return out;
     }
 } 

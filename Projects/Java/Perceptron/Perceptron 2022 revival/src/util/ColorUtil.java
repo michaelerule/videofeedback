@@ -10,7 +10,7 @@ import static java.lang.Math.cos;
 import static java.lang.Math.max;
 import static java.lang.Math.round;
 import static java.lang.Math.sin;
-import static perceptron.Misc.clip;
+import static util.Misc.clip;
 import static util.Matrix.diag;
 import static util.Matrix.invert_3x3;
 import static util.Matrix.multiply;

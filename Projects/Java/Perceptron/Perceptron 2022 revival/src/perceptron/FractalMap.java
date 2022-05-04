@@ -18,6 +18,7 @@ import java.awt.Color;
 import java.awt.image.DataBuffer;
 import java.util.ArrayList;
 import static java.lang.Math.min;
+import static java.lang.Math.cos;
 import static java.lang.Math.max;
 import static java.lang.Math.abs;
 import static java.lang.Math.pow;
@@ -25,9 +26,8 @@ import static java.lang.Math.sqrt;
 import static math.complex.arg;
 import static math.complex.fromPolar;
 import static math.complex.mod;
-import static perceptron.Misc.clip;
-import static perceptron.Misc.wrap;
-import static util.ColorUtil.blend;
+import static util.Misc.clip;
+import static util.Misc.wrap;
 import static util.ColorUtil.blend;
 
 /**
@@ -40,10 +40,6 @@ public class FractalMap {
     ArrayList<Mapping> maps;
     boolean            running = false;
     
-    boolean        active  = true;
-    public boolean isActive() {return active;}
-    public void    setActive(boolean active) {this.active = active;}
-    
     DataBuffer 
         out, // current image on the screen
         buf, // image buffer after mapping
@@ -53,7 +49,7 @@ public class FractalMap {
     // Control interpretation of translation, rotation + mirroring modes
     public int 
         offset_mode = 0,
-        rotate_mode = 0,
+        rotate_mode = 2,
         mirror_mode = 0;
     public final int 
         // Constants for identifying the translation modes
@@ -86,10 +82,12 @@ public class FractalMap {
     public static final complex size = new complex(6f, 6f);
     public static final complex UL   = new complex();
     public static final complex LR   = new complex();
-    public static final double PI_OVER_TWO = Math.PI * .5;
+    public static final double  PI_OVER_TWO = Math.PI * .5;
     
     // Accumulators for velocity mode
     private float dr = 0, di = 0, dtheta = .1f;
+    
+    public static final float ZSCALE = 2.8f;//2.4f;
     
     /** Create new FractalMap
      * @param b
@@ -101,21 +99,20 @@ public class FractalMap {
         vars.set(22, new complex(size.real));
         vars.set(7 , new complex(size.imag));
         this.maps = null==maps? new ArrayList<>() : maps;
-        // FractalMap loads the buffer.
-        B = b;
         // Screen width and height, and related constants.
         // We need to remove most of these
-        W      = b.out.img.getWidth();
-        H      = b.out.img.getHeight();
-        W7     = W<<7;  H7  = H<<7;
-        oW7    = 1f/W7; oH7 = 1f/H7;
-        W8     = W<<8;  H8  = H<<8;
-        MLEN   = W*H;   M2  = MLEN<<1;
-        if (W >= H) { size.real = 2.4f * W / H; size.imag = 2.4f; }
-        else        { size.real = 2.4f; size.imag = 2.4f * H / W; }
+        B   = b;
+        W   = b.out.img.getWidth();
+        H   = b.out.img.getHeight();
+        W7  = W<<7;  H7  = H<<7;
+        oW7 = 1f/W7; oH7 = 1f/H7;
+        W8  = W<<8;  H8  = H<<8;
+        MLEN= W*H;   M2  = MLEN<<1;
+        if (W >= H) { size.real = ZSCALE * W / H; size.imag = ZSCALE; }
+        else        { size.real = ZSCALE; size.imag = ZSCALE * H / W; }
         LR.real = size.real/2f; LR.imag = size.imag/2f;
         UL.real = -LR.real;     UL.imag = -LR.imag;
-        z2mapW  = size.real/W;  z2mapH  = size.imag/H;
+        z2mapW  = size.real/W;  z2mapH = size.imag/H;
         z2W = z2H = (W/size.real+H/size.imag) * .5f;
         // Initialize modular rendering functions
         bounds_i  = wrap(bounds_i, bounds.length);
@@ -140,7 +137,7 @@ public class FractalMap {
             i++;
         }
         grad_i = 0;
-        grad  = grads[grad_i];
+        grad   = grads[grad_i];
         // Prepare the buffers for the mapping f(z). 
         map     = new int[M2];
         map_buf = new int[M2];
@@ -162,10 +159,6 @@ public class FractalMap {
     //🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛
     // Apply current map to screen raster, storing result in output raster. 
     public synchronized void operate() {
-        if (!active) {
-            B.out.g.drawImage(B.buf.img, 0, 0, null);
-            return;
-        }
         out = B.out.buf;
         buf = B.buf.buf;
         dsp = B.dsp.buf;
@@ -173,24 +166,20 @@ public class FractalMap {
         
         updateColorRegisters();
 
-        //gradient_inversion ^= ~0;
-        final State m = new State();
-
         // Mode 0: (normal) offset is converted to 8-bit fixed point. 
         // Mode 1: Velocity mode. 
         // Mode 2: Locked: the offset is clamped to zero. 
+        int cx = W7, cy = H7;
         switch (offset_mode) {
             case TRANSLATION_NORMAL: 
-                m.x=(int)(.5f+256*normc[0])+W7; 
-                m.y=(int)(.5f+256*normc[1])+H7; 
+                cx=(int)(.5f+256*normc[0])+W7; 
+                cy=(int)(.5f+256*normc[1])+H7; 
                 break;
             case TRANSLATION_VELOCITY:
-                m.x = (int)(.5f+256*((dr=(abs(dr)>MAXC)?0:dr+.1f*normc[0])))+W7;
-                m.y = (int)(.5f+256*((di=(abs(di)>MAXC)?0:di+.1f*normc[1])))+H7;
+                cx = (int)(.5f+256*((dr=(abs(dr)>MAXC)?0:dr+.1f*normc[0])))+W7;
+                cy = (int)(.5f+256*((di=(abs(di)>MAXC)?0:di+.1f*normc[1])))+H7;
                 break;
             case TRANSLATION_LOCKED: 
-                m.x = W7; 
-                m.y = H7; 
                 break;
         }
         // Mode 0: Blue cursor controls scale and rotation
@@ -203,49 +192,40 @@ public class FractalMap {
                 break;
             case ROTATION_VELOCITY:
                 dtheta += arg(rotation)*.01f;
-                r=fromPolar(mod(rotation),dtheta);
+                r = fromPolar(mod(rotation),dtheta);
                 break;
             case ROTATION_LOCKED:
                 r = fromPolar(1f,(float)PI_OVER_TWO);
                 break;
         }
-        m.rx = r.real;
-        m.ry = r.imag;
-        m.rc = m.rx + m.ry;
 
         int hH = (H+1)/2, hW = (W+1)/2, hM = (MLEN+1)/2;
         switch (mirror_mode) {
             case MIRROR_OFF: {
-                render(m);
+                render(0,MLEN,cx,cy,r);
             } break;
             case MIRROR_HORIZONTAL: {
                 for (int y=0; y<H; y++) {
-                    m.start = y*W;
-                    m.end   = m.start + hW;
-                    render(m);
+                    render(y*W,y*W+hW,cx,cy,r);
                     int i=y*W+W-1, j=y*W;
                     for (int x=0; x<hW; x++) buf.setElem(i--,buf.getElem(j++));
                 } 
             } break;
             case MIRROR_VERTICAL: {
-                m.end = W*hH;
-                render(m);
+                render(0,W*hH,cx,cy,r);
                 for (int y=0; y<hH; y++) {
                     int i = W*(H-1-y), j = W*y;
                     for (int x=0; x<W; x++) buf.setElem(i++, buf.getElem(j++));
                 }
             } break;
             case MIRROR_TURN: {
-                m.end = hM;
-                render(m);
+                render(0,hM,cx,cy,r);
                 int i=MLEN-1;
-                for (int j=0; j<m.end; j++) buf.setElem(i--, buf.getElem(j));
+                for (int j=0; j<hM; j++) buf.setElem(i--, buf.getElem(j));
             } break;
             case MIRROR_QUADRANT: {
                 for (int y=0; y<hH; y++) {
-                    m.start = y*W;
-                    m.end   = m.start + hW;
-                    render(m);
+                    render(y*W,y*W+hW,cx,cy,r);
                     int i=y*W+W-1, j=y*W;
                     for (int x=0; x<hW; x++) buf.setElem(i--,buf.getElem(j++));
                 }
@@ -261,13 +241,18 @@ public class FractalMap {
         B.flip();
     }
     //🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛🮛
-        
+
     ////////////////////////////////////////////////////////////////////////////
     // The main rendering operator /////////////////////////////////////////////
-    void render(State m) {
+    void render(int start, int end, int cx, int cy, complex r) {
+        
+        float rx = r.real;
+        float ry = r.imag;
+        float rc = rx + ry;
+        
         int noise = (int)((long)(Math.random()*4294967296L)&0xffffffff);
         int f1 = (int) (256 * map_fade);
-        for (int i = m.start; i<m.end; i++) {
+        for (int i = start; i<end; i++) {
             int j = i<<1;
             int real, imag;
             if (f1 > 0) {
@@ -275,17 +260,18 @@ public class FractalMap {
                 imag = map_buf[j] + (map[j]*f1 >> 8);
             } 
             else {real = map[j++]; imag = map[j]; }
-            float x4 = imag * m.rx;
-            float x5 = real * m.ry;
-            int fx = (int)(x4+x5)+m.x;
-            int fy = (int)(m.rc*(imag-real)-x4+x5)+m.y;
-            int c;
+            float x4 = imag * rx;
+            float x5 = real * ry;
+            int   fx = (int)(x4+x5)+cx;
+            int   fy = (int)(rc*(imag-real)-x4+x5)+cy;
+            int   c;
             if (bound_op.test(fx,fy,i) != bounds_invert) {
+                // Within bounds for feedback unless bounds_invert = true
                 c = B.out.get.it(fx, fy);
                 if (P.fore_grad) c = grad_op.go(i,c);
                 c ^= feedback_mask;
             } else {
-                c = outside_op.go(fx,fy);
+                c = outside_op.go(fx,fy,i);
                 c = grad_op.go(i,c);
             }
             if (noise_level>0) {
@@ -315,33 +301,35 @@ public class FractalMap {
     // fade_color: used as the 1st gradient color
     // fade_color: use for outside coloring 
     // fade_color: used for bar coloring
-    public int gcolor1_i    = 0; // Gradient color index used in modes 1 and 2
+    // Colors: 0black 1white 2midhue 3midinv 4midhuerot 5huerot
+    public int gcolor1_i    = 4; // Gradient color index used in modes 1 and 2
     public int gcolor2_i    = 0; // Accent color index if in gradient mode 2
     public int barcolor_i   = 0; // H/V bar colors (if present)
     public int tintcolor_i  = 0; // Global (uniform) tinting
-    public int outcolor_i   = 0; // Color used to fill in for boundary mode 0
+    public int outcolor_i   = 4; // Color used to fill in for boundary mode 0
     public int gcolor1      = 0; 
-    public int gcolor2      = 0; 
+    public int gcolor2      = 0;
     public int bar_color    = 0; 
     public int tint_color   = 0; 
     public int out_color    = 0; 
+    public int pout_color   = 0; 
     public int tint_level   = 0;
-    public int color_dampen = 0;
+    public int color_dampen = 128;
     //public void setGColor1(int i) {fade_op = fade_colors[gradcolor1_i = wrap(i, N_COLOR_REGISTERS)];}
-    public void setGColor1   (int i) {gcolor1_i    = wrap(i, N_COLOR_REGISTERS);}
-    public void setGColor2   (int i) {gcolor2_i    = wrap(i, N_COLOR_REGISTERS);}
-    public void setBarColor  (int i) {barcolor_i   = wrap(i, N_COLOR_REGISTERS);}
-    public void setTintColor (int i) {tintcolor_i  = wrap(i, N_COLOR_REGISTERS);}
-    public void setOutColor  (int i) {outcolor_i   = wrap(i, N_COLOR_REGISTERS);}
-    public void setTintLevel (int i) {tint_level   = clip(i, 0,255);}
-    public void setColorDamp (int i) {color_dampen = clip(i, 0,255);}
-    public void nextGColor1  (int n) {setGColor1  (gcolor1_i    + n);}    
-    public void nextGColor2  (int n) {setGColor2  (gcolor2_i    + n);}    
-    public void nextBarColor (int n) {setBarColor (barcolor_i   + n);}    
-    public void nextOutColor (int n) {setOutColor (outcolor_i   + n);}    
-    public void nextTintColor(int n) {setTintColor(tintcolor_i  + n);}    
-    public void nextTintLevel(int n) {setTintLevel(tint_level   + n);}
-    public void nextColorDamp(int n) {setColorDamp(color_dampen + n);}
+    public void setGColor1   (int i) {gcolor1_i   =wrap(i,N_COLOR_REGISTERS);}
+    public void setGColor2   (int i) {gcolor2_i   =wrap(i,N_COLOR_REGISTERS);}
+    public void setBarColor  (int i) {barcolor_i  =wrap(i,N_COLOR_REGISTERS);}
+    public void setTintColor (int i) {tintcolor_i =wrap(i,N_COLOR_REGISTERS);}
+    public void setOutColor  (int i) {outcolor_i  =wrap(i,N_COLOR_REGISTERS);}
+    public void setTintLevel (int i) {tint_level  =clip(i,0,255);}
+    public void setColorDamp (int i) {color_dampen=clip(i,0,255);}
+    public void nextGColor1  (int n) {setGColor1  (gcolor1_i   +n);}    
+    public void nextGColor2  (int n) {setGColor2  (gcolor2_i   +n);}    
+    public void nextBarColor (int n) {setBarColor (barcolor_i  +n);}    
+    public void nextOutColor (int n) {setOutColor (outcolor_i  +n);}    
+    public void nextTintColor(int n) {setTintColor(tintcolor_i +n);}    
+    public void nextTintLevel(int n) {setTintLevel(tint_level  +n);}
+    public void nextColorDamp(int n) {setColorDamp(color_dampen+n);}
     public final int N_COLOR_REGISTERS = 6;
     public final String [] color_register_names = {
         "Black",
@@ -374,6 +362,7 @@ public class FractalMap {
         rotation_hue++;
         color = Color.HSBtoRGB((float)rotation_hue*.01f, 1.f, 1.f);
         color_registers[i] = blend(color_registers[i++],color,color_dampen);
+        pout_color = out_color^feedback_mask^color_mask; // needed for special edge mode
         gcolor1    = color_registers[gcolor1_i];
         gcolor2    = color_registers[gcolor2_i];
         bar_color  = color_registers[barcolor_i  ]; 
@@ -395,24 +384,78 @@ public class FractalMap {
     ////////////////////////////////////////////////////////////////////////////
     // Describe what to do when a pixel is out of bounds ///////////////////////
     public PixelOp  outside_op;
-    public int      outside_i = 0; // 0:color 1:edge  2:repeat  3:image  4:fade
+    public int      outside_i = 5; // 0:color 1:edge  2:repeat  3:image  4:fade 5:special
     public void nextOutside(int n) {setOutside(outside_i + n);}
     public void setOutside(int index) {outside_op = outside_ops[outside_i = wrap(index, outside_ops.length)];}
     public abstract class PixelOp {
         public final String name;
-        abstract int go(int fx, int fy);
+        abstract int go(int fx, int fy, int i);
         public PixelOp(String s){this.name=s;}
+    }    
+    public abstract class SpecialOp extends PixelOp {
+        public SpecialOp(String s){super(s);}
+        final float weight(int fx,int fy,int i) {
+            int x = i%W;
+            int y = i/W;
+            float px = (float)x/(float)W*2-1;
+            float py = (float)y/(float)H*2-1;
+            float qx = (float)fx*oW7-1;
+            float qy = (float)fy*oH7-1;
+            float pr,qr;
+            switch (FractalMap.this.bounds_i) {
+                case 0: // Screen
+                    pr = (float)max(abs(px),abs(py));
+                    qr = (float)max(abs(qx),abs(qy));
+                    break;
+                case 1: // Oval
+                    pr = (float)sqrt(px*px+py*py);
+                    qr = (float)sqrt(qx*qx+qy*qy);
+                    break;
+                case 2: // Horizon
+                    pr = (float)abs(py);
+                    qr = (float)abs(qy);
+                    break;
+                case 3: // Radius
+                    pr = (float)sqrt(px*px+py*py)/bound_radius;
+                    qr = (float)sqrt(qx*qx+qy*qy)/bound_radius;
+                    break;
+                case 4: // Newton
+                case 5: // None
+                default:
+                    pr = (float)max(abs(px),abs(py));
+                    qr = (float)max(abs(qx),abs(qy));
+                }
+            float  w1 = clip(bounds_invert?pr-1:1-pr,0f,1f);
+            float  w2 = clip(bounds_invert?1-qr:qr-1,0f,1f);
+            return w1/(w1+w2);
+        }
     }
     public final PixelOp[] outside_ops = {
-        new PixelOp("Color Fill") {int go(int x,int y) {return out_color; }},
-        new PixelOp("Edge Clamp") {int go(int x,int y) {return B.buf.get.it(clip(x,0,W8),clip(y,0,H8)); }},
-        new PixelOp("Repeat"    ) {int go(int x,int y) {return B.buf.get.it(x,y); }},
-        new PixelOp("Image"     ) {int go(int x,int y) {return B.img.get.it(x,y); }},
-        new PixelOp("Image Fade") {int go(int x,int y) {
+        new PixelOp("Color"){int go(int x,int y,int i){return out_color; }},
+        new PixelOp("Edge" ){int go(int x,int y,int i){return B.buf.get.it(clip(x,0,W8),clip(y,0,H8)); }},
+        new PixelOp("Tile" ){int go(int x,int y,int i){return B.buf.get.it(x,y); }},
+        new PixelOp("Image"){int go(int x,int y,int i){return B.img.get.it(x,y); }},
+        new PixelOp("Fade" ){int go(int x,int y,int i){
             float X = (float)x*oW7-1, Y = (float)y*oH7-1;
             int   K = clip((int)((2-X*X+Y*Y) * 256),0,256);
             return blend(B.buf.get.it(x,y),B.img.get.it(x,y),K);
-        }}};
+        }},
+        new SpecialOp("Special1"){int go(int fx,int fy,int i){
+            float w = weight(fx,fy,i);
+            return blend(bar_color,out_color,(int)(256*w+0.5));
+        }},
+        new SpecialOp("Special2"){int go(int fx,int fy,int i){
+            float w = weight(fx,fy,i);
+            w = (w*2-1);
+            w *= w;
+            return blend(bar_color,out_color,(int)(256*w+0.5));
+        }},
+        new SpecialOp("Special3"){int go(int fx,int fy,int i){
+            float w = weight(fx,fy,i);
+            w = 1-((float)cos(w*(float)(Math.PI))+1)*.5f;
+            return blend(pout_color,out_color,(int)(256*w+0.5));
+        }},
+    };
     
     ////////////////////////////////////////////////////////////////////////////
     // Fractal map control /////////////////////////////////////////////////////
@@ -441,9 +484,9 @@ public class FractalMap {
         rotation.real = ((W - x) / z2W + UL.real);
         rotation.imag = ((H - y) / z2H + UL.imag);
         float theta = complex.arg(rotation);
-        float r = complex.mod(rotation) * 2;
-        rotation = complex.fromPolar(1 / r, theta);    
-        bound_radius = 1 / (float)sqrt(r*r);
+        float r = complex.mod(rotation) * 2; 
+        bound_radius = 1 / complex.mod(rotation);
+        rotation = complex.fromPolar(1 / r, theta);   
     }
     final static ComplexVarList vars = ComplexVarList.standard();
     public static abstract class Mapping {
@@ -502,17 +545,17 @@ public class FractalMap {
     
     ////////////////////////////////////////////////////////////////////////////
     // The boundary conditions for the Julia set. "R" //////////////////////////
-    public Bound bound_op;
-    public int     bounds_i      = 0;     // 0:screen 1:circle 2:elastic 3:horizon 4:Newton 5:none
+    public Bound   bound_op;
+    public int     bounds_i      = 1;     // 0:screen 1:circle 2:elastic 3:horizon 4:Newton 5:none
     public boolean bounds_invert = false; // Invert boundary condition?
-    public double  bound_radius  = 1;     // adjust radius with map scale (mode 2)
+    public float   bound_radius  = 1;     // adjust radius with map scale (mode 2)
     public void nextBound(int n) {setBound(bounds_i + n);}
     public void setBound(int index) {bound_op = bounds[bounds_i = wrap(index, bounds.length)];}
     public abstract class Bound {
         public final String name;
         public Bound(String name) {this.name = name;}
         abstract boolean test(int fx, int fy, int i);
-        float r2(int X, int Y) {float x=(float)X*oW7-1,y=(float)Y*oH7-1; return x*x+y*y;}}
+        float r2(int X, int Y) {float x=(float)X*oW7-1,y=(float)Y*oH7-1; return (float)sqrt(x*x+y*y);}}
     private final Bound[] bounds = {
         new Bound("Screen") {boolean test(int X,int Y,int i) {return X<W8&&Y<H8&&X>=0&&Y>=0;}},
         new Bound("Oval")   {boolean test(int X,int Y,int i) {return r2(X,Y)<1;}},
@@ -524,22 +567,21 @@ public class FractalMap {
     ////////////////////////////////////////////////////////////////////////////
     // Gradient ////////////////////////////////////////////////////////////////
     public GradOp   grad_op;
-    public int[]    accents = new int[]{0x0, 0xFFFFFF}; // Accent colors (mode 2)
-    public char[][] grads;          // All gradient tables; see initGradients()
-    public char[]   grad;           // Active gradient lookup table
-    public float    gslope    = 1f; // Cursor-controlled gradient rate
-    public float    goffset   = 0f; // Cursor-controlled gradient size
+    public char[][] grads;              // All gradient tables; see initGradients()
+    public char[]   grad;               // Active gradient lookup table
+    public float    gslope        = 1f; // Cursor-controlled gradient rate
+    public float    goffset       = 0f; // Cursor-controlled gradient size
     public int      color_mask    = 0;  // XOR this with output color
     public int      feedback_mask = 0;  // XOR this with feedback color
     public int      grad_i        = 0;  // In-use gradient lookup table
     public int      grad_mode     = 0;  // Modes; 0: off 1: one-color 2: two-color
     public void setGradientParam (float slope, float offset) {gslope=slope;goffset=offset;}
-    public void setGradientShape (int n) {grad    = grads [grad_i    = wrap(n, grads.length )];}
-    public void setGradient      (int i) {grad_op     = grad_modes[grad_mode = wrap(i, grad_modes.length)];}
+    public void setGradientShape (int n) {grad=grads[grad_i=wrap(n,grads.length)];}
+    public void setGradient      (int i) {grad_op=grad_modes[grad_mode=wrap(i,grad_modes.length)];}
     public void nextGradientShape(int n) {setGradientShape(grad_i+n);}
     public void nextGradient     (int n) {setGradient(grad_mode+n);  }
-    public void toggleInversion()      {color_mask    ^= 0xffffff; }
-    public void toggleFeedbackInvert() {feedback_mask ^= 0xffffff; }
+    public void toggleInversion()      {color_mask    ^= 0xffffff;}
+    public void toggleFeedbackInvert() {feedback_mask ^= 0xffffff;}
     public abstract class GradOp {
         public final String name; 
         public GradOp(String s) {name=s;}
@@ -549,30 +591,6 @@ public class FractalMap {
         new GradOp("None")   {int go(int i,int c){return c;}},
         new GradOp("1-Color"){int go(int i,int c){return blend(c,gcolor1,w(i));}},
         new GradOp("2-Color"){int go(int i,int c){int g=w(i); return blend(c,blend(gcolor2,gcolor1,g),g);}}};
-    
-    ////////////////////////////////////////////////////////////////////////////
-    // RenderState machine structure contains the instance variables that 
-    // Operators can modify. The Renderer scans the map_buffer to set the pixel
-    // color at the appropriate location in the screen buffer.
-    // Various effect functions are then called to calculate
-    // the color of the map element, and hence the pixel.
-    class State {
-        int c, oldcolor;   
-        // 8-bit fixed point coordinates of mapped pixel
-        int fx, fy;
-        // index of target pixel in the output buffer
-        int i;
-        // Render indecies from start to end-1, skipping every `stride` pixels
-        int start = 0;
-        int end = MLEN;     
-        // Constant offset in 8-bit fixed point screen coordinates
-        int x, y;
-        // Precomputed rotation constants
-        float rx; // Rotate/scale normalized to screen coordinates
-        float ry; // Rotate/scale normalized to screen coordinates
-        float rc; // Intermediate term used for Gauss multiply
-        // Weak RNG state
-        int noise;
-    }
+
     
 }

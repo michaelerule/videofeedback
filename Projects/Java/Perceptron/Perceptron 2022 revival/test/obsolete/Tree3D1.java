@@ -1,8 +1,10 @@
 package rendered3D;
 
+import rendered.Object3D;
+import rendered.Point3D;
 import java.util.ArrayList;
 import java.awt.Color;
-import rendered3D.Object3D.RotateablePoint3D;
+import rendered.Object3D.RotateablePoint3D;
 
 /**
  *
