@@ -39,7 +39,7 @@ import static util.Matrix.rotation;
  * 
  * @author mer49
  */
-public final class ControlSet implements MouseListener, MouseMotionListener, KeyListener {
+public final class Controls implements MouseListener, MouseMotionListener, KeyListener {
     //THESE OBJECTS ARE CONTROLLED AND MODIFIED BY THIS CLASS
 
     Perceptron P;
@@ -79,7 +79,7 @@ public final class ControlSet implements MouseListener, MouseMotionListener, Key
     /// PRESETS
     Preset[] presets;
 
-    public ControlSet(
+    public Controls(
             Perceptron P_,
             Preset[] user_presets) {
         presets = user_presets;
@@ -318,15 +318,15 @@ public final class ControlSet implements MouseListener, MouseMotionListener, Key
         switch (c) {
             case '`':P.running = !P.running; break;
             case '~':break;
-            case '1':F.setMap("i*ln(z)/2/P*"  +FractalMap.size.real); break;
-            case '!':F.setMap("ln(z)/2/P*"    +FractalMap.size.imag); break;
-            case '2':F.setMap("2*i*ln(z)/2/P*"+FractalMap.size.real); break;
-            case '@':F.setMap("2*ln(z)/2/P*"  +FractalMap.size.imag); break;
-            case '3':F.setMap("3*i*ln(z)/2/P*"+FractalMap.size.real); break;
-            case '#':
-            case '£':F.setMap("3*ln(z)/2/P*"  +FractalMap.size.imag); break;
-            case '4':F.setMap("4*i*ln(z)/2/P*"+FractalMap.size.real); break;
-            case '$':F.setMap("4*ln(z)/2/P*"  +FractalMap.size.imag); break;
+            case '1':F.setMap("i*ln(z)/2/P*w"); break;
+            case '!':F.setMap("ln(z)/2/P*h"); break;
+            case '2':F.setMap("2*i*ln(z)/2/P*w"); break;
+            case '@':F.setMap("2*ln(z)/2/P*h"); break;
+            case '3':F.setMap("3*i*ln(z)/2/P*w"); break;
+            case '#':F.setMap("2*i*ln(z)/(2p)*sqrt(w*w+h*h)*e^(i*atan(h/w))");break;
+            case '£':F.setMap("3*ln(z)/2/P*h"); break;
+            case '4':F.setMap("4*i*ln(z)/2/P*w"); break;
+            case '$':F.setMap("4*ln(z)/2/P*h"); break;
             case '5':F.setMap("z/abs(sqrt((absz)^2-1.5))"); break;
             case '%':F.setMap("z^(1.5)"); break;
             case '6':F.setMap("z-(z^3-1)/(3*z^2)"); break;

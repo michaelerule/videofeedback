@@ -74,7 +74,7 @@ public class Preset {
     public int     grad_i        = 0;
     public int     grad_mode     = 0;
     public int     mic_visualization = 0;
-    // ControlSet
+    // Controls
     public float  grad_slope    = 1f; 
     public float  grad_offset   = 0f;
     public float  mic_speed     = .05f;
@@ -140,7 +140,7 @@ public class Preset {
         FractalMap   F = P.fractal;
         DoubleBuffer B = P.buf;
         TextBuffer   T = P.text;
-        ControlSet   C = P.control;
+        Controls   C = P.control;
         String GAP = "      ";
         String out = "";
         out += GAP + "objects_on_top         " + P.objects_on_top + "\n";
@@ -230,7 +230,7 @@ public class Preset {
      * @param P
      * @return  */
     public static String helpString(Perceptron P) {
-        ControlSet C = P.control;
+        Controls C = P.control;
         FractalMap F = P.fractal;
         String out = "";
         out += "Ctl @type equation         @" + C.entry_mode + "\n";
@@ -313,7 +313,7 @@ public class Preset {
         FractalMap   F = P.fractal;
         DoubleBuffer B = P.buf;
         TextBuffer   T = P.text;
-        ControlSet   C = P.control;
+        Controls   C = P.control;
         
         F.setMap(fractal_map);
         P.objects_on_top        = objects_on_top;

@@ -535,9 +535,9 @@ public class FractalMap {
     public Mapping makeMap(final String s) {
         final Equation e = MathToken.toEquation(s);
         vars.set(18,size);
-        vars.set(22,new complex(size.real));
-        vars.set(7, new complex(size.imag));
-        return new Mapping(s) {public complex f(complex z) {vars.set(25,z);return e.eval(vars);}};
+        vars.set('w'-'a',new complex(size.real));
+        vars.set('h'-'a',new complex(size.imag));
+        return new Mapping(s) {public complex f(complex z) {vars.set('z'-'a',z);return e.eval(vars);}};
     }
     private synchronized void computeLookup() {
         // If we're transition freeze this intermediate state

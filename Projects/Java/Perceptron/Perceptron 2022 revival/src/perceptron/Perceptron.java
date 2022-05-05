@@ -68,7 +68,7 @@ public final class Perceptron extends javax.swing.JFrame {
     BufferStrategy            bufferStrategy;
     Graphics2D                graph2D;
     ImageCache                images = null;
-    ControlSet                control;
+    Controls                control;
     FractalMap                fractal;
     Tree3D                    tree;
     TextBuffer                text;
@@ -251,7 +251,7 @@ public final class Perceptron extends javax.swing.JFrame {
             new TreeForm[]{new TreeForm(.5f,-.2f,.7f,7),new TreeForm(.5f,.2f,.7f,-7)},
             new Point(half_screen_w,half_screen_h),buf);
         
-        control = new ControlSet(this,presets);
+        control = new Controls(this,presets);
         this.addMouseListener(control);
         this.addMouseMotionListener(control);
         this.addKeyListener(control);
