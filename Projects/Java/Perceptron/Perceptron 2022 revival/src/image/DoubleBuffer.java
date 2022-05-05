@@ -1,4 +1,4 @@
-package perceptron;
+package image;
 //
 //  DoubleBuffer.java
 //
@@ -9,7 +9,8 @@ package perceptron;
 
 import util.ColorUtil;
 import java.awt.image.*;
-import perceptron.Samplers.Sampler;
+import perceptron.Perceptron;
+import image.Samplers.Sampler;
 import static util.Misc.clip;
 
 /**
@@ -86,7 +87,7 @@ public class DoubleBuffer {
      * @param rr
      * @param P
      */
-    public synchronized void loadImage(BufferedImage s) {
+    public synchronized void set(BufferedImage s) {
         if (s == null) return;
         final float scale = (s.getWidth()-0.5f) / (float)(out.W);
         fde = img;

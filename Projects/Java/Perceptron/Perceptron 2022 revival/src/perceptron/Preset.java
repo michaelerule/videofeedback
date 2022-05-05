@@ -1,5 +1,7 @@
 package perceptron;
 
+import rendered.TextBuffer;
+import image.DoubleBuffer;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
@@ -20,11 +22,12 @@ public class Preset {
     
     final static String [] gradient_names  = {"Circle","Horizontal","Vertical","Diagonal","Diamond","Cross","Ring","Sharp Ring","Eye"};
 
+    
     ////////////////////////////////////////////////////////////////////////////
     // Mirror of every state in perceptron
     // Perceptron
     public boolean objects_on_top     = true;
-    public boolean cap_frame_rate     = true;
+    //public boolean cap_frame_rate     = true;
     public boolean rotate_images      = false;
     public boolean fore_grad          = false;
     public boolean draw_moths         = false; 
@@ -41,7 +44,7 @@ public class Preset {
     public int     offset_mode   = 0;
     public int     rotate_mode   = 0;
     public int     mirror_mode   = 0;
-    public int     motion_blur   = 255;
+    public int     motion_blur   = 0;
     public boolean dampen_colors = true;
     public String  fractal_map;
     public boolean bounds_invert = false;
@@ -52,6 +55,7 @@ public class Preset {
     public int     barcolor_i    = 0; // H/V bar colors (if present)
     public int     tintcolor_i   = 0; // Global (uniform) tinting
     public int     outcolor_i    = 0; // Color used to fill in for boundary mode 0
+    public int     tint_level    = 0;
     public int     noise_level   = 0;
     public int     color_dampen  = 0;
     public float   grad_slope    = 1f; 
@@ -99,15 +103,26 @@ public class Preset {
     public float   mic_speed = .05f;
     public float   mic_volume = 1.0f;
     
+    public String  image_file = "";
     
+    // Name is the only state that's not a stored perceptron state variable
+    private final String name;
+    private Preset(String name) {this.name = name;}
+    public String name() {return name;}
 
     /** Read the preset.
+     * @param name
      * @param in
      * @return
      * @throws java.io.IOException  */
-    public static Preset parse(BufferedReader in) throws IOException {
-        Preset p = new Preset();
-        Parser.parse(p, in);
+    public static Preset parse(String name, BufferedReader in) throws IOException {
+        Preset p = new Preset(name);
+        try {
+            Parser.parse(p, in);
+        } catch (Exception e) {
+            System.err.println("Error parsing preset "+name);
+            throw e;
+        }
         return p;
     }
 
@@ -134,7 +149,7 @@ public class Preset {
         String GAP = "      ";
         String out = "";
         out += GAP + "objects_on_top         " + P.objects_on_top + "\n";
-        out += GAP + "cap_frame_rate         " + P.cap_frame_rate + "\n";
+        //out += GAP + "cap_frame_rate         " + P.cap_frame_rate + "\n";
         out += GAP + "rotate_images          " + P.rotate_images + "\n";
         out += GAP + "fore_grad              " + P.fore_grad + "\n";
         
@@ -150,9 +165,9 @@ public class Preset {
         out += GAP + "con_rate               " + P.con_rate + "\n";
         out += GAP + "blursharp_rate         " + P.blursharp_rate + "\n";
         
-        out += GAP + "offset_type            " + F.offset_mode + "\n";
-        out += GAP + "rotate_type            " + F.rotate_mode + "\n";
-        out += GAP + "mirror_type            " + F.rotate_mode + "\n";
+        out += GAP + "offset_mode            " + F.offset_mode + "\n";
+        out += GAP + "rotate_mode            " + F.rotate_mode + "\n";
+        out += GAP + "mirror_mode            " + F.rotate_mode + "\n";
         out += GAP + "motionblurp            " + F.motion_blur + "\n";
         out += GAP + "gradcolor1_i           " + F.gcolor1_i + "\n";
         out += GAP + "gradcolor2_i           " + F.gcolor2_i + "\n";
@@ -161,7 +176,7 @@ public class Preset {
         out += GAP + "outcolor_i             " + F.outcolor_i + "\n";
         out += GAP + "noise_level            " + F.noise_level + "\n";
         out += GAP + "color_dampen           " + F.color_dampen + "\n";
-        out += GAP + "fractal_map            " + F.mapping + "\n";
+        out += GAP + "fractal_map            " + F.mapping.toString().strip().replaceAll(" ","") + "\n";
         out += GAP + "bounds_i               " + F.bounds_i + "\n";
         out += GAP + "bounds_invert          " + F.invert_bound + "\n";
         out += GAP + "outside_i              " + F.outi + "\n";
@@ -192,6 +207,8 @@ public class Preset {
         out += GAP + "mic_visualization      " + P.mic.getVis() + "\n";
         out += GAP + "mic_speed              " + P.mic.getSpeed() + "\n";
         out += GAP + "mic_volume             " + P.mic.getVolume() + "\n";
+        
+        out += GAP + "image_file             " + P.images.name() + "\n";
         
         out += GAP + "XBranchingCursor       " + C.XBranchingCursor() + "\n";
         out += GAP + "XAlphaCursor           " + C.XAlphaCursor() + "\n";
@@ -279,7 +296,15 @@ public class Preset {
         out += "PgUp/Dn @± mic volume      @" + P.mic.getVolume() + "\n";
         out += "Home/End@± mic speed       @" + P.mic.getSpeed() + "\n";
         out += "Del   @write animation     @" + P.write_animation + "\n";
-        out += "Enter @presets mode        @" + (C.presets_mode? "true ("+C.preset_i+")" : "false") + "\n";
+        out += "Enter @presets mode        @" + (
+                C.presets_mode? "true ("+C.preset_i+"; "
+                    + (C.presets.length<=0
+                        ? "NONE LOADED" 
+                        : ((C.preset_i>=0 && C.preset_i<C.presets.length)
+                            ? C.presets[C.preset_i].name() 
+                            : "OUT OF BOUNDS")
+                    )
+                    +")" : "false") + "\n";
         
         return out;
     }
@@ -294,7 +319,7 @@ public class Preset {
         TextBuffer T = P.text;
         ControlSet C = P.control;
         P.objects_on_top = objects_on_top;
-        P.cap_frame_rate = cap_frame_rate;
+        //P.cap_frame_rate = cap_frame_rate;
         P.rotate_images = rotate_images;
         P.fore_grad = fore_grad;
         P.draw_moths = draw_moths;
@@ -328,6 +353,7 @@ public class Preset {
         F.gcolor2_i = gradcolor2_i;
         F.barcolor_i   = barcolor_i;
         F.tintcolor_i  = tintcolor_i;
+        F.tint_level   = tint_level;
         F.outcolor_i   = outcolor_i;
         F.noise_level  = noise_level;
         F.color_dampen = color_dampen;
@@ -350,6 +376,8 @@ public class Preset {
         P.mic.setVis(mic_visualization);
         P.mic.setSpeed(mic_speed);
         P.mic.setVolume(mic_volume);
+        
+        P.setImage(image_file);
                 
         C.draw_futures = draw_futures;
         C.setFractal(true);
@@ -383,9 +411,9 @@ public class Preset {
         out += GAP + "bri_rate               = " + bri_rate + "\n";
         out += GAP + "con_rate               = " + con_rate + "\n";
         out += GAP + "blursharp_rate         = " + blursharp_rate + "\n";
-        out += GAP + "translate_type         = " + offset_mode + "\n";
-        out += GAP + "rotate_type            = " + rotate_mode + "\n";
-        out += GAP + "motionblurp            = " + motion_blur + "\n";
+        out += GAP + "offset_mode            = " + offset_mode + "\n";
+        out += GAP + "rotate_mode            = " + rotate_mode + "\n";
+        out += GAP + "motion_blur            = " + motion_blur + "\n";
         out += GAP + "dampen_colors          = " + dampen_colors + "\n";
         out += GAP + "fractal_map            = " + fractal_map + "\n";
         out += GAP + "bounds_i               = " + bounds_i + "\n";
@@ -395,6 +423,7 @@ public class Preset {
         out += GAP + "gradcolor2_i           = " + gradcolor2_i + "\n";
         out += GAP + "barcolor_i             = " + barcolor_i + "\n";
         out += GAP + "tintcolor_i            = " + tintcolor_i + "\n";
+        out += GAP + "tint_level             = " + tint_level + "\n";
         out += GAP + "outcolor_i             = " + outcolor_i + "\n";
         out += GAP + "noise_level            = " + noise_level + "\n";
         out += GAP + "color_dampen           = " + color_dampen + "\n";
@@ -436,6 +465,7 @@ public class Preset {
         out += GAP + "mic_visualization      = " + mic_visualization + "\n";
         out += GAP + "mic_speed              = " + mic_speed + "\n";
         out += GAP + "mic_volume             = " + mic_volume + "\n";
+        out += GAP + "image_file             = " + image_file + "\n";
         return out;
     }
 } 

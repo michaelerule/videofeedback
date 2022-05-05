@@ -10,6 +10,7 @@ package perceptron;
  *
  */
 
+import image.DoubleBuffer;
 import math.MathToken;
 import math.complex;
 import math.Equation;
@@ -167,7 +168,7 @@ public class FractalMap {
         for (int y=0; y<H; y++) for (int x=0; x<W; x++) {
             PX[i] = (float)x/(float)W*2-1;
             PY[i] = (float)y/(float)H*2-1;
-            PR[i] = (float)hypot(PX[i],PY[i]);
+            PR[i] = (float)(PX[i]*PX[i]+PY[i]*PY[i]);
             AX[i] = abs(PX[i]);
             AY[i] = abs(PY[i]);
             in_circle[i] = PR[i]<0.995;
@@ -436,12 +437,12 @@ public class FractalMap {
                 case 1: {// Oval
                     pr = PR[i];
                     fx-= W7; fy-= H7;
-                    qr = (float)sqrt(fx*(fx*cW)+fy*(fy*cH));
+                    qr = (float)(fx*(fx*cW)+fy*(fy*cH));
                 } break;
                 case 3: {// Radius
                     pr = PR[i];
                     fx-= W7; fy-= H7;
-                    qr = (float)sqrt(fx*(fx*cW)+fy*(fy*cH));
+                    qr = (float)(fx*(fx*cW)+fy*(fy*cH));
                     pr *= inverse_radius;
                     qr *= inverse_radius;
                 } break;
@@ -522,8 +523,14 @@ public class FractalMap {
         public abstract complex f(complex z);
     }
     public static Mapping makeMapStatic(final String s) {
-        final Equation e = MathToken.toEquation(s);
-        return new Mapping(s) {public complex f(complex z) {vars.set(25,z);return e.eval(vars);}};
+        try {
+            final Equation e = MathToken.toEquation(s);
+            return new Mapping(s) {public complex f(complex z) {vars.set(25,z);return e.eval(vars);}};
+        } catch (Exception e) {
+            System.err.println("Error parsing map "+s);
+            e.printStackTrace();
+            throw e;
+        }
     }
     public Mapping makeMap(final String s) {
         final Equation e = MathToken.toEquation(s);

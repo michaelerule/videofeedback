@@ -330,13 +330,21 @@ public final class ControlSet implements MouseListener, MouseMotionListener, Key
      * @param e
      * 
      */
+    final static String lookup = "0123456789abcdefghijklmnopqrstuvwxyz`-=[]\\;\',./)!@#$%^&*(ABCDEFGHIJKLMNOPQRSTUVWXYZ~_+{}|:\"<>?";
     @Override
     public void keyTyped(KeyEvent e) {
+        char c = e.getKeyChar();
+        if (c=='£') c='#';
         if (entry_mode) return;
-        if (presets_mode) return;
+        if (presets_mode) {
+            int which = lookup.indexOf(c);
+            if (which>=0) setPreset(which); 
+            else P.notify("Character input "+c+" is not yet supported.");
+            return;
+        }
         FractalMap F = P.fractal;
         if (F==null) return;
-        switch (e.getKeyChar()) {
+        switch (c) {
             case '`':P.running = !P.running; break;
             case '~':break;
             case '1':F.setMap("i*ln(z)/2/P*"  +FractalMap.size.real); break;
@@ -349,10 +357,10 @@ public final class ControlSet implements MouseListener, MouseMotionListener, Key
             case '4':F.setMap("4*i*ln(z)/2/P*"+FractalMap.size.real); break;
             case '$':F.setMap("4*ln(z)/2/P*"  +FractalMap.size.imag); break;
             case '5':F.setMap("z/abs(sqrt((absz)^2-1.5))"); break;
-            case '%':break;
+            case '%':F.setMap("z^(1.5)"); break;
             case '6':F.setMap("z-(z^3-1)/(3*z^2)"); break;
             case '^':F.setMap("z-(z^4-1)/(4*z^3)"); break;
-            case '7':F.setMap("z^(1.5)");break;
+            case '7':break;
             case '&':P.tree.toggleLeaves(); break;
             case '8':break;
             case '*':P.tree.toggleSymmetry(); break;
@@ -364,7 +372,6 @@ public final class ControlSet implements MouseListener, MouseMotionListener, Key
             case '_':P.draw_top_bars = !P.draw_top_bars; break;
             case '=':
             case '+':current.adjustSpeed(1); break;
-            // TODO: add noise
             //case '\t':break;
             case 'q':F.nextMap(1); break;
             case 'Q':F.nextMap(-1);break;
@@ -446,16 +453,18 @@ public final class ControlSet implements MouseListener, MouseMotionListener, Key
     @Override
     public void keyPressed(KeyEvent e) {
         FractalMap F = P.fractal;
-        if (entry_mode) switch (e.getKeyCode()) {
+        int code = e.getKeyCode();
+        if (code==VK_ESCAPE||code==VK_STOP) System.exit(0); 
+        
+        if (entry_mode) switch (code) {
             case VK_LEFT      : P.text.left(); break;
             case VK_RIGHT     : P.text.right(); break;
             case VK_UP        : P.text.up(); break;
             case VK_DOWN      : P.text.down(); break;
             case VK_BACK_SPACE: P.text.backspace(); break;
-            case VK_ENTER     : P.text.toMap(); break;
+            case VK_ENTER     : P.textToMap(); break;
             case VK_PAGE_UP   : P.text.scrollUp(); break;
             case VK_PAGE_DOWN : P.text.scrollDown(); break;
-            case VK_ESCAPE    : System.exit(0); break;
             case VK_CAPS_LOCK : P.save(); break;
             case VK_TAB       : P.text.toggleCursor(); break;
             case VK_ALT       : break;
@@ -464,75 +473,12 @@ public final class ControlSet implements MouseListener, MouseMotionListener, Key
             default:P.text.append(e.getKeyChar());
             return;
         } 
-        else if (presets_mode) switch (e.getKeyCode()) {    
-            case VK_ESCAPE:System.exit(0); break; 
-            case VK_STOP:System.exit(0); break; 
-            case VK_0:setPreset(0); break; 
-            case VK_1:setPreset(1); break; 
-            case VK_2:setPreset(2); break; 
-            case VK_3:setPreset(3); break; 
-            case VK_4:setPreset(4); break; 
-            case VK_5:setPreset(5); break; 
-            case VK_6:setPreset(6); break; 
-            case VK_7:setPreset(7); break; 
-            case VK_8:setPreset(8); break; 
-            case VK_9:setPreset(9); break; 
-            case VK_A:setPreset(10); break; 
-            case VK_B:setPreset(11); break; 
-            case VK_C:setPreset(12); break; 
-            case VK_D:setPreset(13); break; 
-            case VK_E:setPreset(14); break; 
-            case VK_F:setPreset(15); break; 
-            case VK_G:setPreset(16); break; 
-            case VK_H:setPreset(17); break; 
-            case VK_I:setPreset(18); break; 
-            case VK_J:setPreset(19); break; 
-            case VK_K:setPreset(20); break; 
-            case VK_L:setPreset(21); break; 
-            case VK_M:setPreset(22); break; 
-            case VK_N:setPreset(23); break; 
-            case VK_O:setPreset(24); break; 
-            case VK_P:setPreset(25); break; 
-            case VK_Q:setPreset(26); break; 
-            case VK_R:setPreset(27); break; 
-            case VK_S:setPreset(28); break; 
-            case VK_T:setPreset(29); break; 
-            case VK_U:setPreset(30); break; 
-            case VK_V:setPreset(31); break; 
-            case VK_W:setPreset(32); break; 
-            case VK_X:setPreset(33); break; 
-            case VK_Y:setPreset(34); break; 
-            case VK_Z:setPreset(35); break; 
-            case VK_F1:setPreset(36); break; 
-            case VK_F2:setPreset(37); break; 
-            case VK_F3:setPreset(38); break; 
-            case VK_F4:setPreset(39); break; 
-            case VK_F5:setPreset(40); break; 
-            case VK_F6:setPreset(41); break; 
-            case VK_F7:setPreset(42); break; 
-            case VK_F8:setPreset(43); break; 
-            case VK_F9:setPreset(44); break; 
-            case VK_F10:setPreset(45); break; 
-            case VK_F11:setPreset(46); break; 
-            case VK_F12:setPreset(47); break; 
-            case VK_BACK_QUOTE:setPreset(48); break; 
-            case VK_QUOTE:setPreset(49); break; 
-            case VK_OPEN_BRACKET:setPreset(50); break; 
-            case VK_CLOSE_BRACKET:setPreset(51); break; 
-            case VK_EQUALS:setPreset(52); break; 
-            case VK_MINUS:setPreset(53); break; 
-            case VK_SLASH:setPreset(54); break; 
-            case VK_BACK_SPACE:setPreset(55); break; 
-            case VK_COMMA:setPreset(56); break; 
-            case VK_PERIOD:setPreset(57); break; 
-            case VK_SPACE:setPreset(58); break; 
-            case VK_SEMICOLON:setPreset(59); break; 
-            case VK_BACK_SLASH:setPreset(60); break; 
-            case VK_ENTER:presets_mode = false; break; 
-            default:return;
-        } 
-        else switch (e.getKeyCode()) {
-            case VK_ESCAPE   : System.exit(0); break;
+        else if (presets_mode) {
+            if (code==VK_ENTER) presets_mode = false;
+            return;
+            // Remaining codes handled by key pressed
+        }
+        else switch (code) {
             case VK_TAB      : break;
             case VK_CAPS_LOCK: break;
             case VK_ENTER    : presets_mode = true; break;
@@ -570,17 +516,22 @@ public final class ControlSet implements MouseListener, MouseMotionListener, Key
     public synchronized void setPreset(int preset) {
         if (presets.length<=0) return;
         try {
-            preset_i = wrap(preset,presets.length);
+            if (preset<0 || preset>=presets.length) {
+                P.notify("Preset #"+preset+" isn't defined.");
+                return;
+            }
+            preset_i = preset;
             Preset ps = presets[preset_i];
             ps.set(P);
+            P.notify("Applied preset #"+preset+" ("+ps.name()+")");
         } catch (Exception e) {
+            P.notify("Error applying preset " + preset);
             System.out.println("Error applying preset " + preset + ":");
             e.printStackTrace();
         }
     }
     public void nextPreset(int n) {
-        preset_i = wrap(preset_i + n, P.presets.length);
-        setPreset(preset_i);
+        setPreset(preset_i = wrap(preset_i + n, P.presets.length));
     }
     public synchronized void setAudio(boolean active) {
         if (active) active_cursors.addAll(audio_cursors);

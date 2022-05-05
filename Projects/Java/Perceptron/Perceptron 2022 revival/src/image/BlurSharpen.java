@@ -1,5 +1,6 @@
-package perceptron;
+package image;
 
+import image.DoubleBuffer;
 import java.awt.image.DataBuffer;
 import static util.Misc.clip;
 import static util.ColorUtil.blend;

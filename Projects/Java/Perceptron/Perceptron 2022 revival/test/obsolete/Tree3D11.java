@@ -1,4 +1,5 @@
 package rendered3D;
+import image.DoubleBuffer;
 import rendered.TreeForm;
 import util.Matrix;
 import util.ColorUtil;

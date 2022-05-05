@@ -1,5 +1,6 @@
 package rendered;
 
+import image.DoubleBuffer;
 import util.Matrix;
 import util.ColorUtil;
 import perceptron.*;

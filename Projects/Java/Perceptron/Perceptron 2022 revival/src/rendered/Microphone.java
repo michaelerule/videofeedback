@@ -14,7 +14,7 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Line;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.TargetDataLine;
-import perceptron.DoubleBuffer;
+import image.DoubleBuffer;
 import static java.lang.Math.max;
 import java.util.List;
 import static javax.sound.sampled.AudioSystem.getLine;

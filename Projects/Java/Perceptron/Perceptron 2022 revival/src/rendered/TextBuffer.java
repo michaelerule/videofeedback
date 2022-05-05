@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package perceptron;
+package rendered;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -11,6 +11,7 @@ import java.awt.font.GlyphVector;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import perceptron.Perceptron;
 
 /**
  *
@@ -28,7 +29,7 @@ public class TextBuffer {
     
     //Text Editor Data
     char[]  buf = new char[ROWS * COLUMNS];
-    int     idx = 0;
+    int     I = 0;
     public boolean on        = false;
     public boolean cursor_on = true;
     Perceptron perceptron;
@@ -73,14 +74,14 @@ public class TextBuffer {
         }
         g.setPaintMode();
         g.setColor(new Color(COLORS[(int) (Math.random() * COLORS.length)]));
-        g.drawString("" + buf[idx], 
-                (int) ((double) (idx % COLUMNS) * screen_width / COLUMNS + XOFF), 
-                (int) ((idx / COLUMNS) * screen_height / ROWS1 + YOFF));
+        g.drawString("" + buf[I], 
+                (int) ((double) (I % COLUMNS) * screen_width / COLUMNS + XOFF), 
+                (int) ((I / COLUMNS) * screen_height / ROWS1 + YOFF));
         g.setFont(old);
         if (cursor_on) {
             g.setColor(new Color(0x000000));
-            int x = (int) ((double) screen_width * (idx % COLUMNS) / COLUMNS);
-            int y = (int) ((double) screen_height * (idx / COLUMNS) / ROWS);
+            int x = (int) ((double) screen_width * (I % COLUMNS) / COLUMNS);
+            int y = (int) ((double) screen_height * (I / COLUMNS) / ROWS);
             g.setXORMode(new Color(0xffffff));
             g.fillRect((int) (x + XOFF), (int) (y), screen_width / COLUMNS, screen_height / ROWS);
             g.setPaintMode();
@@ -89,12 +90,8 @@ public class TextBuffer {
         /** Consciousness is evolution on infinitely faster time scales */
         g.setPaintMode();
     }
-    
-    void clear() {
-        for (int i = 0; i<buf.length; i++) buf[i] = ' ';
-    }
 
-    void loadString(String string) {
+    public void loadString(String string) {
         clear();
         int bufferSourceIndex = 0;
         int read;
@@ -111,53 +108,16 @@ public class TextBuffer {
         }
     }
     
-    
-    /** Press CTRL and start typing... 
-     */
-    void append(char c) {
-        buf[idx] = c;
-        idx = (idx + 1) % buf.length;
-    }
-
-    void left() {
-        idx = (idx + buf.length + -1) % buf.length;
-    }
-
-    void right() {
-        idx = (idx + 1) % buf.length;
-    }
-
-    void up() {
-        idx = (idx + buf.length - COLUMNS) % buf.length;
-    }
-
-    void down() {
-        idx = (idx + buf.length + COLUMNS) % buf.length;
-    }
-
-    void backspace() {
-        idx = (idx + buf.length + -1) % buf.length;
-        buf[idx] = ' ';
-    }
-
-    void scrollUp() {
-    }
-
-    void scrollDown() {
-    }
-
-    /** Press S.    */
-    boolean toggle() {
-        return on = !on;
-    }
-
-    /** Press CTRL, type equation, press enter. */
-    void toMap() {
-        perceptron.fractal.setMap(new String(buf));
-    }
-
-    /** Press C to turn off/on cursors. */
-    void toggleCursor() {
-        cursor_on = !cursor_on;
-    }
+    public void    clear()        {for (int i=0; i<buf.length; i++) buf[i]=' ';}
+    public void    append(char c) {buf[I]=c;I=(I+1)%buf.length;}
+    public void    left()         {I=(I+buf.length-1) % buf.length;}
+    public void    right()        {I=(I+1) % buf.length;}
+    public void    up()           {I=(I+buf.length-COLUMNS) % buf.length;}
+    public void    down()         {I=(I+buf.length+COLUMNS) % buf.length;}
+    public void    backspace()    {I=(I+buf.length-1)%buf.length;buf[I]=' ';}
+    public void    scrollUp()     {}
+    public void    scrollDown()   {}
+    public boolean toggle()       {return on = !on;}
+    public void    toggleCursor() {cursor_on = !cursor_on;}
+    public String  buffer()       {return new String(buf);}
 }

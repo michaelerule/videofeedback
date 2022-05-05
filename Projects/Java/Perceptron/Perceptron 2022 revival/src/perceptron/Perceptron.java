@@ -3,6 +3,9 @@ package perceptron;
  * Created on December 21,2006,5:27 PM
  */
 
+import rendered.TextBuffer;
+import image.BlurSharpen;
+import image.DoubleBuffer;
 import util.Misc;
 import rendered.Microphone;
 import static java.lang.Math.*;
@@ -36,8 +39,11 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.DataBuffer;
 import java.util.ArrayDeque;
 import java.util.Arrays;
+import static java.util.Arrays.asList;
 import java.util.Collection;
+import static java.util.Collections.sort;
 import java.util.HashSet;
+import java.util.List;
 
 import static util.Misc.getDeviceGraphicsConfig;
 import static util.Misc.hideCursor;
@@ -80,7 +86,7 @@ public final class Perceptron extends javax.swing.JFrame {
     boolean running;
     int help_alpha = 255;
     int image_i = 0;
-    public String imgdir = "resource/images/";
+    public String image_directory = "resource/images/";
     
     ////////////////////////////////////////////////////////////////////////////
     // Timers and counters
@@ -150,33 +156,38 @@ public final class Perceptron extends javax.swing.JFrame {
     
     ////////////////////////////////////////////////////////////////////////////
     // Getters and Setters (boilerplate!) //////////////////////////////////////
-    public int     screenWidth()              { return screen_width; }
-    public int     screenHeight()             { return screen_height; }
-    public int     halfScreenWidth()          { return half_screen_w; }
-    public int     halfScreenHeight()         { return half_screen_h; }
-    public int     physical_width()           { return display_w; }
-    public int     physical_height()          { return display_h; }
-    public boolean isFancy()                  { return buf.fancy; }
-    public void    setObjectsOnTop(boolean b) { objects_on_top = b; }
-    public void    setFancy(boolean s)        { if (s != isFancy()) toggleFancy(); }
-    public void    toggleFancy()              { buf.toggleFancy(); }
-    public void    toggleObjectsOnTop()       { objects_on_top = !objects_on_top; }
-    public void    toggleCapFramerate()       { cap_frame_rate = !cap_frame_rate; }
-    public void    toggleAnimation()          { write_animation = !write_animation; }
-    public void    toggleShowHelp()           { show_help = !show_help; }
-    public void    toggleTree()               { draw_tree = !draw_tree; }
+    public int     screenWidth()             {return screen_width; }
+    public int     screenHeight()            {return screen_height; }
+    public int     halfScreenWidth()         {return half_screen_w; }
+    public int     halfScreenHeight()        {return half_screen_h; }
+    public int     physical_width()          {return display_w; }
+    public int     physical_height()         {return display_h; }
+    public boolean isFancy()                 {return buf.fancy; }
+    public void    setObjectsOnTop(boolean b){objects_on_top = b; }
+    public void    setFancy(boolean s)       {if (s!=isFancy()) toggleFancy(); }
+    public void    toggleFancy()             {buf.toggleFancy(); }
+    public void    toggleObjectsOnTop()      {objects_on_top = !objects_on_top; }
+    public void    toggleCapFramerate()      {cap_frame_rate = !cap_frame_rate; }
+    public void    toggleAnimation()         {write_animation = !write_animation; }
+    public void    toggleShowHelp()          {show_help = !show_help; }
+    public void    toggleTree()              {draw_tree = !draw_tree; }
 
     public void setImage(int n) {
         try {
             image_i = n;
-            buf.loadImage(images.get(n));
+            buf.set(images.get(n));
             last_image_time = 30000+System.currentTimeMillis();
         } catch (Exception E) {
             E.printStackTrace();
         }
     }
+    public void setImage(String n) {
+        int i = images.where(n);
+        if (i<0) notify("Could not find image named "+n);
+        else setImage(i);
+    }
     public void nextImage(int n) {
-        buf.loadImage(images.advance(n));
+        buf.set(images.next(n));
         image_i = images.current();
         last_image_time = image_rotate_ms+System.currentTimeMillis();
     }
@@ -226,8 +237,8 @@ public final class Perceptron extends javax.swing.JFrame {
         
         blursharp = new BlurSharpen(buf);
         text      = new TextBuffer(this);  
-        imgdir    = requireNonNull(imgdir);
-        images    = new ImageCache(imgdir);
+        image_directory    = requireNonNull(image_directory);
+        images    = new ImageCache(image_directory);
         fractal   = new FractalMap(buf,maps,this);
         mic       = new Microphone(buf, 0);
         text.loadString(CrashLog);   
@@ -510,7 +521,7 @@ public final class Perceptron extends javax.swing.JFrame {
     
     ////////////////////////////////////////////////////////////////////////////
     /** Read in the settings file. */
-    @SuppressWarnings("ConvertToStringSwitch")
+    @SuppressWarnings({"ConvertToStringSwitch", "unchecked"})
     final void parseSettings(String settings_path,String presets_path) 
     {
         ArrayList<Preset> presets = new ArrayList<>();
@@ -527,7 +538,7 @@ public final class Perceptron extends javax.swing.JFrame {
                         if (var.equals("preset")) {
                             try {
                                 System.out.println("parsing preset "+val+":");
-                                presets.add(Preset.parse(in));
+                                presets.add(Preset.parse(val,in));
                             } catch (IOException e) {
                                 System.err.println("(failed)");
                             }
@@ -561,22 +572,21 @@ public final class Perceptron extends javax.swing.JFrame {
             Logger.getLogger(Perceptron.class.getName()).log(Level.SEVERE,null,ex);
         }
         File f = new File(presets_path);
-        if (f.listFiles() != null)  {
-            for (var file : f.listFiles()) {
-                String name = file.getName();
-                if (name.endsWith(".state")) {
-                    try {
-                        BufferedReader in = new BufferedReader(new FileReader(file));
-                        System.out.println("parsing preset "+name+":");
-                        presets.add(Preset.parse(in));
-                        in.close();
-                    } catch (FileNotFoundException ex) {
-                        System.err.println("Could not find preset file "+name);
-                        Logger.getLogger(Perceptron.class.getName()).log(Level.SEVERE,null,ex);
-                    } catch (IOException ex) {
-                        System.err.println("Error loading preset "+name);
-                        Logger.getLogger(Perceptron.class.getName()).log(Level.SEVERE,null,ex);
-                    }
+        List<String> fileList = asList(f.list());
+        sort(fileList);
+        for (String name : fileList) {
+            if (name.endsWith(".state")) {
+                try {
+                    BufferedReader in = new BufferedReader(new FileReader(new File(presets_path+name)));
+                    System.out.println("parsing preset "+name+":");
+                    presets.add(Preset.parse(name, in));
+                    in.close();
+                } catch (FileNotFoundException ex) {
+                    System.err.println("Could not find preset file "+name);
+                    Logger.getLogger(Perceptron.class.getName()).log(Level.SEVERE,null,ex);
+                } catch (IOException ex) {
+                    System.err.println("Error loading preset "+name);
+                    Logger.getLogger(Perceptron.class.getName()).log(Level.SEVERE,null,ex);
                 }
             }
         }
@@ -605,11 +615,21 @@ public final class Perceptron extends javax.swing.JFrame {
     public final int LINEHEIGHT = 11;
     private void drawString(Graphics2D G,String s,int x,int y,int a) {
         G.setFont(TEXTFONT);
-        G.setColor(new Color(0,0,0,a>>1));
+        G.setColor(new Color(0,0,0,a));
         G.drawString(s,x-1,y);
         G.drawString(s,x+1,y);
         G.drawString(s,x,y-1);
         G.drawString(s,x,y+1);
+        
+        G.setColor(new Color(0,0,0,a>>1));
+        G.drawString(s,x-1,y+1);
+        G.drawString(s,x+1,y+1);
+        G.drawString(s,x-1,y-1);
+        G.drawString(s,x+1,y-1);
+        G.drawString(s,x+1,y-1);
+        G.drawString(s,x+1,y+1);
+        G.drawString(s,x-1,y-1);
+        G.drawString(s,x-1,y+1);
         G.setColor(new Color(0xff,0xff,0xff,a));
         G.drawString(s,x,y);
     }
@@ -672,7 +692,10 @@ public final class Perceptron extends javax.swing.JFrame {
     Collection<String> past = null;
     void noticeChanges() {
         Collection<String> st = Arrays.asList(helpString(this).split("\n"));
-        if (past!=null) zip(past,st,(s,S)->{if (!s.equals(S)) notify(S);});
+        if (past!=null) zip(past,st,(s,S)->{if (!s.equals(S)) {
+            String[] columns = S.split("@");
+            notify(columns[1].replace('±',' ').strip()+" ⯇ "+columns[2].strip());
+        }});
         past = st; 
         drawNotifications(buf.out.g);
     }
@@ -694,9 +717,7 @@ public final class Perceptron extends javax.swing.JFrame {
                     (since<=255)? (int)(since) :
                     (since>SHOWFORMS-FADEOUTMS)? (int)((SHOWFORMS-since)*255.0/FADEOUTMS+0.5) :
                     255;
-                String[] columns = n.s.split("@");
-                String s = columns[1].replace('±',' ').strip()+" ⯇ "+columns[2].strip();
-                drawRightString(G,s,screen_width-2,y,alpha);
+                drawRightString(G,n.s,screen_width-2,y,alpha);
                 y+= LINEHEIGHT;
             } catch (Exception e) {
                 System.err.println("Error in drawNotifications "+n.s);
@@ -704,5 +725,10 @@ public final class Perceptron extends javax.swing.JFrame {
             }
         };
         notifications.removeAll(remove);
+    }
+    
+    
+    public void textToMap() {
+        fractal.setMap(text.buffer());
     }
 }

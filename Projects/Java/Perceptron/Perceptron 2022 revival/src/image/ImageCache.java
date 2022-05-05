@@ -8,21 +8,14 @@ import java.util.Arrays;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import javax.imageio.ImageIO;
+import static util.Misc.wrap;
 
-/**
- *
- * @author mer49
- */
 public class ImageCache {
 
     private ArrayList<File> images;
     private final int size;
     File current;
 
-    /**
-     *
-     * @param folder_name
-     */
     public ImageCache(String folder_name) {
         assert null != folder_name;
         assert nonNull(folder_name);
@@ -34,57 +27,20 @@ public class ImageCache {
         if (null != f.listFiles()) {
             File[] files = f.listFiles();
             Arrays.sort(files);
-            for (var file : files) {
-                try {
-                    images.add(file);
-                    System.out.println("loaded image " + file.getName());
-                } catch (Exception e) {
-                    System.err.println("could not open image " + file.getName());
-                }
+            for (var file : files) try {
+                images.add(file);
+                System.out.println("loaded image " + file.getName());
+            } catch (Exception e) {
+                System.err.println("could not open image \"" + file.getName() + "\"");
             }
         }
         size = images.size();
     }
 
-    private static int wrap(int n, int m) {
-        return n < 0 ? m - 1 - (-n % m) : n % m;
-    }
+    public BufferedImage next(int n) {return get(wrap(images.indexOf(current) + n, size));}
+    public int current() {return images.indexOf(current);}
+    public String name() {return current!=null? current.getName() : "(none)";}
 
-    /**
-     *
-     * @param n
-     * @return
-     */
-    public BufferedImage advance(int n) {
-        int number_of_images = images.size();
-        int current_image_selection = images.indexOf(current);
-        current_image_selection = current_image_selection + n;
-        if (current_image_selection == number_of_images) {
-            current_image_selection = 0;
-        }
-        if (current_image_selection == -1) {
-            current_image_selection = number_of_images - 1;
-        }
-        return get(current_image_selection);
-    }
-
-    /**
-     *
-     * @return
-     */
-    public int current() {
-        return images.indexOf(current);
-    }
-    
-    public String name() {
-        return current!=null? current.getName() : "(none)";
-    }
-
-    /**
-     *
-     * @param n
-     * @return
-     */
     public BufferedImage get(int n) {
         if (images.isEmpty()) {
             current = null;
@@ -104,5 +60,14 @@ public class ImageCache {
             System.err.println("could not open image " + current.getName());
         }
         return null;
+    }
+
+    public int where(String image_file) {
+        int i=0;
+        for (var imf:images) {
+            if (imf.getName().equals(image_file)) return i;
+            i++;
+        }
+        return -1;
     }
 }
