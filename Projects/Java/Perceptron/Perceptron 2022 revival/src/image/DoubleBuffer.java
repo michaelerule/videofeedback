@@ -12,6 +12,7 @@ import java.awt.image.*;
 import perceptron.Perceptron;
 import image.Samplers.Sampler;
 import static util.Misc.clip;
+import static util.Misc.wrap;
 
 /**
  *
@@ -27,7 +28,7 @@ public class DoubleBuffer {
         fde, // Used to fade between two inpiut images
         dsp; // On-screen display; Contains post-processing effects.
     
-    public boolean reflect     = true;
+    public int     reflect     = 0;
     public boolean interpolate = true;
     public boolean fancy       = true;
     
@@ -98,11 +99,11 @@ public class DoubleBuffer {
         setInterpolatedAndReflected(!interpolate,reflect);
     }
     
-    public void toggleReflection() {
-        setInterpolatedAndReflected(interpolate,!reflect);
+    public void nextReflection(int n) {
+        setInterpolatedAndReflected(interpolate,wrap(n+reflect,3));
     }
     
-    void setInterpolatedAndReflected(boolean interp, boolean reflect) {
+    void setInterpolatedAndReflected(boolean interp, int reflect) {
         this.reflect = reflect;
         this.interpolate = interp;
         if (out != null) out.setInterpolatedAndReflected(interp,reflect);

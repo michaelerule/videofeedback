@@ -17,6 +17,11 @@ import static util.ColorUtil.fast;
  */
 public class ImageRenderContext 
 {
+    public static final int 
+        REFLECT_MIRROR   = 0,
+        REFLECT_REPEAT   = 0,
+        REFLECT_TRIANGLE = 0;
+    
     public BufferedImage img;
     public Graphics2D    g0;
     public Graphics2D    g2D;
@@ -36,7 +41,7 @@ public class ImageRenderContext
      * @param reflect
      */
     public ImageRenderContext(BufferedImage b, 
-            boolean interpolate, boolean reflect) {
+            boolean interpolate, int reflect) {
         img  = b;
         img.setAccelerationPriority(1.f);
         
@@ -54,7 +59,7 @@ public class ImageRenderContext
     }
     
     public ImageRenderContext(BufferedImage b, 
-            boolean interpolate, boolean reflect, float scale) {
+            boolean interpolate, int reflect, float scale) {
         this(b, interpolate, reflect);
         this.is_scaled = true;
         this.scale = scale;
@@ -88,10 +93,18 @@ public class ImageRenderContext
      * @param inter
      * @param reflect
      */
-    public final void setInterpolatedAndReflected(boolean inter, boolean reflect) {
-        get = inter 
-            ? (reflect? samplers.getFixed8Bit : samplers.getFixed8BitNoReflect)
-            : (reflect? samplers.get          : samplers.getNoReflect);
+    public final void setInterpolatedAndReflected(boolean inter, int reflect) {
+        switch (reflect) {
+            case 0:
+                get = inter? samplers.getFixed8Bit : samplers.get;
+                break;
+            case 1:
+                get = inter? samplers.getFixed8BitNoReflect : samplers.getNoReflect;
+                break;
+            case 2:
+                get = inter? samplers.getTriangleFixed8Bit : samplers.getTriangle;
+                break;
+        }
         if (is_scaled)    
             get = samplers.makeScaledGrabber(get, scale);
     }

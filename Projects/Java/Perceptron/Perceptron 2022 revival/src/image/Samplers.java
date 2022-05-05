@@ -17,6 +17,12 @@ import static util.Misc.wrap;
  */
 public class Samplers {
     
+    public static final String [] reflection_mode_names = {
+        "Mirror",
+        "Repeat",
+        "Triangle"
+    };
+    
     /** Bit-masked for AARRGGBB 8-bit color data */
     final static int 
             R  = 0xFF0000, 
@@ -45,7 +51,9 @@ public class Samplers {
             get, 
             getNoReflect, 
             getFixed8Bit, 
-            getFixed8BitNoReflect;
+            getFixed8BitNoReflect,
+            getTriangle,
+            getTriangleFixed8Bit;
     
     /** Construct a sampler collection matching given buffered image
      * 
@@ -103,7 +111,7 @@ public class Samplers {
         };
 
         // Linear interpolation with 8-bit fixed point and reflection.
-        getFixed8Bit = new Barysampler(new Sampler() {
+        getFixed8Bit = new Sampler() {
             @Override
             public int it(int x, int y) {
                 int x1, x2, y1, y2;
@@ -150,7 +158,7 @@ public class Samplers {
                 return M & (M4 + ((M1-M4)*C1 + (M2-M4)*C2 + (M3-M4)*C3 + MR >> 8))
                      | G & (G4 + ((G1-G4)*C1 + (G2-G4)*C2 + (G3-G4)*C3 + GR >> 8));
             }
-        });
+        };
 
         // Linear interpolation with fixed-point and no reflection
         getFixed8BitNoReflect = new Sampler() {
@@ -195,6 +203,8 @@ public class Samplers {
                      | G & (G4 + ((G1-G4)*C1 + (G2-G4)*C2 + (G3-G4)*C3 + GR >> 8));
             }
         };
+        getTriangle = new Barysampler(get);
+        getTriangleFixed8Bit = new Barysampler(getFixed8Bit);
     }
     
     /**
@@ -237,6 +247,7 @@ public class Samplers {
         public int it(int x, int y) {
             assert (W>=H);
             
+            x = W*256-1-x;
             x -= xshift;
             y = H*256-y;
             
@@ -258,18 +269,6 @@ public class Samplers {
             int row = y/h8, col = x/b8;
             y = y % h8;
             x = x % b8;
-            // Triangle code
-            // 0: take from screen as normal
-            // 1: rotate screen anticlockwise pi/3
-            // 2: rotate screen clockwise pi/3
-            int code = (row+col)%3;
-            
-            // Ensure we're in the right spot
-            assert (y<=x);
-            assert (x>=0);
-            assert (x<b81);
-            assert (y>=0);
-            assert (y<h81);
             
             // Check whether we're in lower or upper triangle
             // Flip down if in upper
@@ -280,44 +279,45 @@ public class Samplers {
             } else {
                 x = b81-x;
             }
-            int px, py;
+            int qx = (int)(x*b2h);
+            int qy = (int)(y*h2b);
+            int px=0, py=0;
+            // Triangle code
+            // 0: take from screen as normal
+            // 1: rotate screen anticlockwise pi/3
+            // 2: rotate screen clockwise pi/3
+            int code = (row+col)%3;
+            if (upper) code = 5-code;
             switch (code) {
                 case 0:
-                    if (upper) {
-                        px = (int)(y*h2b);
-                        py = (int)(x*b2h);
-                    } else {
-                        px = x;
-                        py = y;
-                    }
+                case 4:
+                    px = x;
                     break;
                 case 1:
-                    if (upper) {
-                        px = x;
-                    } else {
-                        px = (int)(y*h2b);
-                    }
-                    y = h81-y;
-                    py = y - (int)(x*b2h);
+                case 5:
+                    px = qy;
                     break;
                 case 2:
-                    if (upper) {
-                        py = y;
-                    } else {
-                        py = (int)(x*b2h);
-                    }
-                    x = b81-x;
-                    px = x-(int)(y*h2b);
+                case 3:
+                    px = b81 - x - qy;
                     break;
-                default:
-                    px = py = 0;
-                    assert false;
             }
-            //return ((px*255/b8)<<16)|((py*255/h8)<<8);
+            switch (code) {
+                case 0:
+                case 3:
+                    py = h81-y;
+                    break;
+                case 2:
+                case 5:
+                    py = h81-qx;
+                    break;
+                case 1:
+                case 4:
+                    py = y + qx;
+                    break;
+            }
             
-            px += (py*148+127>>8);
-            px += xshift;
-            py = h8-py;
+            px += ((h81-py)*148+127>>8) + xshift;
             return orthosampler.it(px,py);
         }
     }

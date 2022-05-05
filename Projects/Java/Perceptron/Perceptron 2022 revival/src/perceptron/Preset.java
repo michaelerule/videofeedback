@@ -2,6 +2,7 @@ package perceptron;
 
 import rendered.TextBuffer;
 import image.DoubleBuffer;
+import image.Samplers;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
@@ -42,11 +43,11 @@ public class Preset {
     public boolean mic_active      = false ;
     public boolean dampen_colors   = true;
     public boolean bounds_invert   = false;
-    public boolean reflect         = true;
     public boolean interpolate     = true;
     public boolean fancy           = true;
     public boolean draw_futures    = true;
     public String  fractal_map;
+    public int     reflect       = 0;
     public int     hue_rate      = 0;
     public int     sat_rate      = 0;
     public int     lum_rate      = 0;
@@ -237,7 +238,7 @@ public class Preset {
         out += "qQ  @± fractal map         @" + F.mapping + "\n";
         out += "wW  @± outside coloring    @" + F.outi + " " + F.outop.name+"\n";
         out += "eE  @± boundary test       @" + F.bounds_i  + " " + F.bound_op.name+"\n";
-        out += "r   @reflection            @" + P.buf.reflect + "\n";
+        out += "r   @reflection            @" + P.buf.reflect + Samplers.reflection_mode_names[P.buf.reflect]+"\n";
         out += "R   @reverse bounds test   @" + F.invert_bound + "\n";
         out += "t   @draw tree             @" + P.draw_tree + "\n";
         out += "T   @objects on top        @" + P.objects_on_top + "\n";

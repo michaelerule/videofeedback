@@ -298,6 +298,8 @@ public final class ControlSet implements MouseListener, MouseMotionListener, Key
                     break;
                 case '\b':
                     break;
+                case '\r':
+                    break;
                 default:
                     P.text.append(c);
             }
@@ -348,7 +350,7 @@ public final class ControlSet implements MouseListener, MouseMotionListener, Key
             case 'W':F.nextOutside(-1); break;
             case 'e':F.nextBound(1); break;
             case 'E':F.nextBound(-1); break;
-            case 'r':P.buf.toggleReflection(); break;
+            case 'r':P.buf.nextReflection(1); break;
             case 'R':F.invert_bound=!F.invert_bound; break;
             case 't':setTree(!P.draw_tree); break;
             case 'T':P.toggleObjectsOnTop(); break;
@@ -378,7 +380,7 @@ public final class ControlSet implements MouseListener, MouseMotionListener, Key
             case 'F':F.nextGColor2(1);         break;
             case 'g':F.nextGradient( 1);       break;
             case 'G':F.nextGradient(-1);       break;
-            case 'h':F.nextGradientShape(1);  break;
+            case 'h':F.nextGradientShape(1);   break;
             case 'H':F.nextGradientShape(-1);  break;
             case 'j':F.toggleInversion();      break;
             case 'J':F.toggleFeedbackInvert(); break;
