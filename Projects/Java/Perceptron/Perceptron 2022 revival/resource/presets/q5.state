@@ -15,7 +15,7 @@ preset q5.state {
       blursharp_rate         0
       offset_mode            0
       rotate_mode            1
-      mirror_mode            1
+      mirror_mode            0
       motionblurp            0
       gradcolor1_i           4
       gradcolor2_i           0

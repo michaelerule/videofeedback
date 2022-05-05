@@ -26,28 +26,37 @@ public class Preset {
     ////////////////////////////////////////////////////////////////////////////
     // Mirror of every state in perceptron
     // Perceptron
-    public boolean objects_on_top     = true;
-    //public boolean cap_frame_rate     = true;
-    public boolean rotate_images      = false;
-    public boolean fore_grad          = false;
-    public boolean draw_moths         = false; 
-    public boolean draw_top_bars      = true;
-    public boolean draw_side_bars     = true;
-    public boolean do_hue_rotation    = true;
-    public int     hue_rate = 0;
-    public int     sat_rate = 0;
-    public int     lum_rate = 0;
-    public int     bri_rate = 0;
-    public int     con_rate = 0;
-    public int     blursharp_rate = 0;
-    // FractalMap
+    public boolean objects_on_top  = true;
+    public boolean rotate_images   = false;
+    public boolean fore_grad       = false;
+    public boolean draw_moths      = false; 
+    public boolean draw_top_bars   = true;
+    public boolean draw_side_bars  = true;
+    public boolean do_hue_rotation = true;
+    public boolean tree_active     = false;
+    public boolean on              = true;
+    public boolean cursor_on       = true;
+    public boolean tree_leaves     = false;
+    public boolean tree_symmetry   = true;
+    public boolean draw_dino       = false;
+    public boolean mic_active      = false ;
+    public boolean dampen_colors   = true;
+    public boolean bounds_invert   = false;
+    public boolean reflect         = true;
+    public boolean interpolate     = true;
+    public boolean fancy           = true;
+    public boolean draw_futures    = true;
+    public String  fractal_map;
+    public int     hue_rate      = 0;
+    public int     sat_rate      = 0;
+    public int     lum_rate      = 0;
+    public int     bri_rate      = 0;
+    public int     con_rate      = 0;
+    public int     blursharp_rate= 0;
     public int     offset_mode   = 0;
     public int     rotate_mode   = 0;
     public int     mirror_mode   = 0;
     public int     motion_blur   = 0;
-    public boolean dampen_colors = true;
-    public String  fractal_map;
-    public boolean bounds_invert = false;
     public int     bounds_i      = 0; 
     public int     outside_i     = 0; 
     public int     gradcolor1_i  = 0; // Gradient color index used in modes 1 and 2
@@ -58,50 +67,35 @@ public class Preset {
     public int     tint_level    = 0;
     public int     noise_level   = 0;
     public int     color_dampen  = 0;
-    public float   grad_slope    = 1f; 
-    public float   grad_offset   = 0f;
     public int     color_mask    = 0;  
     public int     feedback_mask = 0;
     public int     grad_accent   = 0;
     public int     grad_i        = 0;
     public int     grad_mode     = 0;
-    // DoubleBuffer
-    public boolean reflect     = true;
-    public boolean interpolate = true;
-    public boolean fancy       = true;
-    // ControlSet
-    public boolean draw_futures = true;
-    public double  XBranchingCursor;
-    public double  XAlphaCursor;
-    public double  XBranchLengthCursor;
-    public double  XTreeOrientationCursor;
-    public double  XMapCursor;
-    public double  XMapRotationCursor;
-    public double  XGradintCursor;
-    public double  XMapAlphaCursor;
-    public double  XTreeLocationCursor;
-    public double  YBranchingCursor;
-    public double  YAlphaCursor;
-    public double  YBranchLengthCursor;
-    public double  YTreeOrientationCursor;
-    public double  YMapCursor;
-    public double  YMapRotationCursor;
-    public double  YGradintCursor;
-    public double  YMapAlphaCursor;
-    public double  YTreeLocationCursor;
-    // Tree3D
-    public boolean tree_active;
-    // TextBuffer
-    public boolean on   = true;
-    public boolean cursor_on = true;
-    // New features
-    public boolean tree_leaves = false;
-    public boolean tree_symmetry = true;
-    public boolean draw_dino = false;
-    public boolean mic_active = false ;
     public int     mic_visualization = 0;
-    public float   mic_speed = .05f;
-    public float   mic_volume = 1.0f;
+    // ControlSet
+    public float  grad_slope    = 1f; 
+    public float  grad_offset   = 0f;
+    public float  mic_speed     = .05f;
+    public float  mic_volume    = 1f;
+    public float  XBranchingCursor;
+    public float  XAlphaCursor;
+    public float  XBranchLengthCursor;
+    public float  XTreeOrientationCursor;
+    public float  XMapCursor;
+    public float  XMapRotationCursor;
+    public float  XGradintCursor;
+    public float  XMapAlphaCursor;
+    public float  XTreeLocationCursor;
+    public float  YBranchingCursor;
+    public float  YAlphaCursor;
+    public float  YBranchLengthCursor;
+    public float  YTreeOrientationCursor;
+    public float  YMapCursor;
+    public float  YMapRotationCursor;
+    public float  YGradintCursor;
+    public float  YMapAlphaCursor;
+    public float  YTreeLocationCursor;
     
     public String  image_file = "";
     
@@ -142,10 +136,10 @@ public class Preset {
      * @param P
      * @return  */
     public static String settings(Perceptron P) {
-        FractalMap F = P.fractal;
+        FractalMap   F = P.fractal;
         DoubleBuffer B = P.buf;
-        TextBuffer T = P.text;
-        ControlSet C = P.control;
+        TextBuffer   T = P.text;
+        ControlSet   C = P.control;
         String GAP = "      ";
         String out = "";
         out += GAP + "objects_on_top         " + P.objects_on_top + "\n";
@@ -167,7 +161,7 @@ public class Preset {
         
         out += GAP + "offset_mode            " + F.offset_mode + "\n";
         out += GAP + "rotate_mode            " + F.rotate_mode + "\n";
-        out += GAP + "mirror_mode            " + F.rotate_mode + "\n";
+        out += GAP + "mirror_mode            " + F.mirror_mode + "\n";
         out += GAP + "motionblurp            " + F.motion_blur + "\n";
         out += GAP + "gradcolor1_i           " + F.gcolor1_i + "\n";
         out += GAP + "gradcolor2_i           " + F.gcolor2_i + "\n";
@@ -210,22 +204,23 @@ public class Preset {
         
         out += GAP + "image_file             " + P.images.name() + "\n";
         
-        out += GAP + "XBranchingCursor       " + C.XBranchingCursor() + "\n";
-        out += GAP + "XAlphaCursor           " + C.XAlphaCursor() + "\n";
-        out += GAP + "XBranchLengthCursor    " + C.XBranchLengthCursor() + "\n";
-        out += GAP + "XTreeOrientationCursor " + C.XTreeOrientationCursor() + "\n";
-        out += GAP + "XMapCursor             " + C.XMapCursor() + "\n";
-        out += GAP + "XMapRotationCursor     " + C.XMapRotationCursor() + "\n";
-        out += GAP + "XGradintCursor         " + C.XGradientCursor() + "\n";
-        out += GAP + "XTreeLocationCursor    " + C.XTreeLocationCursor() + "\n";
-        out += GAP + "YBranchingCursor       " + C.YBranchingCursor() + "\n";
-        out += GAP + "YAlphaCursor           " + C.YAlphaCursor() + "\n";
-        out += GAP + "YBranchLengthCursor    " + C.YBranchLengthCursor() + "\n";
-        out += GAP + "YTreeOrientationCursor " + C.YTreeOrientationCursor() + "\n";
-        out += GAP + "YMapCursor             " + C.YMapCursor() + "\n";
-        out += GAP + "YMapRotationCursor     " + C.YMapRotationCursor() + "\n";
-        out += GAP + "YGradintCursor         " + C.YGradientCursor() + "\n";
-        out += GAP + "YTreeLocationCursor    " + C.YTreeLocationCursor() + "\n";
+        out += GAP + "XBranchingCursor       " + C.branching.x() + "\n";
+        out += GAP + "XAlphaCursor           " + C.alpha_cursor.x() + "\n";
+        out += GAP + "XBranchLengthCursor    " + C.branch_length.x() + "\n";
+        out += GAP + "XTreeOrientationCursor " + C.tree_orientation.x() + "\n";
+        out += GAP + "XMapCursor             " + C.map_offset.x() + "\n";
+        out += GAP + "XMapRotationCursor     " + C.map_rotation.x() + "\n";
+        out += GAP + "XGradintCursor         " + C.gradient.x() + "\n";
+        out += GAP + "XTreeLocationCursor    " + C.tree_location.x() + "\n";
+        
+        out += GAP + "YBranchingCursor       " + C.branching.y() + "\n";
+        out += GAP + "YAlphaCursor           " + C.alpha_cursor.y() + "\n";
+        out += GAP + "YBranchLengthCursor    " + C.branch_length.y() + "\n";
+        out += GAP + "YTreeOrientationCursor " + C.tree_orientation.y() + "\n";
+        out += GAP + "YMapCursor             " + C.map_offset.y() + "\n";
+        out += GAP + "YMapRotationCursor     " + C.map_rotation.y() + "\n";
+        out += GAP + "YGradintCursor         " + C.gradient.y() + "\n";
+        out += GAP + "YTreeLocationCursor    " + C.tree_location.y() + "\n";
         return out;
     }
 
@@ -277,7 +272,7 @@ public class Preset {
         out += "xX  @± tint amount         @" + F.tint_level + "\n";
         out += "C   @cursor futures        @" + C.draw_futures + "\n";
         out += "c   @show cursors          @" + C.draw_cursors + "\n";
-        out += "v   @wander                @" + (C.current==null?"(none)":C.current.name+": "+C.current.wanderer) + "\n";
+        out += "v   @wander                @" + (C.current==null?"(none)":C.current.name+": "+C.current.wander) + "\n";
         out += "V   @autopilot             @" + C.screensaver + "\n";
         out += "b   @show text buffer      @" + P.text.on + "\n";
         out += "B   @text buffer cursor    @" + P.text.cursor_on + "\n";
@@ -314,86 +309,80 @@ public class Preset {
      * @param P
      */
     public void set(Perceptron P) {
-        FractalMap F = P.fractal;
+        FractalMap   F = P.fractal;
         DoubleBuffer B = P.buf;
-        TextBuffer T = P.text;
-        ControlSet C = P.control;
-        P.objects_on_top = objects_on_top;
-        //P.cap_frame_rate = cap_frame_rate;
-        P.rotate_images = rotate_images;
-        P.fore_grad = fore_grad;
-        P.draw_moths = draw_moths;
-        P.draw_top_bars = draw_top_bars;
-        P.draw_side_bars = draw_side_bars;
-        P.do_color_transform = do_hue_rotation;
-        P.hue_rate = hue_rate;
-        P.sat_rate = sat_rate;
-        P.lum_rate = lum_rate;
-        P.bri_rate = bri_rate;
-        P.con_rate = con_rate;
-        P.blursharp_rate = blursharp_rate;
+        TextBuffer   T = P.text;
+        ControlSet   C = P.control;
         
-        F.offset_mode = offset_mode;
-        F.rotate_mode = rotate_mode;
-        F.mirror_mode = mirror_mode;
-        F.motion_blur = motion_blur;
         F.setMap(fractal_map);
-        F.bounds_i = bounds_i;
-        F.invert_bound = bounds_invert;
-        F.outi = outside_i;
-        F.gslope = grad_slope;
-        F.goffset = grad_offset;
-        F.color_mask = color_mask;
-        F.feedback_mask = feedback_mask;
-        F.gcolor2 = grad_accent;
-        F.grad_i = grad_i;
-        F.grad_mode = grad_mode;
-        
-        F.gcolor1_i = gradcolor1_i;
-        F.gcolor2_i = gradcolor2_i;
-        F.barcolor_i   = barcolor_i;
-        F.tintcolor_i  = tintcolor_i;
-        F.tint_level   = tint_level;
-        F.outcolor_i   = outcolor_i;
-        F.noise_level  = noise_level;
-        F.color_dampen = color_dampen;
-        
-        F.syncOps();
-
-        B.reflect = reflect;
-        B.fancy = fancy;
-        B.interpolate = interpolate;
-        P.draw_tree = tree_active;
-        
-        T.on = on;
-        T.cursor_on = cursor_on;
-
-        // New features
+        P.objects_on_top        = objects_on_top;
+        P.rotate_images         = rotate_images;
+        P.fore_grad             = fore_grad;
+        P.draw_moths            = draw_moths;
+        P.draw_top_bars         = draw_top_bars;
+        P.draw_side_bars        = draw_side_bars;
+        P.do_color_transform    = do_hue_rotation;
+        P.hue_rate              = hue_rate;
+        P.sat_rate              = sat_rate;
+        P.lum_rate              = lum_rate;
+        P.bri_rate              = bri_rate;
+        P.con_rate              = con_rate;
+        P.blursharp_rate        = blursharp_rate;
+        P.draw_dino             = draw_dino;
         P.tree.setLeaves(tree_leaves);
         P.tree.setSymmetry(tree_symmetry);
-        P.draw_dino = draw_dino;
         P.mic.setActive(mic_active);
         P.mic.setVis(mic_visualization);
         P.mic.setSpeed(mic_speed);
         P.mic.setVolume(mic_volume);
-        
         P.setImage(image_file);
-                
-        C.draw_futures = draw_futures;
+        
+        F.offset_mode           = offset_mode;
+        F.rotate_mode           = rotate_mode;
+        F.mirror_mode           = mirror_mode;
+        F.motion_blur           = motion_blur;
+        F.bounds_i              = bounds_i;
+        F.invert_bound          = bounds_invert;
+        F.outi                  = outside_i;
+        F.gslope                = grad_slope;
+        F.goffset               = grad_offset;
+        F.color_mask            = color_mask;
+        F.feedback_mask         = feedback_mask;
+        F.gcolor2               = grad_accent;
+        F.grad_i                = grad_i;
+        F.grad_mode             = grad_mode;
+        F.gcolor1_i             = gradcolor1_i;
+        F.gcolor2_i             = gradcolor2_i;
+        F.barcolor_i            = barcolor_i;
+        F.tintcolor_i           = tintcolor_i;
+        F.tint_level            = tint_level;
+        F.outcolor_i            = outcolor_i;
+        F.noise_level           = noise_level;
+        F.color_dampen          = color_dampen;
+        F.syncOps();
+
+        B.reflect       = reflect;
+        B.fancy         = fancy;
+        B.interpolate   = interpolate;
+        P.draw_tree     = tree_active;
+        T.on            = on;
+        T.cursor_on     = cursor_on;
+        
+        C.draw_futures  = draw_futures;
         C.setFractal(true);
         C.setTree(tree_active);
         C.setAudio(false);
         C.syncCursors();
-        C.setBranchingCursor(XBranchingCursor,YBranchingCursor);
-        C.setAlphaCursor(XAlphaCursor,YAlphaCursor);
-        C.setBranchLengthCursor(XBranchLengthCursor,YBranchLengthCursor);
-        C.setTreeOrientationCursor(XTreeOrientationCursor,YTreeOrientationCursor);
-        C.setMapOffsetCursor(XMapCursor,YMapCursor);
-        C.setMapRotationCursor(XMapRotationCursor,YMapRotationCursor);
-        C.setGradientCursor(XGradintCursor,YGradintCursor);
-        C.setTreeLocationCursor(XTreeLocationCursor,YTreeLocationCursor);
+        C.branching.set(XBranchingCursor,YBranchingCursor);
+        C.alpha_cursor.set(XAlphaCursor,YAlphaCursor);
+        C.branch_length.set(XBranchLengthCursor,YBranchLengthCursor);
+        C.tree_orientation.set(XTreeOrientationCursor,YTreeOrientationCursor);
+        C.map_offset.set(XMapCursor,YMapCursor);
+        C.map_rotation.set(XMapRotationCursor,YMapRotationCursor);
+        C.gradient.set(XGradintCursor,YGradintCursor);
+        C.tree_location.set(XTreeLocationCursor,YTreeLocationCursor);
     }
-    
+
     @Override
     public String toString() {
         String GAP = "      ";

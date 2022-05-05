@@ -592,9 +592,9 @@ public class FractalMap {
         float r1(int X, int Y) {float x_=(float)X*oW7-1, y_=(float)Y*oH7-1; return (float)sqrt(x_*x_+y_*y_);}}
     private final Bound[] bounds = {
         new Bound("Screen") {boolean test(int x,int y,int i) {return x<W8&&y<H8&&x>=0&&y>=0;}},
-        new Bound("Oval")   {boolean test(int x,int y,int i) {return x<W8&&y<H8&&x>=0&&y>=0&&in_circle[(x>>8)+W*(y>>8)];}},
+        new Bound("Oval")   {boolean test(int x,int y,int i) {return x<W8&&y<H8&&x>=0&&y>=0&&in_circle[wrap((x>>8)+W*(y>>8),MLEN)];}},
         new Bound("Horizon"){boolean test(int x,int y,int i) {return y>0&&y<H8;}},
-        new Bound("Radius") {boolean test(int x,int y,int i) {return r1(x,y) < bound_radius;}},
+        new Bound("Radius") {boolean test(int x,int y,int i) {return r1(x,y)<bound_radius;}},
         new Bound("Newton") {boolean test(int x,int y,int i) {return zconv[i];}},
         new Bound("None")   {boolean test(int x,int y,int i) {return false;}}};
     

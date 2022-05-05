@@ -66,76 +66,70 @@ public class Microphone {
     int   image_width, image_height, half_image_height, buffer_size;
     
     public Microphone(DoubleBuffer b, int iline) {
+        
+        buffer = b;
+        image_width  = buffer.out.img.getWidth();
+        image_height = buffer.out.img.getHeight();
+        half_image_height = image_height / 2;
+        buffer_size = buffer.out.buf.getSize();
+
+        int counter = 0;
+        index = new float[END_NOTE - START_NOTE];
+        interval = SUBSAMPLE * 12.f;
+        for (int i = START_NOTE; i < END_NOTE; i++) {
+            float size = (int) (SAMPLE_RATE / (440 * Math.pow(2, i / interval)));
+            if (size > 1) {
+                index[counter] = size;
+                counter++;
+            }
+        }
+        filter = new float[index.length][];
+        for (int i = 0; i < counter; i++) filter[i] = new float[(int) index[i]];
+        hist     = new float[filter.length];
+        histbuf  = new float[filter.length];
+        // TODO: replace with IIR filter bank solution?
+        harmonic = new float[filter.length][filter.length];
+        for (int i = 0; i < harmonic.length; i++) {
+            for (int j = 0; j < harmonic.length; j++) {
+                float quot = (float) StrictMath.abs(2 * ((index[j] / index[i]) % 1 - .5f));
+                if (quot > .9) harmonic[i][j] = quot;
+            }
+        }
+        temp_byte = new byte[(int) index[counter - 1] * 4];
+        updateWeights();
+        vis = visuals.get(0);
+        
         audio_line = iline ;
+        tryToListen();
+    }
+    
+    private boolean tryToListen() {
         try {            
             //obtain and start a new incoming sound line
             ArrayList<TargetDataLine> valid_lines = new ArrayList<>();
             Line.Info[] all_lines = getTargetLineInfo(new TargetDataLine.Info(TargetDataLine.class,format)) ;
-            for (var i : all_lines)
-                valid_lines.add((TargetDataLine)getLine(i));
-            if (valid_lines.size()<=0 || iline<0 || iline>=valid_lines.size()) {
-                active = working = false; return;
-            }
-            line = (TargetDataLine)valid_lines.get(iline);
+            for (var i : all_lines) valid_lines.add((TargetDataLine)getLine(i));
+            if (valid_lines.size()<=0 || audio_line<0 || audio_line>=valid_lines.size()) 
+                return active = working = false;
+            line = (TargetDataLine)valid_lines.get(audio_line);
             line.open(format);
             line.start();
             System.out.println("LISTENING ON " + line );
-
-            int counter = 0;
-
-            index = new float[END_NOTE - START_NOTE];
-
-            interval = SUBSAMPLE * 12.f;
-            for (int i = START_NOTE; i < END_NOTE; i++) {
-                float size = (int) (SAMPLE_RATE / (440 * Math.pow(2, i / interval)));
-                if (size > 1) {
-                    index[counter] = size;
-                    counter++;
-                }
-            }
-
-            filter = new float[index.length][];
-            for (int i = 0; i < counter; i++) {
-                filter[i] = new float[(int) index[i]];
-            }
-
-            hist = new float[filter.length];
-            histbuf = new float[filter.length];
-
-            harmonic = new float[filter.length][filter.length];
-            for (int i = 0; i < harmonic.length; i++) {
-                for (int j = 0; j < harmonic.length; j++) {
-                    float quot = (float) StrictMath.abs(2 * ((index[j] / index[i]) % 1 - .5f));
-                    if (quot > .9) harmonic[i][j] = quot;
-                }
-            }
-
-            temp_byte = new byte[(int) index[counter - 1] * 4];
-            buffer = b;
-            image_width  = buffer.out.img.getWidth();
-            image_height = buffer.out.img.getHeight();
-            half_image_height = image_height / 2;
-            buffer_size = buffer.out.buf.getSize();
-            updateWeights();
-            vis = visuals.get(0);
-            working = true;
-            active = false;
+            return (working = true);
         } catch (LineUnavailableException E) {
-            System.err.println("Could not get audio line "+iline+", audio input won\'t work.");
+            System.err.println("Could not get audio line "+audio_line+", audio input won\'t work.");
             E.printStackTrace();
-            working = active = false;
+            return active = working = false;
         }
     }
 
     public void setActive(boolean a) {
-        if (!working) {active=false;return;}
         if (active == a) return;
-        if (active) stop();
-        else start();
+        if (active) stop(); else start();
     }
 
     public void start() {
-        if (!working) {active=false;return;}
+        if (!working && !tryToListen()) {active=false;return;}
         if (capture==null||!capture.running) {(capture=new CaptureThread()).start();}
         active = true;
     }

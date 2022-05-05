@@ -45,11 +45,6 @@ import static java.util.Collections.sort;
 import java.util.HashSet;
 import java.util.List;
 
-import static util.Misc.getDeviceGraphicsConfig;
-import static util.Misc.hideCursor;
-import static util.Misc.makeUndecoratedMainFrame;
-import static util.Misc.makeNotFullscreen;
-import static util.Misc.makeFullscreen;
 import static util.Misc.clip;
 import static util.Misc.zip;
 import static java.util.Objects.requireNonNull;
@@ -61,6 +56,7 @@ import static util.ColorUtil.makeHueSatLumaOperator;
 import static util.Matrix.diag;
 import static util.Matrix.multiply;
 import static perceptron.FractalMap.Mapping;
+import util.Win;
 
 /**
  * @author mer49
@@ -158,10 +154,10 @@ public final class Perceptron extends javax.swing.JFrame {
     // Getters and Setters (boilerplate!) //////////////////////////////////////
     public int     screenWidth()             {return screen_width; }
     public int     screenHeight()            {return screen_height; }
+    public int     displayWidth()            {return display_w; }
+    public int     displayHeight()           {return display_h; }
     public int     halfScreenWidth()         {return half_screen_w; }
     public int     halfScreenHeight()        {return half_screen_h; }
-    public int     physical_width()          {return display_w; }
-    public int     physical_height()         {return display_h; }
     public boolean isFancy()                 {return buf.fancy; }
     public void    setObjectsOnTop(boolean b){objects_on_top = b; }
     public void    setFancy(boolean s)       {if (s!=isFancy()) toggleFancy(); }
@@ -181,11 +177,15 @@ public final class Perceptron extends javax.swing.JFrame {
             E.printStackTrace();
         }
     }
+    
     public void setImage(String n) {
+        n = n.strip();
+        if (n.length()<=0) return;
         int i = images.where(n);
-        if (i<0) notify("Could not find image named "+n);
+        if (i<0) notify("Could not find image named \""+n+"\"");
         else setImage(i);
     }
+    
     public void nextImage(int n) {
         buf.set(images.next(n));
         image_i = images.current();
@@ -203,7 +203,7 @@ public final class Perceptron extends javax.swing.JFrame {
      */
     @SuppressWarnings("LeakingThisInConstructor")
     public Perceptron(String Settings,String CrashLog,String Presets) {
-        super("Perceptron",getDeviceGraphicsConfig());
+        super("Perceptron",Win.getDeviceGraphicsConfig());
         this.setBackground(Color.black);
 
         // Make the saver window and remember its (smaller) size)
@@ -217,8 +217,8 @@ public final class Perceptron extends javax.swing.JFrame {
         parseSettings(Settings,Presets);  //READ IN SETTINGS INFORMATION
         
         // Make us full-screen
-        makeUndecoratedMainFrame(this); //FRAME SETUP
-        makeFullscreen(this);           //FULLSCREEN INITIALISATION
+        Win.makeUndecoratedMainFrame(this); //FRAME SETUP
+        Win.makeFullscreen(this);           //FULLSCREEN INITIALISATION
         display_w    = getWidth();
         display_h    = getHeight();
         half_screen_w = (short) (screen_width / 2);
@@ -325,10 +325,8 @@ public final class Perceptron extends javax.swing.JFrame {
     @SuppressWarnings({"SleepWhileInLoop","UseSpecificCatch"})
     public void go() {
         System.out.println("Starting...");
-        
         //hideCursor(this);
         this.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
-        
         last_image_time = 20000+System.currentTimeMillis();
         boredom_time    = 50000+System.currentTimeMillis();
         o.recenter(200);
@@ -341,21 +339,60 @@ public final class Perceptron extends javax.swing.JFrame {
         System.out.println(" x_offset : "+x_offset);
         System.out.println(" y_offset : "+y_offset);
         long last_time = System.currentTimeMillis();
-
         running = true;
         nextImage(1);
-
         control.setPreset(control.preset_i);
-        
         //Setting up Double Buffering
         createBufferStrategy(2);
         bufferStrategy = getBufferStrategy();
-        
         System.out.println("Entering Kernel Loop...");
+        
+        /*
+        // This was added for debugging
+        for (int y=0; y<screen_height; y++) {
+            for (int x=0; x<screen_width; x++) {
+                int c = ((y*255/screen_height)<<16)|((x*255/screen_width)<<8);//|(255*((x/256^1)^(y/256^1)));
+                buf.out.buf.setElem(x+y*screen_width, c);
+            }
+        }
+        BufferedImage image2 = new BufferedImage(
+                screen_width,
+                screen_height,
+                BufferedImage.TYPE_INT_RGB);
+        image2.getGraphics().drawImage(buf.out.img, 0, 0, null);
+        buf.set(image2);
+        */
+        
         while (true) {
             if (running) {
                 try {
                     long start_time = System.currentTimeMillis();
+                    
+                    /*
+                    // This was added for debugging
+                    int x1 = screen_width/2;
+                    int y1 = 0;
+                    int base = (int)(screen_height*(float)(2f/sqrt(3))+0.5);
+                    int x2 = x1 - base/2;
+                    int x3 = x1 + base/2;
+                    int y2 = screen_height-1;
+                    int y3 = screen_height-1;
+                    buf.buf.g.drawImage(buf.img.img,0,0,screen_width,screen_height,null);
+                    buf.out.g.drawImage(buf.img.img,0,0,screen_width,screen_height,null);
+                    buf.buf.g.setColor(new Color(0,0,0));
+                    //buf.buf.g.fillRect(0,0,screen_width,screen_height);
+                    buf.out.g.setColor(new Color(120,0,255,128));
+                    buf.buf.g.fillPolygon(
+                        new int[]{x1,x2,x3,x1},
+                        new int[]{y1,y2,y3,y1},4);
+                    buf.out.g.setColor(new Color(0,0,0));
+                    //buf.out.g.fillRect(0,0,screen_width,screen_height);
+                    buf.out.g.setColor(new Color(120,0,255,128));
+                    buf.out.g.fillPolygon(
+                        new int[]{x1,x2,x3,x1},
+                        new int[]{y1,y2,y3,y1},4);
+                    drawBars();
+                    */
                                         
                     // Apply the fractal mapping
                     fractal.operate();
@@ -484,7 +521,7 @@ public final class Perceptron extends javax.swing.JFrame {
     {
         boolean was_running = this.running;
         this.running = false;
-        makeNotFullscreen();
+        Win.makeNotFullscreen();
         saver.setVisible(true);
         saver.setFocusable(true);
         saver.requestFocus();
@@ -513,8 +550,8 @@ public final class Perceptron extends javax.swing.JFrame {
             System.out.println("...did not save.");
         }
         System.out.println("Done.");
-        makeFullscreen(this);
-        hideCursor(this);
+        Win.makeFullscreen(this);
+        Win.hideCursor(this);
         this.running = was_running;
     }
     
@@ -551,7 +588,7 @@ public final class Perceptron extends javax.swing.JFrame {
                             } 
                         } else {
                             //parse primitive
-                            Object value = Misc.bestEffortParse(val);
+                            Object value = Parser.bestEffortParse(val);
                             if (null != value)
                                 try {
                                     this.getClass().getField(var).set(this,value);

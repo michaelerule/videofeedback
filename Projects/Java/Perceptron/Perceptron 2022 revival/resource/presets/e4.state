@@ -8,9 +8,9 @@ preset e4.state {
       draw_side_bars         true
       do_hue_rotation        true
       hue_rate               48
-      sat_rate               256
+      sat_rate               50
       lum_rate               0
-      bri_rate               8
+      bri_rate               20
       con_rate               4
       blursharp_rate         0
       offset_mode            2

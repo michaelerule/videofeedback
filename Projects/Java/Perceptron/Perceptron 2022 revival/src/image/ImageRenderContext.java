@@ -58,7 +58,7 @@ public class ImageRenderContext
         this(b, interpolate, reflect);
         this.is_scaled = true;
         this.scale = scale;
-        get = Samplers.makeScaledGrabber(get, scale);
+        get = samplers.makeScaledGrabber(get, scale);
     }
     
     /** The following return statement decides which
@@ -93,7 +93,7 @@ public class ImageRenderContext
             ? (reflect? samplers.getFixed8Bit : samplers.getFixed8BitNoReflect)
             : (reflect? samplers.get          : samplers.getNoReflect);
         if (is_scaled)    
-            get = Samplers.makeScaledGrabber(get, scale);
+            get = samplers.makeScaledGrabber(get, scale);
     }
     
 }

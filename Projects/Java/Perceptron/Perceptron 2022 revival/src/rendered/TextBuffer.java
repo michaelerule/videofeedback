@@ -114,6 +114,7 @@ public class TextBuffer {
     public void    right()        {I=(I+1) % buf.length;}
     public void    up()           {I=(I+buf.length-COLUMNS) % buf.length;}
     public void    down()         {I=(I+buf.length+COLUMNS) % buf.length;}
+    public void    home()         {I=(I/COLUMNS)*COLUMNS;}
     public void    backspace()    {I=(I+buf.length-1)%buf.length;buf[I]=' ';}
     public void    scrollUp()     {}
     public void    scrollDown()   {}
