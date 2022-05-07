@@ -39,7 +39,7 @@ preset e3.state {
       grad_mode              0
       reflect                true
       interpolate            true
-      fancy                  false
+      anti_alias             false
       tree_active            false
       on                     false
       cursor_on              false

@@ -7,23 +7,16 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import static java.lang.Math.max;
-import rendered.Tree3D;
 
 /**
  * Preset.java
- *
  * Created on October 17, 2007, 11:02 PM
- *
  * @author Michael Rule
  */
-/**Check if  there are any new features in the Perceptron. */
 /** Read the preset and load the parameters. */
 public class Preset {
-    
     final static String [] gradient_names  = {"Circle","Horizontal","Vertical","Diagonal","Diamond","Cross","Ring","Sharp Ring","Eye"};
 
-    
     ////////////////////////////////////////////////////////////////////////////
     // Mirror of every state in perceptron
     // Perceptron
@@ -40,11 +33,11 @@ public class Preset {
     public boolean tree_leaves     = false;
     public boolean tree_symmetry   = true;
     public boolean draw_dino       = false;
-    public boolean mic_active      = false ;
+    public boolean mic_active      = false;
     public boolean dampen_colors   = true;
     public boolean bounds_invert   = false;
     public boolean interpolate     = true;
-    public boolean fancy           = true;
+    public boolean anti_alias      = true;
     public boolean draw_futures    = true;
     public String  fractal_map;
     public int     reflect       = 0;
@@ -186,7 +179,7 @@ public class Preset {
         out += GAP + "grad_mode              " + F.grad_mode + "\n";
         out += GAP + "reflect                " + B.reflect + "\n";
         out += GAP + "interpolate            " + B.interpolate + "\n";
-        out += GAP + "fancy                  " + B.fancy + "\n";
+        out += GAP + "anti_alias             " + B.fancy + "\n";
         out += GAP + "tree_active            " + P.draw_tree + "\n";
         
         out += GAP + "on                     " + T.on + "\n";
@@ -337,6 +330,7 @@ public class Preset {
         P.mic.setSpeed(mic_speed);
         P.mic.setVolume(mic_volume);
         P.setImage(image_file);
+        P.setAntialias(anti_alias);
         
         F.offset_mode           = offset_mode;
         F.rotate_mode           = rotate_mode;
@@ -363,7 +357,6 @@ public class Preset {
         F.syncOps();
 
         B.reflect       = reflect;
-        B.fancy         = fancy;
         B.interpolate   = interpolate;
         P.draw_tree     = tree_active;
         T.on            = on;
@@ -426,7 +419,7 @@ public class Preset {
         out += GAP + "grad_mode              = " + grad_mode + "\n";
         out += GAP + "reflect                = " + reflect + "\n";
         out += GAP + "interpolate            = " + interpolate + "\n";
-        out += GAP + "fancy                  = " + fancy + "\n";
+        out += GAP + "anti_alias             = " + anti_alias + "\n";
         out += GAP + "tree_active            = " + tree_active + "\n";
         out += GAP + "on                     = " + on + "\n";
         out += GAP + "cursor_on              = " + cursor_on + "\n";

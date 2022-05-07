@@ -13,9 +13,9 @@ preset w2.state {
       bri_rate               12
       con_rate               0
       blursharp_rate         256
-      offset_mode            1
-      rotate_mode            1
-      mirror_mode            1
+      offset_type            1
+      rotate_type            1
+      mirror_type            1
       motionblurp            64
       gradcolor1_i           0
       gradcolor2_i           0

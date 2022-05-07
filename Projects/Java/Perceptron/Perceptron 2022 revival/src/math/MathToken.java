@@ -570,6 +570,13 @@ public class MathToken {
      */
 
     public static MathToken[] substring(MathToken[] data, int start, int end) {
+        
+        if (start<0 || end>data.length) {
+            String m = "start "+start+" and end "+end+" are not in bounds "
+                    +"for MathToken data length "+data.length;
+            for (int i=0; i<data.length; i++) m+="\n  "+i+" "+data[i].toString();
+            throw new IllegalArgumentException(m);
+        }
         MathToken[] result = new MathToken[end - start];
         System.arraycopy(data, start, result, 0, result.length);
         return result;

@@ -37,6 +37,8 @@ import static util.ColorUtil.blend;
  */
 public class FractalMap {
        
+    // Desired rectangular span of complex plane on screen
+    // Changing this changes everything! Presets break. 
     public static final float ZSCALE = 2.8f;//2.4f;
     
     Perceptron         P;
@@ -82,7 +84,8 @@ public class FractalMap {
     final float cW, cH, oW2, oH2, oW7, oH7, z2mapW, z2mapH, z2W, z2H;
     
     /** The upper left, the lower right, and the size of the rectangle in the
-     *   complex plane. These are actually re-initialized so these values don't matter.     */
+     * complex plane. These are re-initialized so these values don't
+     * matter.     */
     public static final complex size = new complex(6f, 6f);
     public static final complex UL   = new complex();
     public static final complex LR   = new complex();
@@ -92,7 +95,7 @@ public class FractalMap {
     private float dr = 0, di = 0, dtheta = .1f;
     
     // Coordinate lookup tables
-    float [] PX,PY,PR,AX,AY,FW;
+    float [] PR,AX,AY,FW;
     boolean [] in_circle;
     
     /** Create new FractalMap
@@ -101,9 +104,6 @@ public class FractalMap {
      * @param parent */
     public FractalMap(DoubleBuffer b, ArrayList<Mapping> maps, Perceptron parent) {
         P = parent;
-        vars.set(18, new complex(size));
-        vars.set(22, new complex(size.real));
-        vars.set(7 , new complex(size.imag));
         this.maps = null==maps? new ArrayList<>() : maps;
         // Screen width and height, and related constants.
         // We need to remove most of these
@@ -116,8 +116,11 @@ public class FractalMap {
         cW  = oW7*oW7;  cH  = oH7*oH7;
         W8  = W<<8;  H8  = H<<8;
         MLEN= W*H;   M2  = MLEN<<1;
-        if (W >= H) { size.real = ZSCALE * W / H; size.imag = ZSCALE; }
-        else        { size.real = ZSCALE; size.imag = ZSCALE * H / W; }
+        if (W >= H) {size.real=ZSCALE*W/H; size.imag=ZSCALE;    }
+        else        {size.real=ZSCALE;     size.imag=ZSCALE*H/W;}
+        vars.set('s'-'a',new complex(size));
+        vars.set('w'-'a',new complex(size.real));
+        vars.set('h'-'a',new complex(size.imag));
         LR.real = size.real/2f; LR.imag = size.imag/2f;
         UL.real = -LR.real;     UL.imag = -LR.imag;
         z2mapW  = size.real/W;  z2mapH = size.imag/H;
@@ -158,19 +161,17 @@ public class FractalMap {
         offset.real=offset.imag=0;
         // Prepare radius lookup tables
         i=0;
-        PX = new float[MLEN];
-        PY = new float[MLEN];
         PR = new float[MLEN];
         AX = new float[MLEN];
         AY = new float[MLEN];
         FW = new float[MLEN];
         in_circle = new boolean[MLEN];
         for (int y=0; y<H; y++) for (int x=0; x<W; x++) {
-            PX[i] = (float)x/(float)W*2-1;
-            PY[i] = (float)y/(float)H*2-1;
-            PR[i] = (float)(PX[i]*PX[i]+PY[i]*PY[i]);
-            AX[i] = abs(PX[i]);
-            AY[i] = abs(PY[i]);
+            float px = (float)x/(float)W*2-1;
+            float py = (float)y/(float)H*2-1;
+            PR[i] = (float)(px*px+py*py);
+            AX[i] = abs(px);
+            AY[i] = abs(py);
             in_circle[i] = PR[i]<0.995;
             
             int fx = x*256+128;
@@ -525,16 +526,19 @@ public class FractalMap {
     public static Mapping makeMapStatic(final String s) {
         try {
             final Equation e = MathToken.toEquation(s);
+            vars.set('s'-'a',new complex(ZSCALE,ZSCALE));
+            vars.set('w'-'a',new complex(ZSCALE));
+            vars.set('h'-'a',new complex(ZSCALE));
             return new Mapping(s) {public complex f(complex z) {vars.set(25,z);return e.eval(vars);}};
         } catch (Exception e) {
-            System.err.println("Error parsing map "+s);
+            System.out.println("!!!! Error parsing map "+s);
             e.printStackTrace();
             throw e;
         }
     }
     public Mapping makeMap(final String s) {
         final Equation e = MathToken.toEquation(s);
-        vars.set(18,size);
+        vars.set('s'-'a',size);
         vars.set('w'-'a',new complex(size.real));
         vars.set('h'-'a',new complex(size.imag));
         return new Mapping(s) {public complex f(complex z) {vars.set('z'-'a',z);return e.eval(vars);}};

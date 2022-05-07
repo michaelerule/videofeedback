@@ -1,11 +1,6 @@
 package image;
-//
 //  DoubleBuffer.java
-//
-//
 //  Created by Michael Rule on 6/1/07.
-//  Copyright 2007 __MyCompanyName__. All rights reserved.
-//
 
 import util.ColorUtil;
 import java.awt.image.*;
@@ -14,10 +9,6 @@ import image.Samplers.Sampler;
 import static util.Misc.clip;
 import static util.Misc.wrap;
 
-/**
- *
- * @author mer49
- */
 public class DoubleBuffer {
 
     /** Image storage buffers. */
@@ -64,7 +55,7 @@ public class DoubleBuffer {
     /**
      *
      */
-    public synchronized void toggleFancy() {
+    public synchronized void toggleAntialias() {
         fancy = !fancy;
         if (out != null) out.setFancy(fancy);
         if (buf != null) buf.setFancy(fancy);

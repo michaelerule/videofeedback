@@ -13,9 +13,9 @@ preset w4.state {
       bri_rate               -16
       con_rate               20
       blursharp_rate         0
-      offset_mode            1
-      rotate_mode            2
-      mirror_mode            0
+      offset_type            1
+      rotate_type            2
+      mirror_type            2
       motionblurp            80
       gradcolor1_i           2
       gradcolor2_i           0
@@ -24,7 +24,7 @@ preset w4.state {
       outcolor_i             4
       noise_level            0
       color_dampen           128
-      fractal_map    sqrt(2)*z*e^(i*p/3) 
+      fractal_map            sqrt(2)*z*e^(i*p/3)
       bounds_i               0
       bounds_invert          true
       outside_i              2

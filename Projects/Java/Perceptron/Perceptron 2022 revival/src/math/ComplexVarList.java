@@ -1,4 +1,6 @@
 package math;
+
+
 /**
  *
  * @author mer49
@@ -6,19 +8,19 @@ package math;
 public class ComplexVarList { 
     
     private final String myVars; 
-    private final complex[] myVals; 
+    private final complex[] values; 
     private final int mySize; 
 
     /**
      *
      */
-    public ComplexVarList() { myVars = "abcdefghijklmnopqrstuvwxyz"; myVals = new complex[26]; mySize = myVars.length(); }    
+    public ComplexVarList() { myVars = "abcdefghijklmnopqrstuvwxyz"; values = new complex[26]; mySize = myVars.length(); }    
 
     /**
      *
      * @param otherSet
      */
-    public ComplexVarList(ComplexVarList otherSet) { myVars = otherSet.getNames(); myVals = otherSet.getValues(); mySize = myVars.length(); }    
+    public ComplexVarList(ComplexVarList otherSet) { myVars = otherSet.getNames(); values = otherSet.getValues(); mySize = myVars.length(); }    
 
     /**
      *
@@ -37,7 +39,7 @@ public class ComplexVarList {
      * @return
      */
     public complex[] getValues() { 
-        complex[] temp = new complex[myVals.length]; 
+        complex[] temp = new complex[values.length]; 
         System.arraycopy(myVars, 0, temp, 0, mySize); 
         return temp; 
     }    
@@ -47,14 +49,14 @@ public class ComplexVarList {
      * @param name
      * @return
      */
-    public complex getVal(char name) { return myVals[(int) name - 97]; }    
+    public complex getVal(char name) { return values[(int) name - 97]; }    
 
     /**
      *
      * @param index
      * @return
      */
-    public complex get(int index) { return myVals[index]; }    
+    public complex get(int index) { return values[index]; }    
 
     /**
      *
@@ -62,7 +64,7 @@ public class ComplexVarList {
      * @param value
      * @return
      */
-    public complex setVal(char name, complex value) { return (myVals[(int) name - 97] = value); }  
+    public complex setVal(char name, complex value) { return (values[(int) name - 97] = value); }  
     
     /**
      *
@@ -70,7 +72,17 @@ public class ComplexVarList {
      * @param value
      * @return
      */
-    public complex set(int index, complex value) { return (myVals[index] = value); }    
+    public complex set(int index, complex value) { 
+        if (index<0||index>=values.length) {
+            throw new IllegalArgumentException(
+                "index "+index+"("+((char)index+'a')+") is "
+                +"out of bounds for variable set of length "+values.length);
+        }
+        return (values[index] = value);
+    }
+    public complex set(char c, complex value) {
+        return set(c-'a',value);
+    }
 
     /**
      *

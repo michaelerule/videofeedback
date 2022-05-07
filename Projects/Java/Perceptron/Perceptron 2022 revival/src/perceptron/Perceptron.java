@@ -160,8 +160,8 @@ public final class Perceptron extends javax.swing.JFrame {
     public int     halfScreenHeight()        {return half_screen_h; }
     public boolean isFancy()                 {return buf.fancy; }
     public void    setObjectsOnTop(boolean b){objects_on_top = b; }
-    public void    setFancy(boolean s)       {if (s!=isFancy()) toggleFancy(); }
-    public void    toggleFancy()             {buf.toggleFancy(); }
+    public void    setAntialias(boolean s)   {if (s!=isFancy()) toggleAntialias();}
+    public void    toggleAntialias()         {buf.toggleAntialias(); }
     public void    toggleObjectsOnTop()      {objects_on_top = !objects_on_top; }
     public void    toggleCapFramerate()      {cap_frame_rate = !cap_frame_rate; }
     public void    toggleAnimation()         {write_animation = !write_animation; }
@@ -347,52 +347,10 @@ public final class Perceptron extends javax.swing.JFrame {
         bufferStrategy = getBufferStrategy();
         System.out.println("Entering Kernel Loop...");
         
-        /*
-        // This was added for debugging
-        for (int y=0; y<screen_height; y++) {
-            for (int x=0; x<screen_width; x++) {
-                int c = ((y*255/screen_height)<<16)|((x*255/screen_width)<<8);//|(255*((x/256^1)^(y/256^1)));
-                buf.out.buf.setElem(x+y*screen_width, c);
-            }
-        }
-        BufferedImage image2 = new BufferedImage(
-                screen_width,
-                screen_height,
-                BufferedImage.TYPE_INT_RGB);
-        image2.getGraphics().drawImage(buf.out.img, 0, 0, null);
-        buf.set(image2);
-        */
-        
         while (true) {
             if (running) {
                 try {
                     long start_time = System.currentTimeMillis();
-                    
-                    /*
-                    // This was added for debugging
-                    int x1 = screen_width/2;
-                    int y1 = 0;
-                    int base = (int)(screen_height*(float)(2f/sqrt(3))+0.5);
-                    int x2 = x1 - base/2;
-                    int x3 = x1 + base/2;
-                    int y2 = screen_height-1;
-                    int y3 = screen_height-1;
-                    buf.buf.g.drawImage(buf.img.img,0,0,screen_width,screen_height,null);
-                    buf.out.g.drawImage(buf.img.img,0,0,screen_width,screen_height,null);
-                    buf.buf.g.setColor(new Color(0,0,0));
-                    //buf.buf.g.fillRect(0,0,screen_width,screen_height);
-                    buf.out.g.setColor(new Color(120,0,255,128));
-                    buf.buf.g.fillPolygon(
-                        new int[]{x1,x2,x3,x1},
-                        new int[]{y1,y2,y3,y1},4);
-                    buf.out.g.setColor(new Color(0,0,0));
-                    //buf.out.g.fillRect(0,0,screen_width,screen_height);
-                    buf.out.g.setColor(new Color(120,0,255,128));
-                    buf.out.g.fillPolygon(
-                        new int[]{x1,x2,x3,x1},
-                        new int[]{y1,y2,y3,y1},4);
-                    drawBars();
-                    */
                                         
                     // Apply the fractal mapping
                     fractal.operate();

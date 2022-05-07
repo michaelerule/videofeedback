@@ -13,15 +13,14 @@ preset w3.state {
       bri_rate               12
       con_rate               0
       blursharp_rate         256
-      offset_mode            0
-      rotate_mode            2
-      mirror_mode            0
+      offset_type            0
+      rotate_type            2
+      mirror_type            2
       motionblurp            0
       gradcolor1_i           0
       gradcolor2_i           0
       barcolor_i             1
       tintcolor_i            0
-      tint_level             4
       outcolor_i             4
       noise_level            0
       color_dampen           128
