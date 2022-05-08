@@ -58,7 +58,7 @@ public class complex {
      * @param theta
      * @return
      */
-    public static complex fromPolar(float r, float theta) {
+    public static complex polar(float r, float theta) {
         return new complex(
                 r * (float) Math.cos(theta),
                 r * (float) Math.sin(theta));
@@ -88,7 +88,7 @@ public class complex {
      * @return 
      */
     public static complex sqrt(complex num) {
-        return fromPolar((float) Math.pow(num.rSquared(), .25),
+        return polar((float) Math.pow(num.rSquared(), .25),
                 arg(num) * .5f);
     }
 
@@ -415,7 +415,7 @@ public class complex {
      * @return
      */
     public complex rotate(float degrees) {
-        return times(fromPolar(1f, degrees));
+        return times(polar(1f, degrees));
     }
 
     /**grabs the integer part of the real an imagenary part
@@ -452,7 +452,7 @@ public class complex {
      * @return 
      */
     public static complex eToThe(complex num) {
-        return fromPolar((float) (float) Math.exp(num.real), num.imag);
+        return polar((float) (float) Math.exp(num.real), num.imag);
     }
 
     /**
@@ -702,7 +702,7 @@ public class complex {
         float expImag = n.imag;
         float baseArg = (float) Math.atan2(imag, real);
         float intrCalc1 = real * real + imag * imag;
-        return fromPolar(
+        return polar(
                 (float) Math.pow(intrCalc1, expReal * .5f)
                 * (float) Math.exp(-expImag * baseArg),
                 expReal * baseArg
@@ -715,7 +715,7 @@ public class complex {
      * @return 
      */
     public complex toThe(float n) {
-        return fromPolar(
+        return polar(
                 (float) Math.pow(real * real + imag * imag, n * .5f), n * arg(this));
     }
 

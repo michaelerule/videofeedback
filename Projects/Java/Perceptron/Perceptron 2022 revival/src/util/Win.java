@@ -9,10 +9,17 @@ import java.awt.DisplayMode;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import static java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment;
 import java.awt.HeadlessException;
 import java.awt.Point;
 import java.awt.Toolkit;
+import static java.awt.Toolkit.getDefaultToolkit;
 import java.awt.Window;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFrame;
 import perceptron.Perceptron;
 
@@ -26,7 +33,7 @@ public class Win {
      * @param c */
     public static void hideCursor(Component c) {
         try {
-            c.setCursor(Toolkit.getDefaultToolkit().createCustomCursor(Toolkit.getDefaultToolkit().getImage("xparent.gif"), new Point(0, 0), null));
+            c.setCursor(getDefaultToolkit().createCustomCursor(getDefaultToolkit().getImage("xparent.gif"), new Point(0, 0), null));
         } catch (HeadlessException | IndexOutOfBoundsException e) {
             System.err.println("Cursor modification is unsupported.");
         }
@@ -37,7 +44,7 @@ public class Win {
      * @return
      */
     public static GraphicsConfiguration getDeviceGraphicsConfig() {
-        return ((GraphicsEnvironment.getLocalGraphicsEnvironment()).getDefaultScreenDevice()).getDefaultConfiguration();
+        return ((getLocalGraphicsEnvironment()).getDefaultScreenDevice()).getDefaultConfiguration();
     }
 
     /** Make a JFrame the undecorated main application window
@@ -67,7 +74,7 @@ public class Win {
     /** Make windowed, "not fullscreen".
      */
     public static void makeNotFullscreen() {
-        GraphicsDevice g = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        GraphicsDevice g = getLocalGraphicsEnvironment().getDefaultScreenDevice();
         if (g.isFullScreenSupported()) {
             g.setFullScreenWindow((Window) null);
         }
@@ -77,15 +84,21 @@ public class Win {
      * @param p
      */
     public static void makeFullscreen(Perceptron p) {
-        GraphicsDevice g = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        GraphicsDevice g = getLocalGraphicsEnvironment().getDefaultScreenDevice();
         DisplayMode d = g.getDisplayMode();
         if (g.isFullScreenSupported()) {
             g.setFullScreenWindow((Window) p);
             DisplayMode[] possible_modes = g.getDisplayModes();
             DisplayMode best_mode = null;
             for (DisplayMode m : possible_modes) {
-                System.out.println(m.getBitDepth() + " " + m.getHeight() + " " + m.getRefreshRate() + " " + m.getWidth());
-                if ((m.getWidth() >= p.screen_width && m.getHeight() >= p.screen_height && m.getBitDepth() >= Math.min(32, d.getBitDepth())) && (best_mode == null || m.getWidth() * m.getHeight() < best_mode.getWidth() * best_mode.getHeight())) {
+                System.out.println(m.getBitDepth() + 
+                        " " + m.getHeight() + 
+                        " " + m.getRefreshRate() + 
+                        " " + m.getWidth());
+                if ((m.getWidth() >= p.screen_width 
+                        && m.getHeight() >= p.screen_height 
+                        && m.getBitDepth() >= Math.min(32, d.getBitDepth())) 
+                        && (best_mode == null || m.getWidth() * m.getHeight() < best_mode.getWidth() * best_mode.getHeight())) {
                     best_mode = m;
                 }
             }
@@ -99,6 +112,21 @@ public class Win {
             DisplayMode m = g.getDisplayMode();
             p.setBounds(0, 0, m.getWidth(), m.getHeight());
             p.setVisible(true);
+        }
+    }
+    
+    
+    public static void toClipboard(String text) {
+        getDefaultToolkit().getSystemClipboard()
+            .setContents(new java.awt.datatransfer.StringSelection(text), null);
+    }
+    
+    public static String fromClipboard() {
+        try { 
+            String s = (String)getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor);
+            return s.strip();
+        } catch (UnsupportedFlavorException | IOException ex) {
+            return "";
         }
     }
     

@@ -23,6 +23,7 @@ import static util.Misc.clip;
  */
 public class Tree3D {
 
+    // Pixel length below which we will not draw branches.
     private static final int RADIUS_CUTOFF = 5;
     
     //RENDERING DATA

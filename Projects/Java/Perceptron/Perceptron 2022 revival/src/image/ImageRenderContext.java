@@ -7,6 +7,7 @@ package image;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import java.awt.image.DataBuffer;
 import static util.ColorUtil.fancy;
 import static util.ColorUtil.fast;
@@ -29,7 +30,7 @@ public class ImageRenderContext
     public DataBuffer    buf;
     public Samplers      samplers;
     public Samplers.Sampler get;
-    int W, H;
+    public final int W, H;
     
     boolean is_scaled = false;
     float   scale = 1f;
@@ -66,19 +67,9 @@ public class ImageRenderContext
         get = samplers.makeScaledGrabber(get, scale);
     }
     
-    /** The following return statement decides which
-     * grabber will ultimately be used as a default one.
-     * @param x
-     * @param y
-     * @return
-     */
-    /*
-    public int get(int x, int y) {
-        return is_scaled
-                ? grab.get((int)(x*scale),(int)(y*scale))
-                : grab.get(x, y);
+    public ImageRenderContext(int W, int H, boolean interpolate, int reflect) {
+        this(new BufferedImage(W,H,TYPE_INT_RGB), interpolate, reflect);
     }
-    */
 
     /**
      *

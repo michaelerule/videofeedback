@@ -27,7 +27,7 @@ public class Parser {
             String var = tokens[0];
             String val = tokens[1].toLowerCase();
             if (var.equals("fractal_map")) {
-                ps.fractal_map = FractalMap.makeMapStatic(val).toString();
+                ps.fractal_map = Fractal.makeMapStatic(val).toString();
                 System.out.println("set fractal_map to "+val);
                 continue;
             } 

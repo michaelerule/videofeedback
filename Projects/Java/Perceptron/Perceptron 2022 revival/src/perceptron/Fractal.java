@@ -19,23 +19,21 @@ import java.awt.Color;
 import java.awt.image.DataBuffer;
 import java.util.ArrayList;
 import static java.lang.Math.min;
-import static java.lang.Math.cos;
 import static java.lang.Math.max;
 import static java.lang.Math.abs;
-import static java.lang.Math.hypot;
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 import static math.complex.arg;
-import static math.complex.fromPolar;
 import static math.complex.mod;
 import static util.Misc.clip;
 import static util.Misc.wrap;
 import static util.ColorUtil.blend;
+import static math.complex.polar;
 
 /**
  * @author Michael Everett Rule
  */
-public class FractalMap {
+public class Fractal {
        
     // Desired rectangular span of complex plane on screen
     // Changing this changes everything! Presets break. 
@@ -57,21 +55,17 @@ public class FractalMap {
         offset_mode = 0,
         rotate_mode = 2,
         mirror_mode = 0;
-    public final int 
-        // Constants for identifying the translation modes
-        TRANSLATION_NORMAL   = 0,
-        TRANSLATION_VELOCITY = 1,
-        TRANSLATION_LOCKED   = 2,
-        // Constants for identifying the rotation modes
-        ROTATION_NORMAL      = 0,
-        ROTATION_VELOCITY    = 1,
-        ROTATION_LOCKED      = 2,
+    public static final int 
+        // Constants for identifying the translation & rotation modes
+        POSITION = 0,
+        VELOCITY = 1,
+        LOCKED   = 2,
         // For identifying mirroring modes
-        MIRROR_OFF           = 0,
-        MIRROR_HORIZONTAL    = 1,
-        MIRROR_VERTICAL      = 2,
-        MIRROR_TURN          = 3,
-        MIRROR_QUADRANT      = 4;
+        MIRROR_OFF        = 0,
+        MIRROR_HORIZONTAL = 1,
+        MIRROR_VERTICAL   = 2,
+        MIRROR_TURN       = 3,
+        MIRROR_QUADRANT   = 4;
     public final String [] 
         translate_modes = {"Position","Velocity","Locked"},
         mirror_modes = {"None","Horizontal","Vertical","Turn","Quadrant"};
@@ -92,7 +86,7 @@ public class FractalMap {
     public static final double  PI_OVER_TWO = Math.PI * .5;
     
     // Accumulators for velocity mode
-    private float dr = 0, di = 0, dtheta = .1f;
+    private float dr = 0, di = 0, theta = .1f;
     
     // Coordinate lookup tables
     float [] PR,AX,AY,FW;
@@ -102,7 +96,7 @@ public class FractalMap {
      * @param b
      * @param maps
      * @param parent */
-    public FractalMap(DoubleBuffer b, ArrayList<Mapping> maps, Perceptron parent) {
+    public Fractal(DoubleBuffer b, ArrayList<Mapping> maps, Perceptron parent) {
         P = parent;
         this.maps = null==maps? new ArrayList<>() : maps;
         // Screen width and height, and related constants.
@@ -205,15 +199,15 @@ public class FractalMap {
         // Mode 2: Locked: the offset is clamped to zero. 
         int cx = W7, cy = H7;
         switch (offset_mode) {
-            case TRANSLATION_NORMAL: 
+            case POSITION: 
                 cx=(int)(.5f+256*normc[0])+W7; 
                 cy=(int)(.5f+256*normc[1])+H7; 
                 break;
-            case TRANSLATION_VELOCITY:
+            case VELOCITY:
                 cx = (int)(.5f+256*((dr=(abs(dr)>MAXC)?0:dr+.1f*normc[0])))+W7;
                 cy = (int)(.5f+256*((di=(abs(di)>MAXC)?0:di+.1f*normc[1])))+H7;
                 break;
-            case TRANSLATION_LOCKED: 
+            case LOCKED: 
                 break;
         }
         // Mode 0: Blue cursor controls scale and rotation
@@ -221,23 +215,14 @@ public class FractalMap {
         // Mode 2: Scale and rotation are locked at 1, pi/2, respectively. 
         complex r = new complex();
         switch (rotate_mode) {
-            case ROTATION_NORMAL:
-                r = rotation;
-                break;
-            case ROTATION_VELOCITY:
-                dtheta += arg(rotation)*.01f;
-                r = fromPolar(mod(rotation),dtheta);
-                break;
-            case ROTATION_LOCKED:
-                r = fromPolar(1f,(float)PI_OVER_TWO);
-                break;
+            case POSITION: r = rotation; break;
+            case VELOCITY: theta += arg(rotation)*.01f; r = polar(mod(rotation),theta); break;
+            case LOCKED: r = polar(1f,(float)PI_OVER_TWO); break;
         }
 
-        int hH = (H+1)/2, hW = (W+1)/2, hM = (MLEN+1)/2;
+        int hH=(H+1)/2, hW=(W+1)/2, hM=(MLEN+1)/2;
         switch (mirror_mode) {
-            case MIRROR_OFF: {
-                render(0,MLEN,cx,cy,r);
-            } break;
+            case MIRROR_OFF: render(0,MLEN,cx,cy,r); break;
             case MIRROR_HORIZONTAL: {
                 for (int y=0; y<H; y++) {
                     render(y*W,y*W+hW,cx,cy,r);
@@ -248,7 +233,7 @@ public class FractalMap {
             case MIRROR_VERTICAL: {
                 render(0,W*hH,cx,cy,r);
                 for (int y=0; y<hH; y++) {
-                    int i = W*(H-1-y), j = W*y;
+                    int i = W*(H-1-y), j=W*y;
                     for (int x=0; x<W; x++) buf.setElem(i++, buf.getElem(j++));
                 }
             } break;
@@ -430,7 +415,7 @@ public class FractalMap {
             //if (fx<0) fx=-fx;
             //if (fy<0) fy=-fy;
             float pr,qr;
-            switch (FractalMap.this.bounds_i) {
+            switch (Fractal.this.bounds_i) {
                 case 2: {// Horizon
                     pr = AY[i];
                     qr = (float)abs((float)fy*oH7-1);
@@ -514,7 +499,7 @@ public class FractalMap {
         float r = complex.mod(rotation) * 2; 
         inverse_radius = complex.mod(rotation);
         bound_radius = 1 / inverse_radius;
-        rotation = complex.fromPolar(1 / r, theta);   
+        rotation = complex.polar(1 / r, theta);   
     }
     final static ComplexVarList vars = ComplexVarList.standard();
     public static abstract class Mapping {
@@ -608,12 +593,12 @@ public class FractalMap {
     public char[][] grads;              // All gradient tables; see initGradients()
     public char[]   grad;               // Active gradient lookup table
     public float    gslope        = 1f; // Cursor-controlled gradient rate
-    public float    goffset       = 0f; // Cursor-controlled gradient size
+    public float    gbias       = 0f; // Cursor-controlled gradient size
     public int      color_mask    = 0;  // XOR this with output color
     public int      feedback_mask = 0;  // XOR this with feedback color
     public int      grad_i        = 0;  // In-use gradient lookup table
     public int      grad_mode     = 0;  // Modes; 0: off 1: one-color 2: two-color
-    public void setGradientParam (float slope, float offset) {gslope=slope;goffset=offset;}
+    public void setGradientParam (float slope, float offset) {gslope=slope;gbias=offset;}
     public void setGradientShape (int n) {grad=grads[grad_i=wrap(n,grads.length)];}
     public void setGradient      (int i) {grad_op=grad_modes[grad_mode=wrap(i,grad_modes.length)];}
     public void nextGradientShape(int n) {setGradientShape(grad_i+n);}
@@ -624,7 +609,7 @@ public class FractalMap {
         public final String name; 
         public GradOp(String s) {name=s;}
         abstract int go(int i, int c);
-        int w(int i){return clip((int)(grad[i]*gslope-goffset),0,255);}}
+        int w(int i){return clip((int)(grad[i]*gslope-gbias),0,255);}}
     public final GradOp[] grad_modes = {
         new GradOp("None")   {int go(int i,int c){return c;}},
         new GradOp("1-Color"){int go(int i,int c){return blend(c,gcolor1,w(i));}},

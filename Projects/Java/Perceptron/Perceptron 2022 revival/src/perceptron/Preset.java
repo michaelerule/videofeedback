@@ -1,12 +1,13 @@
 package perceptron;
 
-import rendered.TextBuffer;
+import rendered.TextMatrix;
 import image.DoubleBuffer;
 import image.Samplers;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringReader;
 
 /**
  * Preset.java
@@ -102,17 +103,20 @@ public class Preset {
      * @param name
      * @param in
      * @return
-     * @throws java.io.IOException  */
-    public static Preset parse(String name, BufferedReader in) throws IOException {
+     */
+    public static Preset parse(String name, BufferedReader in) {
         Preset p = new Preset(name);
         try {
             Parser.parse(p, in);
-        } catch (Exception e) {
+        } catch (IOException e) {
             System.err.println("Error parsing preset "+name);
-            throw e;
         }
         return p;
     }
+    public static Preset parse(String state) {
+        return parse("(anonymous)",new BufferedReader(new StringReader(state)));
+    }
+    
 
     /** Write the preset.
      * @param percept
@@ -130,10 +134,10 @@ public class Preset {
      * @param P
      * @return  */
     public static String settings(Perceptron P) {
-        FractalMap   F = P.fractal;
+        Fractal   F = P.fractal;
         DoubleBuffer B = P.buf;
-        TextBuffer   T = P.text;
-        Controls   C = P.control;
+        TextMatrix   T = P.text;
+        Control   C = P.control;
         String GAP = "      ";
         String out = "";
         out += GAP + "objects_on_top         " + P.objects_on_top + "\n";
@@ -171,7 +175,7 @@ public class Preset {
         out += GAP + "fade_i                 " + F.gcolor1_i + "\n";
         out += GAP + "grad_accent_i          " + F.gcolor2_i + "\n";
         out += GAP + "grad_slope             " + F.gslope + "\n";
-        out += GAP + "grad_offset            " + F.goffset + "\n";
+        out += GAP + "grad_offset            " + F.gbias + "\n";
         out += GAP + "color_mask             " + F.color_mask + "\n";
         out += GAP + "feedback_mask          " + F.feedback_mask + "\n";
         out += GAP + "grad_accent            " + F.gcolor2 + "\n";
@@ -179,7 +183,7 @@ public class Preset {
         out += GAP + "grad_mode              " + F.grad_mode + "\n";
         out += GAP + "reflect                " + B.reflect + "\n";
         out += GAP + "interpolate            " + B.interpolate + "\n";
-        out += GAP + "anti_alias             " + B.fancy + "\n";
+        out += GAP + "anti_alias             " + B.antialiased + "\n";
         out += GAP + "tree_active            " + P.draw_tree + "\n";
         
         out += GAP + "on                     " + T.on + "\n";
@@ -223,10 +227,28 @@ public class Preset {
      * @param P
      * @return  */
     public static String helpString(Perceptron P) {
-        Controls C = P.control;
-        FractalMap F = P.fractal;
+        Control C = P.control;
+        Fractal F = P.fractal;        
+        /*
+        ⌘ Command (Cmd) U+2318
+        ⌥ Option (Opt or Alt) U+2325
+        ⌃ Control (Ctrl) U+2303
+        ⇧ Shift U+21E7
+        ⇪ Caps Lock U+21EA
+        ↩ Return U+21A9
+        ⌤ Enter U+2324
+        ⌫ Delete (Backspace) U+232B
+        ⌦ Forward Delete U+2326
+        ⎋ Escape (Esc) U+238B
+        ⏏ Eject U+23CF
+        ⌽ Power U+2333D
+        ⇥ Tab U+21E5
+        ⇞ Page Up U+21DE
+        ⇟ Page Down U+21DF
+        ↖ Home U+2196
+        ↘ End U+2198
+        */
         String out = "";
-        out += "Ctl @type equation         @" + C.entry_mode + "\n";
         out += "?/  @show help             @" + P.show_help + "\n";
         out += "qQ  @± fractal map         @" + F.mapping + "\n";
         out += "wW  @± outside coloring    @" + F.outi + " " + F.outop.name+"\n";
@@ -236,7 +258,7 @@ public class Preset {
         out += "t   @draw tree             @" + P.draw_tree + "\n";
         out += "T   @objects on top        @" + P.objects_on_top + "\n";
         out += "yY  @± outer color (w=0)   @" + F.outcolor_i + " " + F.color_register_names[F.outcolor_i] + "\n";
-        out += "u   @show frame rate       @" + P.draw_framerate + "\n";
+        out += "u   @show frame rate       @" + P.show_framerate + "\n";
         out += "U   @cap frame rate        @" + P.cap_frame_rate + "\n";
         out += "iI  @± input image         @" + P.image_i + " " + P.images.name() + "\n";
         out += "oO  @± translate mode      @" + F.offset_mode + " " + F.translate_modes[F.offset_mode] + "\n";
@@ -257,7 +279,7 @@ public class Preset {
         out += "k   @foreground gradient   @" + P.fore_grad + "\n";
         out += "K   @color transform       @" + P.do_color_transform + '\n';
         out += "l   @linear interpolate    @" + P.buf.interpolate + "\n";
-        out += "L   @anti-alias            @" + P.isFancy() + "\n";
+        out += "L   @anti-alias            @" + P.isAntialiased() + "\n";
         out += ";\' @± Δhue (n)            @" + P.hue_rate + '\n';
         out += ":\" @± Δsaturation (n)     @" + P.sat_rate + '\n';
         out += ",.  @± Δcontrast (n)       @" + P.con_rate + '\n';
@@ -282,10 +304,11 @@ public class Preset {
         out += "()  @± noise level         @" + F.noise_level + '\n';
         out += "↑↓  @± motion blur         @" + F.motion_blur + '\n';
         out += "←→  @sharpen/blur          @" + P.blursharp_rate + '\n';
-        out += "PgUp/Dn @± mic volume      @" + P.mic.getVolume() + "\n";
-        out += "Home/End@± mic speed       @" + P.mic.getSpeed() + "\n";
-        out += "Del   @write animation     @" + P.write_animation + "\n";
-        out += "Enter @presets mode        @" + (
+        out += "⇞⇟  @± mic volume          @" + P.mic.getVolume() + "\n";
+        out += "↖↘  @± mic speed           @" + P.mic.getSpeed() + "\n";
+        out += "⌦   @write animation       @" + P.write_animation + "\n";
+        out += "⇥   @type equation         @" + C.entry_mode + "\n";
+        out += "↩   @presets mode          @" + (
                 C.presets_mode? "true ("+C.preset_i+"; "
                     + (C.presets.length<=0
                         ? "NONE LOADED" 
@@ -298,15 +321,15 @@ public class Preset {
         return out;
     }
     
-    /**
-     *
+    /** 
+     * Apply given preset to perceptron.
      * @param P
      */
     public void set(Perceptron P) {
-        FractalMap   F = P.fractal;
+        Fractal   F = P.fractal;
         DoubleBuffer B = P.buf;
-        TextBuffer   T = P.text;
-        Controls   C = P.control;
+        TextMatrix   T = P.text;
+        Control     C = P.control;
         
         F.setMap(fractal_map);
         P.objects_on_top        = objects_on_top;
@@ -340,7 +363,7 @@ public class Preset {
         F.invert_bound          = bounds_invert;
         F.outi                  = outside_i;
         F.gslope                = grad_slope;
-        F.goffset               = grad_offset;
+        F.gbias               = grad_offset;
         F.color_mask            = color_mask;
         F.feedback_mask         = feedback_mask;
         F.gcolor2               = grad_accent;

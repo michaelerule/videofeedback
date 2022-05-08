@@ -2,52 +2,44 @@ package rendered;
 /* TreeForm.java
  * Created on March 7, 2007, 12:16 PM
  */
+import static java.lang.Math.max;
 import util.ColorUtil;
 import util.Matrix;
+import static util.Misc.clip;
 
 /**
+ * Describes the geometric transformation associated with a single branch in
+ * the tree. Each tree should have two of these, one for left and one for right
+ * branches.
  * @author Michael Everett Rule
  */
 public class TreeForm {
     
-    //change in length 
-
     /**
-     *
+     * change in length.
      */
     public float d_r;
 
-    //change in HSV lookupu table color index 
-
     /**
-     *
+     * change in HSV lookup table color index .
      */
     public byte d_color;
 
-    //branching axial rotation
+    /**
+     * branching axial rotation.
+     */
+    public float alpha;
 
     /**
-     *
+     * horizontal branching angle.
      */
-    protected float alpha;
-
-    //horizontal branching angle
+    public float beta;
 
     /**
-     *
+     * precomputed transformation matrix.
      */
-    protected float beta;
-
-    //precomputed transformation matrix
-
-    /**
-     *
-     */
-    protected float [][] T;
+    public float [][] T;
     
-    
-    //Construct
-
     /**
      *
      * @param new_alpha
@@ -80,24 +72,25 @@ public class TreeForm {
     
     /** Set the branching angle
      * @param b */
-    public void set_beta(float b) {
-        beta = b;
+    public void setBeta(float b) {
+        b = b % (float)(2*Math.PI);
+        beta = clip(b,0,(float)(Math.PI/2));
         update_matrix();
     }
     
     /** get the axial rotation angle
      * @return  */
-    public float get_alpha() {return alpha;}
+    public float getAlpha() {return alpha;}
     
     /** get the branching angle
      * @return  */
-    public float get_beta() {return beta;}
+    public float getBeta() {return beta;}
     
     /** Safely increment of decrement the color lookup table index, wrapping
      *  around from beginning to end if the index goes out of bounds
      * @param color_index
      * @return s*/
-    public int mutate_color(byte color_index) {
+    public int setColorIndex(byte color_index) {
         return ((color_index + d_color + ColorUtil.LUTSIZE) % ColorUtil.LUTSIZE);
     }
 }

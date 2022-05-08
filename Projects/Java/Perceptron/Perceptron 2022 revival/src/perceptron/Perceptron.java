@@ -3,7 +3,7 @@ package perceptron;
  * Created on December 21,2006,5:27 PM
  */
 
-import rendered.TextBuffer;
+import rendered.TextMatrix;
 import image.BlurSharpen;
 import image.DoubleBuffer;
 import util.Misc;
@@ -13,7 +13,6 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.image.BufferStrategy;
-import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -42,21 +41,27 @@ import java.util.Arrays;
 import static java.util.Arrays.asList;
 import java.util.Collection;
 import static java.util.Collections.sort;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 
 import static util.Misc.clip;
 import static util.Misc.zip;
 import static java.util.Objects.requireNonNull;
-import java.util.Queue;
 import java.util.Set;
+import math.complex;
+import static math.complex.arg;
+import static math.complex.mod;
 import static util.Misc.wrap;
 import static perceptron.Preset.helpString;
 import static util.ColorUtil.makeHueSatLumaOperator;
 import static util.Matrix.diag;
 import static util.Matrix.multiply;
-import static perceptron.FractalMap.Mapping;
+import static perceptron.Fractal.Mapping;
 import util.Win;
+import static util.Win.makeFullscreen;
+import static util.Win.makeUndecoratedMainFrame;
+import static math.complex.polar;
 
 /**
  * @author mer49
@@ -67,17 +72,17 @@ public final class Perceptron extends javax.swing.JFrame {
     public final DoubleBuffer buf;
     BufferStrategy            bufferStrategy;
     Graphics2D                graph2D;
-    ImageCache                images = null;
-    Controls                control;
-    FractalMap                fractal;
-    Tree3D                    tree;
-    TextBuffer                text;
     ArrayList<Mapping>        maps;
     Preset[]                  presets;
-    BlurSharpen               blursharp;
-    Moths                     moths;
-    Microphone                mic;
+    ImageCache                images = null;
     JFileChooser              savers;
+    final Control             control;
+    final Fractal          fractal;
+    final Tree3D              tree;
+    final TextMatrix          text;
+    final BlurSharpen         blursharp;
+    final Moths               moths;
+    final Microphone          mic;
     
     boolean running;
     int help_alpha = 255;
@@ -123,16 +128,16 @@ public final class Perceptron extends javax.swing.JFrame {
     public boolean draw_moths         = false; 
     public boolean draw_top_bars      = false;
     public boolean draw_side_bars     = false;
-    public boolean draw_framerate     = false;
+    public boolean show_framerate     = false;
     public boolean draw_tree          = false;
     public boolean draw_dino          = false;
     public boolean show_notifications = true;
     public boolean do_color_transform = true;
-    public int     hue_rate = 0;
-    public int     sat_rate = 0;
-    public int     lum_rate = 0;
-    public int     bri_rate = 0;
-    public int     con_rate = 0;
+    public int     hue_rate           = 0;
+    public int     sat_rate           = 0;
+    public int     lum_rate           = 0;
+    public int     bri_rate           = 0;
+    public int     con_rate           = 0;
     
     JFileChooser saver;
     
@@ -158,15 +163,16 @@ public final class Perceptron extends javax.swing.JFrame {
     public int     displayHeight()           {return display_h; }
     public int     halfScreenWidth()         {return half_screen_w; }
     public int     halfScreenHeight()        {return half_screen_h; }
-    public boolean isFancy()                 {return buf.fancy; }
+    public boolean isAntialiased()           {return buf.antialiased; }
     public void    setObjectsOnTop(boolean b){objects_on_top = b; }
-    public void    setAntialias(boolean s)   {if (s!=isFancy()) toggleAntialias();}
+    public void    setAntialias(boolean s)   {if (s!=isAntialiased()) toggleAntialias();}
     public void    toggleAntialias()         {buf.toggleAntialias(); }
     public void    toggleObjectsOnTop()      {objects_on_top = !objects_on_top; }
     public void    toggleCapFramerate()      {cap_frame_rate = !cap_frame_rate; }
     public void    toggleAnimation()         {write_animation = !write_animation; }
     public void    toggleShowHelp()          {show_help = !show_help; }
     public void    toggleTree()              {draw_tree = !draw_tree; }
+    public void    toggleShowFramerate()     {show_framerate = !show_framerate; }
 
     public void setImage(int n) {
         try {
@@ -195,14 +201,17 @@ public final class Perceptron extends javax.swing.JFrame {
     ////////////////////////////////////////////////////////////////////////////
     /**
      * This entire constructor and most of the class design is one giant bug. 
-     * Initalization must be done carefully,the order of operations matter.
+     * Initialization must be done carefully,the order of operations matter.
      * 
-     * @param Settings
-     * @param CrashLog
-     * @param Presets 
+     * @param settings_filename
+     * @param crash_log_filename
+     * @param presets_filename 
      */
     @SuppressWarnings("LeakingThisInConstructor")
-    public Perceptron(String Settings,String CrashLog,String Presets) {
+    public Perceptron(
+            String settings_filename,
+            String crash_log_filename,
+            String presets_filename) {
         super("Perceptron",Win.getDeviceGraphicsConfig());
         this.setBackground(Color.black);
 
@@ -214,34 +223,30 @@ public final class Perceptron extends javax.swing.JFrame {
         // because we need to know the desired canvas size to choose a
         // screen resolution.
         maps = new ArrayList<>();
-        parseSettings(Settings,Presets);  //READ IN SETTINGS INFORMATION
+        parseSettings(settings_filename,presets_filename);  //READ IN SETTINGS
         
         // Make us full-screen
-        Win.makeUndecoratedMainFrame(this); //FRAME SETUP
-        Win.makeFullscreen(this);           //FULLSCREEN INITIALISATION
-        display_w    = getWidth();
-        display_h    = getHeight();
-        half_screen_w = (short) (screen_width / 2);
+        makeUndecoratedMainFrame(this); //FRAME SETUP
+        makeFullscreen(this);           //FULLSCREEN INITIALISATION
+        display_w     = getWidth();
+        display_h     = getHeight();
+        half_screen_w = (short) (screen_width  / 2);
         half_screen_h = (short) (screen_height / 2);
         System.out.println("buffer width : "+screen_width+" height : "+screen_height);
         System.out.println("screen width : "+display_w+" height : "+display_h);
-        moths = new Moths(screen_width,screen_height);
         
         // screen_height and screen_width are only initialized AFTER parsing
         // the settings file. 
         // Initialise the frame rendering,background,and display buffers
-        BufferedImage o = new BufferedImage(screen_width,screen_height,BufferedImage.TYPE_INT_RGB);
-        BufferedImage b = new BufferedImage(screen_width,screen_height,BufferedImage.TYPE_INT_RGB);
-        BufferedImage d = new BufferedImage(screen_width,screen_height,BufferedImage.TYPE_INT_RGB);
-        buf = new DoubleBuffer(this,o,b,null,d);
-        
-        blursharp = new BlurSharpen(buf);
-        text      = new TextBuffer(this);  
-        image_directory    = requireNonNull(image_directory);
-        images    = new ImageCache(image_directory);
-        fractal   = new FractalMap(buf,maps,this);
-        mic       = new Microphone(buf, 0);
-        text.loadString(CrashLog);   
+        buf             = new DoubleBuffer(screen_width,screen_height);
+        blursharp       = new BlurSharpen(buf);
+        text            = new TextMatrix(screen_width,screen_height);  
+        text.loadString(crash_log_filename);  
+        image_directory = requireNonNull(image_directory);
+        images          = new ImageCache(image_directory);
+        fractal         = new Fractal(buf,maps,this);
+        moths           = new Moths(screen_width,screen_height);
+        mic             = new Microphone(buf, 0); 
         //mic.start();
         
         tree = new Tree3D(
@@ -251,10 +256,11 @@ public final class Perceptron extends javax.swing.JFrame {
             new TreeForm[]{new TreeForm(.5f,-.2f,.7f,7),new TreeForm(.5f,.2f,.7f,-7)},
             new Point(half_screen_w,half_screen_h),buf);
         
-        control = new Controls(this,presets);
+        control = new Control(this,presets);
         this.addMouseListener(control);
         this.addMouseMotionListener(control);
         this.addKeyListener(control);
+        this.setFocusTraversalKeysEnabled(false); // don't consume VK_TAB
     }
     
 
@@ -361,9 +367,8 @@ public final class Perceptron extends javax.swing.JFrame {
                     control.advance((int)framerate);
                     control.drawAll(buf.out.g);
                     
-                    Graphics2D out = (Graphics2D)buf.out.g;
-                    drawState(out);
-                    if (draw_framerate) drawFramerate(out);
+                    drawState((Graphics2D)buf.out.g);
+                    if (show_framerate) drawFramerate();
                     if (show_notifications) noticeChanges();
                     
                     // Copy to physical screen with double buffering.
@@ -531,15 +536,11 @@ public final class Perceptron extends javax.swing.JFrame {
                         String var = token.nextToken();
                         String val = token.nextToken();
                         if (var.equals("preset")) {
-                            try {
-                                System.out.println("parsing preset "+val+":");
-                                presets.add(Preset.parse(val,in));
-                            } catch (IOException e) {
-                                System.err.println("(failed)");
-                            }
+                            System.out.println("parsing preset "+val+":");
+                            presets.add(Preset.parse(val,in));
                         } else if (var.equals("map")) {
                             try {
-                                maps.add(FractalMap.makeMapStatic(val));
+                                maps.add(Fractal.makeMapStatic(val));
                                 System.out.println("map : "+val);
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -605,84 +606,126 @@ public final class Perceptron extends javax.swing.JFrame {
     }
     
     ////////////////////////////////////////////////////////////////////////////
+    // Text drawing routines
     public final Font TEXTFONT = new Font(Font.MONOSPACED,Font.PLAIN,10);
     public final FontMetrics fm = getFontMetrics(TEXTFONT);
     public final int LINEHEIGHT = 11;
-    private void drawString(Graphics2D G,String s,int x,int y,int a) {
-        G.setFont(TEXTFONT);
-        G.setColor(new Color(0,0,0,a));
-        G.drawString(s,x-1,y);
-        G.drawString(s,x+1,y);
-        G.drawString(s,x,y-1);
-        G.drawString(s,x,y+1);
-        
-        G.setColor(new Color(0,0,0,a>>1));
-        G.drawString(s,x-1,y+1);
-        G.drawString(s,x+1,y+1);
-        G.drawString(s,x-1,y-1);
-        G.drawString(s,x+1,y-1);
-        G.drawString(s,x+1,y-1);
-        G.drawString(s,x+1,y+1);
-        G.drawString(s,x-1,y-1);
-        G.drawString(s,x-1,y+1);
-        G.setColor(new Color(0xff,0xff,0xff,a));
-        G.drawString(s,x,y);
-    }
-    private void drawRightString(Graphics2D G,String s,int x,int y,int a) {
-        Rectangle2D b = fm.getStringBounds(s,G);
-        int w = (int)round(b.getWidth());
-        int h = (int)round(b.getHeight());
-        drawString(G,s,x-w,h+y,a);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    public void toggleShowFramerate() { draw_framerate = !draw_framerate; }
-    private void drawFramerate(Graphics2D out) {
-        out.setColor(Color.WHITE);
-        out.setFont(TEXTFONT);
-        String s = ""+framerate;
-        FontMetrics fm = getFontMetrics(TEXTFONT);
-        Rectangle2D b = fm.getStringBounds(s,out);
-        int w = (int)round(b.getWidth());
-        int h = (int)round(b.getHeight());
-        drawString(out,s,screen_width-2-w,screen_height-2,255);
+    
+    private void drawString(Graphics2D g,String s,int x,int y,int a) {
+        g.setFont(TEXTFONT);
+        // Fill outline sides
+        g.setColor(new Color(0,0,0,a));
+        g.drawString(s,x-1,y); g.drawString(s,x+1,y);
+        g.drawString(s,x,y-1); g.drawString(s,x,y+1);
+        // Fill outline corners
+        g.setColor(new Color(0,0,0,a>>1));
+        g.drawString(s,x-1,y+1); g.drawString(s,x+1,y+1);
+        g.drawString(s,x-1,y-1); g.drawString(s,x+1,y-1);
+        g.drawString(s,x+1,y-1); g.drawString(s,x+1,y+1);
+        g.drawString(s,x-1,y-1); g.drawString(s,x-1,y+1);
+        g.setColor(new Color(0xff,0xff,0xff,a));
+        g.drawString(s,x,y);
     }
     
-    ////////////////////////////////////////////////////////////////////////////
-    private void drawState(Graphics2D G) {
+    private void drawTopRightString(Graphics2D g,String s,int x,int y,int a) {
+        Rectangle2D b = fm.getStringBounds(s,g);
+        int w = (int)round(b.getWidth()), h = (int)round(b.getHeight());
+        drawString(g,s,x-w,h+y,a);
+    }
+    
+    private void drawRightString(Graphics2D g,String s,int x,int y,int a) {
+        int w = (int)round(fm.getStringBounds(s,g).getWidth());
+        drawString(g,s,x-w,y,a);
+    }
+
+    private void drawFramerate() {
+        Graphics2D g = buf.out.g;
+        int y = screen_height-2;
+        int x = screen_width-2;
+        drawRightString(g,framerate+" framerate",x,y,255);
+        y-= LINEHEIGHT;
+        switch (fractal.offset_mode) {
+            case Fractal.LOCKED:
+                drawRightString(g,"(constant locked at 0)",x,y,255);
+                break;
+            case Fractal.POSITION:
+                drawRightString(g,fractal.offset+" c",x,y,255);
+                break;
+            case Fractal.VELOCITY:
+                drawRightString(g,fractal.offset+" dc/dt",x,y,255);
+                break;
+        }
+        y-= LINEHEIGHT;
+        switch (fractal.rotate_mode) {
+            case Fractal.LOCKED:
+                drawRightString(g,"(rotation locked at 1)",x,y,255);
+                break;
+            case Fractal.POSITION:
+                drawRightString(g,fractal.rotation.over(complex.I)+" ρ",x,y,255);
+                break;
+            case Fractal.VELOCITY:
+                drawRightString(g,arg(fractal.rotation)*.01f+" dθ/dt",x,y,255);
+                y-= LINEHEIGHT;
+                drawRightString(g,mod(fractal.rotation)+" r",x,y,255);
+                break;
+        }
+        if (fractal.grad_mode>0) {
+            y-= LINEHEIGHT;
+            drawRightString(g,fractal.gslope+" grad slope",x,y,255);
+            y-= LINEHEIGHT;
+            drawRightString(g,fractal.gbias+" grad bias",x,y,255);
+        }
+        if (draw_tree) {
+            y-= LINEHEIGHT;
+            drawRightString(g,"x="+tree.location.x+" y="+tree.location.y+" root",x,y,255);
+            y-= LINEHEIGHT;
+            drawRightString(g,tree.form[0].d_r+" Lρ",x,y,255);
+            y-= LINEHEIGHT;
+            drawRightString(g,tree.form[1].d_r+" Rρ",x,y,255);
+            y-= LINEHEIGHT;
+            drawRightString(g,tree.form[0].beta+" Lθ",x,y,255);
+            y-= LINEHEIGHT;
+            drawRightString(g,tree.form[1].beta+" Rθ",x,y,255);
+        }
+    }
+    
+    
+    private void drawState(Graphics2D g) {
         // Fade to visible if on,otherwise fade away
         help_alpha = clip(show_help?max(1,help_alpha<<1):help_alpha>>1,0,255);
         if (help_alpha <=0 ) return;
-        String state_info =
+        String info =
             "───┤    PERCEPTRON    ├───\n"
            +"Esc     @exit\n"
-           +"LClick@next cursor\n"
-           +"RClick@previous cursor\n"
+           +"LClick  @next cursor\n"
+           +"RClick  @previous cursor\n"
            +"Space   @save\n"
-           +"Enter   @execute equation\n"
-           +"0-9,Fn @built-in presets\n"
-           //+"Alt     @pause\n"
+           +"⇧+↩     @execute equation\n"
+           +"0-9,Fn  @built-in presets\n"
            +helpString(this);
         final int[] tabs = {5,65,195,330,385,515};
-        int k = -2;
+        int y = -2;
         int tab = 0;
-        for (var line : state_info.split("\n")) {
-            k+= LINEHEIGHT;
-            if (k>screen_height-1) {
-                k = LINEHEIGHT-2;
+        for (var l : info.split("\n")) {
+            y+= LINEHEIGHT;
+            if (y>screen_height-1) {
+                y = LINEHEIGHT-2;
                 tab = 3;
             }
             int si = 0;
-            for (var s : line.split("@")) drawString(G,s,tabs[tab+si++],k,help_alpha);
+            for (var s:l.split("@")) drawString(g,s,tabs[tab+si++],y,help_alpha);
         }
     }
     
     ////////////////////////////////////////////////////////////////////////////
+    final long SHOWFORMS = 30000; // How long to show each notification in ms
+    final long FADEOUTMS = 1000;  // Fade in/out time in ms
+    final int  MAXNOTIFY = 40;    // Maximum notifications shown
     class Note {
         public final String s;
         public final long   t;
         public Note(String S) {s=S; t=System.currentTimeMillis();}}
-    Queue<Note>  notifications = new ArrayDeque<>();
+    Deque<Note>  notifications = new ArrayDeque<>();
     public void notify(String s) {notifications.add(new Note(s));}
     Collection<String> past = null;
     void noticeChanges() {
@@ -695,24 +738,20 @@ public final class Perceptron extends javax.swing.JFrame {
         drawNotifications(buf.out.g);
     }
     void drawNotifications(final Graphics2D G) {
-        final long SHOWFORMS = 6000;
-        final long FADEOUTMS = 1000;
         G.setFont(TEXTFONT);
         long t = System.currentTimeMillis();
         final Set<Note> remove = new HashSet<>();
         int y = 0;
-        for (var n : notifications) {
+        final Deque<Note> notes = new ArrayDeque<>(notifications);
+        for (var n : notes) {
             try{
                 long since = t-n.t;
-                if (since>SHOWFORMS) {
-                    remove.add(n);
-                    continue;
-                }
+                if (since>SHOWFORMS) {remove.add(n); continue;}
                 int alpha = 
                     (since<=255)? (int)(since) :
                     (since>SHOWFORMS-FADEOUTMS)? (int)((SHOWFORMS-since)*255.0/FADEOUTMS+0.5) :
                     255;
-                drawRightString(G,n.s,screen_width-2,y,alpha);
+                drawTopRightString(G,n.s,screen_width-2,y,alpha);
                 y+= LINEHEIGHT;
             } catch (Exception e) {
                 System.err.println("Error in drawNotifications "+n.s);
@@ -720,10 +759,11 @@ public final class Perceptron extends javax.swing.JFrame {
             }
         };
         notifications.removeAll(remove);
+        while (notifications.size()>MAXNOTIFY) notifications.pop();
     }
     
     
     public void textToMap() {
-        fractal.setMap(text.buffer());
+        fractal.setMap(text.get());
     }
 }

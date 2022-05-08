@@ -2,11 +2,8 @@ package image;
 //  DoubleBuffer.java
 //  Created by Michael Rule on 6/1/07.
 
-import util.ColorUtil;
 import java.awt.image.*;
 import perceptron.Perceptron;
-import image.Samplers.Sampler;
-import static util.Misc.clip;
 import static util.Misc.wrap;
 
 public class DoubleBuffer {
@@ -21,23 +18,13 @@ public class DoubleBuffer {
     
     public int     reflect     = 0;
     public boolean interpolate = true;
-    public boolean fancy       = true;
+    public boolean antialiased       = true;
     
-    final Perceptron P;
-
-    /**
-     * @param P
-     * @param a
-     * @param b
-     * @param s
-     * @param d
-     */
-    public DoubleBuffer(Perceptron P, BufferedImage a, BufferedImage b, 
-            BufferedImage s, BufferedImage d) {        
-        if (a != null) out = new ImageRenderContext(a, interpolate, reflect);
-        if (b != null) buf = new ImageRenderContext(b, interpolate, reflect);
-        if (d != null) dsp = new ImageRenderContext(d, interpolate, reflect);
-        this.P = P;
+    public DoubleBuffer(int W, int H) {
+        out = new ImageRenderContext(W, H, interpolate, reflect);
+        buf = new ImageRenderContext(W, H, interpolate, reflect);
+        img = new ImageRenderContext(W, H, interpolate, reflect);
+        dsp = new ImageRenderContext(W, H, interpolate, reflect);
     }
 
     /**
@@ -45,22 +32,22 @@ public class DoubleBuffer {
      * @param b
      */
     public synchronized void setFancy(boolean b) {
-        fancy = b;
-        if (out != null) out.setFancy(fancy);
-        if (buf != null) buf.setFancy(fancy);
-        if (img != null) img.setFancy(fancy);
-        if (dsp != null) dsp.setFancy(fancy);
+        antialiased = b;
+        if (out != null) out.setFancy(antialiased);
+        if (buf != null) buf.setFancy(antialiased);
+        if (img != null) img.setFancy(antialiased);
+        if (dsp != null) dsp.setFancy(antialiased);
     }
 
     /**
      *
      */
     public synchronized void toggleAntialias() {
-        fancy = !fancy;
-        if (out != null) out.setFancy(fancy);
-        if (buf != null) buf.setFancy(fancy);
-        if (img != null) img.setFancy(fancy);
-        if (dsp != null) dsp.setFancy(fancy);
+        antialiased = !antialiased;
+        if (out != null) out.setFancy(antialiased);
+        if (buf != null) buf.setFancy(antialiased);
+        if (img != null) img.setFancy(antialiased);
+        if (dsp != null) dsp.setFancy(antialiased);
     }
 
     /**
