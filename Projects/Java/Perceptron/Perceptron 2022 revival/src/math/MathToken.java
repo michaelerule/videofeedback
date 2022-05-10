@@ -1,7 +1,5 @@
 package math;
 
-//
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -662,12 +660,11 @@ public class MathToken {
                 + "___________________________________________________________________________________\n");
         BufferedReader keyBoard = new BufferedReader(new InputStreamReader(System.in));
         Equation equ;
-        ComplexVarList variables = new ComplexVarList();
-        variables.fillStandard();
+        ComplexContex variables = ComplexContex.standard();
         complex n = new complex();
-        variables.add('a', n);
-        variables.add('g', new complex((9.80655f)));
-        variables.add('c', new complex(299792458));
+        variables.set('a', n);
+        variables.set('g', new complex((9.80655f)));
+        variables.set('c', new complex(299792458));
         System.out.println("Legal variables: \n" + variables);
         System.out.println("(a is the previous answer)");
         String in;
@@ -688,7 +685,7 @@ public class MathToken {
                         System.out.print(equ + "=");
                         n = equ.eval(variables);
                         System.out.println(n);
-                        variables.setVal('a', n);
+                        variables.set('a', n);
                         break;
                 }
             } catch (IOException e) {

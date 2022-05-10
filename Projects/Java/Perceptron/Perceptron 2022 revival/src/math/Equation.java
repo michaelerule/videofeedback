@@ -157,7 +157,7 @@ public class Equation
      * @param variables
      * @return
      */
-    public complex eval(ComplexVarList variables)
+    public complex eval(ComplexContex variables)
     {
         return eval_op.operate(variables);
     }

@@ -6,17 +6,19 @@ package util;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.image.DataBuffer;
 import static java.lang.Math.cos;
 import static java.lang.Math.max;
 import static java.lang.Math.round;
 import static java.lang.Math.sin;
-import static util.Misc.clip;
 import static util.Matrix.diag;
+import static util.Misc.clip;
 import static util.Matrix.invert_3x3;
 import static util.Matrix.multiply;
 import static util.Matrix.multiply_3x3_Laderman;
 import static util.Matrix.multiply_3x3_point;
 import static util.Matrix.rotation;
+import static util.Misc.clip;
 
 /**
  * @author Michael Everett Rule
@@ -554,10 +556,51 @@ public class ColorUtil {
              | G & ((W1 * (c1 & G) + W2 * (c2 & G) + W3 * (c3 & G) + GR) >> 8);
     }
     
+    /** Linear color transform.
+     * 
+     * @param b  databuffer RGB888
+     * @param hr hue adjust
+     * @param sr saturation adjust
+     * @param lr luminance adjust
+     * @param cr contrast adjust
+     * @param br brightness adjust
+     */
+    public static void colorFilter(
+            DataBuffer b, float hr, float sr, float lr, float cr, float br) {
+        float 
+            gamma= br<=.5? cr*br*2   : 2*cr*(1-br),
+            beta = br<=.5? br*(1-cr) : br-cr+br*cr;
+        beta *= 255;
+        float [] D = {beta,beta,beta};
+        float [][] H = makeHueSatLumaOperator(hr,sr,lr);
+        float [][] B = diag(gamma,gamma,gamma);
+        H = multiply(B,H);
+        int beta8 = (int)(beta*256+0.5);
+        int M00 = (int)(H[0][0]*256+0.5);
+        int M01 = (int)(H[0][1]*256+0.5);
+        int M02 = (int)(H[0][2]*256+0.5);
+        int M10 = (int)(H[1][0]*256+0.5);
+        int M11 = (int)(H[1][1]*256+0.5);
+        int M12 = (int)(H[1][2]*256+0.5);
+        int M20 = (int)(H[2][0]*256+0.5);
+        int M21 = (int)(H[2][1]*256+0.5);
+        int M22 = (int)(H[2][2]*256+0.5);
+        int N   = b.getSize();
+        for (int i=0; i<N; i++) {
+            int c = b.getElem(i);
+            int r0 = (c & 0xff0000) >> 16;
+            int g0 = (c & 0xff00) >> 8;
+            int b0 = (c & 0xff);
+            int r1 = M00*r0+M01*g0+M02*b0+beta8;
+            int g1 = M10*r0+M11*g0+M12*b0+beta8;
+            int b1 = M20*r0+M21*g0+M22*b0+beta8;
+            r1 = clip((r1+127)>>8,0,255);
+            g1 = clip((g1+127)>>8,0,255);
+            b1 = clip((b1+127)>>8,0,255);
+            b.setElem(i,(r1<<16)|(g1<<8)|b1);
+        }
+    }
     
-    
-    ////////////////////////////////////////////////////////////////////////////
-    // Rendering option control
     /** Turn on top-quality rendering options for Graphics2D.
      * @param image_graphics
      * @return
@@ -577,6 +620,7 @@ public class ColorUtil {
                 RenderingHints.VALUE_STROKE_PURE);
         return image_graphics;
     }
+    
     /** Turn on top speed rendering options for Graphics2D.
      * @param image_graphics
      * @return 

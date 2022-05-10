@@ -68,7 +68,7 @@ public class DoubleBuffer {
      */
     public synchronized void set(BufferedImage s) {
         if (s == null) return;
-        final float scale = (s.getWidth()-0.5f) / (float)(out.W);
+        final float scale = (s.getWidth()-0.5f) / (float)(out.w);
         fde = img;
         img = new ImageRenderContext(s, interpolate, reflect, scale);
     }

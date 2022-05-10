@@ -43,7 +43,7 @@ public class OperationEvaluation implements EvaluationOperation {
      * @return
      */
     @Override
-    public complex operate(ComplexVarList variables) {
+    public complex operate(ComplexContex variables) {
         return binary_ops[op].execute(left.operate(variables),right.operate(variables));
     }
 	

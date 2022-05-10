@@ -29,8 +29,8 @@ public class ImageRenderContext
     public Graphics2D    g;
     public DataBuffer    buf;
     public Samplers      samplers;
-    public Samplers.Sampler get;
-    public final int W, H;
+    public Samplers.Sampler8Bit get;
+    public final int w, h;
     
     boolean is_scaled = false;
     float   scale = 1f;
@@ -54,9 +54,9 @@ public class ImageRenderContext
         
         setInterpolatedAndReflected(interpolate, reflect);
         
-        get = samplers.getFixed8Bit;
-        W = b.getWidth();
-        H = b.getHeight();
+        get = samplers.getReflect8Bit;
+        w = b.getWidth();
+        h = b.getHeight();
     }
     
     public ImageRenderContext(BufferedImage b, 
@@ -67,8 +67,8 @@ public class ImageRenderContext
         get = samplers.makeScaledGrabber(get, scale);
     }
     
-    public ImageRenderContext(int W, int H, boolean interpolate, int reflect) {
-        this(new BufferedImage(W,H,TYPE_INT_RGB), interpolate, reflect);
+    public ImageRenderContext(int w, int h, boolean interpolate, int reflect) {
+        this(new BufferedImage(w,h,TYPE_INT_RGB), interpolate, reflect);
     }
 
     /**
@@ -87,13 +87,13 @@ public class ImageRenderContext
     public final void setInterpolatedAndReflected(boolean inter, int reflect) {
         switch (reflect) {
             case 0:
-                get = inter? samplers.getFixed8Bit : samplers.get;
+                get = inter? samplers.getReflect8Bit : samplers.getReflect;
                 break;
             case 1:
-                get = inter? samplers.getFixed8BitNoReflect : samplers.getNoReflect;
+                get = inter? samplers.getWrap8Bit : samplers.getWrap;
                 break;
             case 2:
-                get = inter? samplers.getTriangleFixed8Bit : samplers.getTriangle;
+                get = inter? samplers.getTriangle8Bit : samplers.getTriangle;
                 break;
         }
         if (is_scaled)    

@@ -1,6 +1,7 @@
 package image;
 
 import java.awt.image.BufferedImage;
+import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,20 +43,14 @@ public class ImageCache {
     public String name() {return current!=null? current.getName() : "(none)";}
 
     public BufferedImage get(int n) {
-        if (images.isEmpty()) {
-            current = null;
-            return null;
-        }
+        if (images.isEmpty()) {current=null; return null;}
         current = images.get(current == null ? 0 : wrap(n, size));
         try {
-            BufferedImage image1 = ImageIO.read(current);
-            BufferedImage image2 = new BufferedImage(
-                    image1.getWidth(),
-                    image1.getHeight(),
-                    BufferedImage.TYPE_INT_RGB);
-            image2.getGraphics().drawImage(image1, 0, 0, null);
+            BufferedImage i1 = ImageIO.read(current);
+            BufferedImage i2 = new BufferedImage(i1.getWidth(), i1.getHeight(), TYPE_INT_RGB);
+            i2.getGraphics().drawImage(i1, 0, 0, null);
             System.out.println("loaded image " + current.getName());
-            return image2;
+            return i2;
         } catch (IOException e) {
             System.err.println("could not open image " + current.getName());
         }

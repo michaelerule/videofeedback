@@ -44,7 +44,7 @@ public class FunctionEvaluation implements EvaluationOperation {
      * @return
      */
     @Override
-    public complex operate(ComplexVarList variables) {
+    public complex operate(ComplexContex variables) {
         return operations[myOperation].execute(left.operate(variables));
     }
 

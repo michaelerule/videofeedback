@@ -39,7 +39,7 @@ public class VariableEvaluation implements EvaluationOperation {
      * @return
      */
     @Override
-    public complex operate(ComplexVarList variables) {
+    public complex operate(ComplexContex variables) {
         return variables.get(myVariableIndex);
     }
 

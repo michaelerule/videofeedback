@@ -4,6 +4,7 @@
  */
 package util;
 
+import static java.lang.Math.max;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -48,6 +49,16 @@ public class Misc {
         return n < 0 ? m - (-n % m) : n % m;
     }
     
+    /**
+     * 
+     * @param alpha
+     * @param show
+     * @return 
+     */
+    public static int fadeout(int alpha, boolean show) {
+        return clip(show? max(1,alpha+64):alpha>>1,0,255);
+    }
+    
     public static <T,U> void zip(Collection<T> A, Collection<U> B, BiConsumer<T, U> c) {
         Iterator<T> it = A.iterator();
         Iterator<U> iu = B.iterator();
@@ -60,5 +71,6 @@ public class Misc {
         return collection.stream().map(mapFunction).collect(Collectors.toList());
     }
 
+    
     
 }

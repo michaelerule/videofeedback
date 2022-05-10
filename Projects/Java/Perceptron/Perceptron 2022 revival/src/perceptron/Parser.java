@@ -1,9 +1,18 @@
 package perceptron;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import static java.util.Arrays.asList;
+import static java.util.Collections.sort;
+import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import math.complex;
 
 /**
@@ -27,7 +36,7 @@ public class Parser {
             String var = tokens[0];
             String val = tokens[1].toLowerCase();
             if (var.equals("fractal_map")) {
-                ps.fractal_map = Fractal.makeMapStatic(val).toString();
+                ps.fractal_map = Map.makeMapStatic(val).toString();
                 System.out.println("set fractal_map to "+val);
                 continue;
             } 
@@ -62,5 +71,80 @@ public class Parser {
     public static final Set<String> trueNames  = Set.of("TRUE", "YES", "Y", "T", "SI", "ON", "1");
     public static final Set<String> falseNames = Set.of("FALSE", "NO", "N", "F", "NON", "OFF", "0");
     
+    
+    
+    
+    ////////////////////////////////////////////////////////////////////////////
+    /** Read in the settings file.
+     * @param P
+     * @param settings_path
+     * @param presets_path */
+    @SuppressWarnings({"ConvertToStringSwitch", "unchecked"})
+    public static void parseSettings(Perceptron P, String settings_path, String presets_path) 
+    {
+        ArrayList<Preset> presets = new ArrayList<>();
+        //Create exc FileReader for reading the file
+        try {
+            BufferedReader in = new BufferedReader(new FileReader(settings_path));
+            String thisLine;
+            while ((thisLine = in.readLine()) != null) {
+                if (thisLine.length() > 0 && thisLine.charAt(0) != '*') {
+                    StringTokenizer token = new StringTokenizer(thisLine);
+                    if (token.countTokens() >= 2) {
+                        String var = token.nextToken();
+                        String val = token.nextToken();
+                        if (var.equals("preset")) {
+                            System.out.println("parsing preset "+val+":");
+                            presets.add(Preset.parse(val,in));
+                        } else if (var.equals("map")) {
+                            try {
+                                P.maps.add(Map.makeMapStatic(val));
+                                System.out.println("map : "+val);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            } 
+                        } else {
+                            //parse primitive
+                            Object value = Parser.bestEffortParse(val);
+                            if (null != value)
+                                try {
+                                    P.getClass().getField(var).set(P,value);
+                                } catch (NoSuchFieldException 
+                                        | SecurityException 
+                                        | IllegalArgumentException
+                                        | IllegalAccessException ex) {
+                                    System.err.println("I could not set "+var+" to "+val+"; parsed as "+value);
+                                    Logger.getLogger(Perceptron.class.getName()).log(Level.WARNING,null,ex);
+                                }
+                        }
+                    }
+                }
+            }
+            in.close();
+        } catch (IOException ex) {
+            System.err.println("Error reading settings file");
+            Logger.getLogger(Perceptron.class.getName()).log(Level.SEVERE,null,ex);
+        }
+        File f = new File(presets_path);
+        List<String> fileList = asList(f.list());
+        sort(fileList);
+        for (String name : fileList) {
+            if (name.endsWith(".state")) {
+                try {
+                    BufferedReader in = new BufferedReader(new FileReader(new File(presets_path+name)));
+                    System.out.println("parsing preset "+name+":");
+                    presets.add(Preset.parse(name, in));
+                    in.close();
+                } catch (FileNotFoundException ex) {
+                    System.err.println("Could not find preset file "+name);
+                    Logger.getLogger(Perceptron.class.getName()).log(Level.SEVERE,null,ex);
+                } catch (IOException ex) {
+                    System.err.println("Error loading preset "+name);
+                    Logger.getLogger(Perceptron.class.getName()).log(Level.SEVERE,null,ex);
+                }
+            }
+        }
+        P.presets = (Preset[])(presets.toArray(Preset[]::new));
+    }
     
 }

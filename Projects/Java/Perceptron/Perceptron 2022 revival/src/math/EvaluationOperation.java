@@ -43,7 +43,7 @@ public interface EvaluationOperation
      * @param variables
      * @return
      */
-    public complex operate(ComplexVarList variables);
+    public complex operate(ComplexContex variables);
     
     /**
      *

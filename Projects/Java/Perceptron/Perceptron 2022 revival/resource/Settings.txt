@@ -34,8 +34,11 @@ audio_line 0
 *screen_width  800
 *screen_height 450
 
-screen_width  1024
-screen_height 576
+*screen_width  640
+*screen_height 480
+
+screen_width  960
+screen_height 540
 
 *screen_width  1600
 *screen_height 900

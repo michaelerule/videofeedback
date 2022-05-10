@@ -27,7 +27,7 @@ public class ExpressionFormatter extends JFormattedTextField.AbstractFormatter {
     public Object stringToValue(String text)
     throws ParseException {
         try {
-            complex number = (MathToken.toEquation(text)).eval(ComplexVarList.standard());
+            complex number = (MathToken.toEquation(text)).eval(ComplexContex.standard());
             if (number.imag == 0)
                 return new Double(number.real);
             else throw new ParseException("",0);

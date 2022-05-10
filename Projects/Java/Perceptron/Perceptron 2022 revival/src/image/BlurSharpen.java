@@ -67,7 +67,7 @@ public class BlurSharpen {
     
     public BlurSharpen(DoubleBuffer b) {
         buffer = b;
-        temp   = new int[b.buf.W * b.buf.H];
+        temp   = new int[b.buf.w * b.buf.h];
     }
     
     // Constants for performing 3-point blur convolution
@@ -89,8 +89,8 @@ public class BlurSharpen {
     
     private void horizontalBlur12() {
         DataBuffer data = buffer.out.buf;
-        int W = buffer.out.W;
-        int H = buffer.out.H;
+        int W = buffer.out.w;
+        int H = buffer.out.h;
         int W2 = W-2;
         // Blur rows, saving in the temp buffer
         for (int y=0; y<H; y++) {
@@ -123,8 +123,8 @@ public class BlurSharpen {
 
     private void blur12(int A) {
         DataBuffer b = buffer.out.buf;
-        int W = buffer.out.W;
-        int H = buffer.out.H;
+        int W = buffer.out.w;
+        int H = buffer.out.h;
         horizontalBlur12();
         int B = 256 - A;
         // Blur columns, saving in the output buffer
@@ -156,8 +156,8 @@ public class BlurSharpen {
     
     private void sharp12(int A) {
         DataBuffer d = buffer.out.buf;
-        int W  = buffer.out.W;
-        int H  = buffer.out.H;
+        int W  = buffer.out.w;
+        int H  = buffer.out.h;
         horizontalBlur12();
         // Blur columns, saving in the output buffer
         int H2 = H-2;
@@ -190,8 +190,8 @@ public class BlurSharpen {
     
     private void horizontalBlur24() {
         DataBuffer data = buffer.out.buf;
-        int W = buffer.out.W;
-        int H = buffer.out.H;
+        int W = buffer.out.w;
+        int H = buffer.out.h;
         int W2 = W-2;
         // Blur rows, saving in the temp buffer
         for (int y=0; y<H; y++) {
@@ -237,8 +237,8 @@ public class BlurSharpen {
     
     private void blur24(int A) {
         DataBuffer b = buffer.out.buf;
-        int W = buffer.out.W;
-        int H = buffer.out.H;
+        int W = buffer.out.w;
+        int H = buffer.out.h;
         horizontalBlur24();
         int B = 256 - A;
         // Blur columns, saving in the output buffer
@@ -285,8 +285,8 @@ public class BlurSharpen {
     
     private void sharp24(int A) {
         DataBuffer d = buffer.out.buf;
-        int W  = buffer.out.W;
-        int H  = buffer.out.H;
+        int W  = buffer.out.w;
+        int H  = buffer.out.h;
         horizontalBlur24();
         // Blur columns, saving in the output buffer
         int H2 = H-2;

@@ -14,7 +14,7 @@ import image.DoubleBuffer;
 import math.MathToken;
 import math.complex;
 import math.Equation;
-import math.ComplexVarList;
+import math.ComplexContex;
 import java.awt.Color;
 import java.awt.image.DataBuffer;
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ import static math.complex.polar;
 /**
  * @author Michael Everett Rule
  */
-public class Fractal {
+public class Map {
        
     // Desired rectangular span of complex plane on screen
     // Changing this changes everything! Presets break. 
@@ -96,7 +96,7 @@ public class Fractal {
      * @param b
      * @param maps
      * @param parent */
-    public Fractal(DoubleBuffer b, ArrayList<Mapping> maps, Perceptron parent) {
+    public Map(DoubleBuffer b, ArrayList<Mapping> maps, Perceptron parent) {
         P = parent;
         this.maps = null==maps? new ArrayList<>() : maps;
         // Screen width and height, and related constants.
@@ -353,10 +353,10 @@ public class Fractal {
     public final String [] color_register_names = {
         "Black",
         "White",
-        "Middle Pixel Hue",
-        "Middle Pixel Inverse",
-        "Middle Pixel Hue Rotate",
-        "Hue Rotate"
+        "Mid:Hue",
+        "Mid:Invert",
+        "Mid:Spin",
+        "Hue Spin"
     };
     public final int[] color_registers = new int[N_COLOR_REGISTERS];
     private int rotation_hue = 0;
@@ -415,7 +415,7 @@ public class Fractal {
             //if (fx<0) fx=-fx;
             //if (fy<0) fy=-fy;
             float pr,qr;
-            switch (Fractal.this.bounds_i) {
+            switch (Map.this.bounds_i) {
                 case 2: {// Horizon
                     pr = AY[i];
                     qr = (float)abs((float)fy*oH7-1);
@@ -501,7 +501,7 @@ public class Fractal {
         bound_radius = 1 / inverse_radius;
         rotation = complex.polar(1 / r, theta);   
     }
-    final static ComplexVarList vars = ComplexVarList.standard();
+    final static ComplexContex vars = ComplexContex.standard();
     public static abstract class Mapping {
         public final String s;
         public Mapping(String S){s=S;}

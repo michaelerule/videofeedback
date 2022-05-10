@@ -134,7 +134,7 @@ public class Preset {
      * @param P
      * @return  */
     public static String settings(Perceptron P) {
-        Fractal   F = P.fractal;
+        Map   F = P.fractal;
         DoubleBuffer B = P.buf;
         TextMatrix   T = P.text;
         Control   C = P.control;
@@ -228,7 +228,7 @@ public class Preset {
      * @return  */
     public static String helpString(Perceptron P) {
         Control C = P.control;
-        Fractal F = P.fractal;        
+        Map F = P.fractal;        
         /*
         ⌘ Command (Cmd) U+2318
         ⌥ Option (Opt or Alt) U+2325
@@ -248,67 +248,22 @@ public class Preset {
         ↖ Home U+2196
         ↘ End U+2198
         */
-        String out = "";
-        out += "?/  @show help             @" + P.show_help + "\n";
-        out += "qQ  @± fractal map         @" + F.mapping + "\n";
-        out += "wW  @± outside coloring    @" + F.outi + " " + F.outop.name+"\n";
-        out += "eE  @± boundary test       @" + F.bounds_i  + " " + F.bound_op.name+"\n";
-        out += "r   @reflection            @" + P.buf.reflect + Samplers.reflection_mode_names[P.buf.reflect]+"\n";
-        out += "R   @reverse bounds test   @" + F.invert_bound + "\n";
-        out += "t   @draw tree             @" + P.draw_tree + "\n";
-        out += "T   @objects on top        @" + P.objects_on_top + "\n";
-        out += "yY  @± outer color (w=0)   @" + F.outcolor_i + " " + F.color_register_names[F.outcolor_i] + "\n";
-        out += "u   @show frame rate       @" + P.show_framerate + "\n";
-        out += "U   @cap frame rate        @" + P.cap_frame_rate + "\n";
-        out += "iI  @± input image         @" + P.image_i + " " + P.images.name() + "\n";
-        out += "oO  @± translate mode      @" + F.offset_mode + " " + F.translate_modes[F.offset_mode] + "\n";
-        out += "pP  @± rotate mode         @" + F.rotate_mode + " " + F.translate_modes[F.rotate_mode] + "\n";
-        out += "&   @tree leaves (t=true)  @" + P.tree.getLeaves() + "\n";
-        out += "*   @tree symmetry (t=true)@" + P.tree.getSymmetry() + "\n";
-        out += "a   @+ audio visualizer    @" + P.mic.getVis() + " " + P.mic.vis.name + "\n";
-        out += "A   @Mic enabled?          @" + P.mic.isActive() + "\n";
-        out += "s   @Stegosaurus?          @" + P.draw_dino + "\n";
-        out += "S   @save (shift+s)        @ \n";
-        out += "dD  @± fade color damping  @" + F.color_dampen + "\n";
-        out += "f   @+ grad color 1 (g>0)  @" + F.gcolor1_i + " " + F.color_register_names[F.gcolor1_i] + "\n";
-        out += "F   @+ grad color 2 (g=2)  @" + F.gcolor2_i + " " + F.color_register_names[F.gcolor2_i] + "\n";
-        out += "gG  @± gradient mode       @" + F.grad_mode + " " + F.grad_op.name  + "\n";
-        out += "hH  @± gradient shape      @" + F.grad_i + " " + gradient_names[F.grad_i] + "\n";
-        out += "j   @invert output         @" + F.color_mask + "\n";
-        out += "J   @invert feedback       @" + F.feedback_mask + "\n";
-        out += "k   @foreground gradient   @" + P.fore_grad + "\n";
-        out += "K   @color transform       @" + P.do_color_transform + '\n';
-        out += "l   @linear interpolate    @" + P.buf.interpolate + "\n";
-        out += "L   @anti-alias            @" + P.isAntialiased() + "\n";
-        out += ";\' @± Δhue (n)            @" + P.hue_rate + '\n';
-        out += ":\" @± Δsaturation (n)     @" + P.sat_rate + '\n';
-        out += ",.  @± Δcontrast (n)       @" + P.con_rate + '\n';
-        out += "<>  @± Δbrightness (n)     @" + P.bri_rate + '\n';
-        out += "zZ  @± tint color          @" + F.tintcolor_i + " " + F.color_register_names[F.tintcolor_i] + "\n";
-        out += "xX  @± tint amount         @" + F.tint_level + "\n";
-        out += "C   @cursor futures        @" + C.draw_futures + "\n";
-        out += "c   @show cursors          @" + C.draw_cursors + "\n";
-        out += "v   @wander                @" + (C.current==null?"(none)":C.current.name+": "+C.current.wander) + "\n";
-        out += "V   @autopilot             @" + C.screensaver + "\n";
-        out += "b   @show text buffer      @" + P.text.on + "\n";
-        out += "B   @text buffer cursor    @" + P.text.cursor_on + "\n";
-        out += "n   @show notifications    @" + P.show_notifications + "\n";
-        out += "m   @mirroring mode        @" + F.mirror_mode + " " + F.mirror_modes[F.mirror_mode] + "\n";
-        out += "M   @draw moths            @" + P.draw_moths + "\n";
-        out += "{}  @± cursor dots         @" + (C.current==null? "(none)" : C.current.nDots()) + "\n";
-        out += "+-  @± cursor speed        @" + (C.current==null? "(none)" : C.current.speed) + '\n';
-        out += "\\  @auto-advance image    @" + P.rotate_images + "\n";
-        out += "_   @horizontal edge       @" + P.draw_top_bars + "\n";
-        out += "|   @vertical edge         @" + P.draw_side_bars + "\n";
-        out += "[]  @± HV edge color       @" + F.barcolor_i + " " + F.color_register_names[F.barcolor_i] + "\n";
-        out += "()  @± noise level         @" + F.noise_level + '\n';
-        out += "↑↓  @± motion blur         @" + F.motion_blur + '\n';
-        out += "←→  @sharpen/blur          @" + P.blursharp_rate + '\n';
-        out += "⇞⇟  @± mic volume          @" + P.mic.getVolume() + "\n";
-        out += "↖↘  @± mic speed           @" + P.mic.getSpeed() + "\n";
-        out += "⌦   @write animation       @" + P.write_animation + "\n";
-        out += "⇥   @type equation         @" + C.entry_mode + "\n";
-        out += "↩   @presets mode          @" + (
+        return
+        "─┤ PERCEPTRON ├────────────────"
+        + "\n qQ  @±fractal map     @" + F.mapping
+        + "\n wW  @±outside mode    @" + F.outi + " " + F.outop.name
+        + "\n eE  @±boundary test   @" + F.bounds_i  + " " + F.bound_op.name
+        + "\n r   @reflection       @" + P.buf.reflect + " " + Samplers.reflection_mode_names[P.buf.reflect]
+        + "\n R   @reverse bounds   @" + F.invert_bound
+        + "\n yY  @±out color       @" + F.outcolor_i + " " + F.color_register_names[F.outcolor_i]
+        + "\n iI  @±input image     @" + P.image_i + " " + P.images.name()
+        + "\n \\  @auto image       @" + P.rotate_images
+        + "\n j   @invert output    @" + F.color_mask
+        + "\n J   @invert input     @" + F.feedback_mask
+        + "\n oO  @±offset mode     @" + F.offset_mode + " " + F.translate_modes[F.offset_mode]
+        + "\n pP  @±rotate mode     @" + F.rotate_mode + " " + F.translate_modes[F.rotate_mode]
+        + "\n m   @mirror mode      @" + F.mirror_mode + " " + F.mirror_modes[F.mirror_mode]
+        + "\n ↩   @presets mode     @" + (
                 C.presets_mode? "true ("+C.preset_i+"; "
                     + (C.presets.length<=0
                         ? "NONE LOADED" 
@@ -316,9 +271,69 @@ public class Preset {
                             ? C.presets[C.preset_i].name() 
                             : "OUT OF BOUNDS")
                     )
-                    +")" : "false") + "\n";
-        
-        return out;
+                    +")" : "false")
+        + "\n 0-9 Fn 1-12: built-in presets"
+        + "\n"//+ + "\n─┤ OBJECTS ├───────────────────"
+        + "\n T   @objects atop     @" + P.objects_on_top
+        + "\n t   @draw tree        @" + P.draw_tree
+        + "\n &   @tree leaves      @" + P.tree.getLeaves()
+        + "\n *   @tree down        @" + P.tree.getSymmetry()
+        + "\n s   @stegosaurus      @" + P.draw_dino
+        + "\n M   @moths            @" + P.draw_moths
+        + "\n _   @horizon edge     @" + P.draw_top_bars
+        + "\n |   @side edge        @" + P.draw_side_bars
+        + "\n []  @±edge color      @" + F.barcolor_i + " " + F.color_register_names[F.barcolor_i]
+        + "\n"//+ + "\n─┤ TINTING ├───────────────────"
+        + "\n gG  @±grad mode       @" + F.grad_mode + " " + F.grad_op.name 
+        + "\n f   @+color 1 (g1)    @" + F.gcolor1_i + " " + F.color_register_names[F.gcolor1_i]
+        + "\n F   @+color 2 (g2)    @" + F.gcolor2_i + " " + F.color_register_names[F.gcolor2_i]
+        + "\n dD  @±color dampen    @" + F.color_dampen
+        + "\n hH  @±grad shape      @" + F.grad_i + " " + gradient_names[F.grad_i]
+        + "\n k   @grad within      @" + P.fore_grad
+        + "\n zZ  @±tint color      @" + F.tintcolor_i + " " + F.color_register_names[F.tintcolor_i]
+        + "\n xX  @±tint            @" + F.tint_level
+        + "\n"//+ "\n─┤ COLOR ├─────────────────────"
+        + "\n K   @color adjust     @" + P.do_color_transform
+        + "\n ;\' @±Δhue            @" + P.hue_rate
+        + "\n :\" @±Δsaturate       @" + P.sat_rate
+        + "\n ,.  @±Δcontrast       @" + P.con_rate
+        + "\n <>  @±Δbright         @" + P.bri_rate
+        + "\n ()  @±noise           @" + F.noise_level
+        + "\n ↑↓  @±motionblur      @" + F.motion_blur
+        + "\n ←→  @sharp/blur       @" + P.blursharp_rate
+        + "\n"//+ + "\n─┤ CURSOR ├────────────────────"
+        + "\n ⌃m  @hide mouse       @" + P.hide_mouse
+        + "\n c   @show cursors     @" + C.draw_cursors
+        + "\n v   @wander           @" + (C.current==null?"(no cursor)":C.current.name+": "+C.current.wander)
+        + "\n V   @autopilot        @" + C.screensaver
+        + "\n +-  @±speed           @" + (C.current==null? "(no cursor)" : C.current.speed)
+        + "\n C   @dots             @" + C.draw_futures
+        + "\n {}  @±dots            @" + (C.current==null? "(no cursor)" : C.current.nDots())
+        + "\n Left  Click   next cursor"
+        + "\n Right Click   previous cursor"
+        + "\n"//+ + "\n─┤ AUDIO ├─────────────────────"
+        + "\n A   @Mic on           @" + P.mic.isActive()
+        + "\n a   @+visualizer      @" + P.mic.getVis() + " " + P.mic.vis.name
+        + "\n ⇞⇟  @±volume          @" + P.mic.getVolume()
+        + "\n ↖↘  @±mic speed       @" + P.mic.getSpeed()
+        + "\n"//+ + "\n─┤ TEXT ├──────────────────────"
+        + "\n ⇥   @type equation    @" + C.text_mode
+        + "\n b   @show text        @" + P.text.on
+        + "\n B   @text cursor      @" + P.text.cursor_on
+        + "\n ⌃↩ or ⇧↩ @@text → equation"
+        + "\n"//+ + "\n─┤ WINDOW ├────────────────────"
+        + "\n ?/  @show help        @" + P.show_state
+        + "\n n   @show notices     @" + P.show_notices
+        + "\n u   @show info        @" + P.show_monitor
+        + "\n U   @limit speed      @" + P.cap_frame_rate
+        + "\n l   @interpolate      @" + P.buf.interpolate
+        + "\n L   @anti-alias       @" + P.isAntialiased()
+        + "\n ⌃f  @fullscreen       @" + P.isFullscreen()
+        + "\n ⌃e  @edges (¬f)       @" + !P.isUndecorated()
+        + "\n ⌃q  @or Esc           @quit"
+        + "\n ⌃s  @or Space or S    @save"
+        + "\n ⎇s @save video       @" + P.write_animation
+                ;
     }
     
     /** 
@@ -326,7 +341,7 @@ public class Preset {
      * @param P
      */
     public void set(Perceptron P) {
-        Fractal   F = P.fractal;
+        Map   F = P.fractal;
         DoubleBuffer B = P.buf;
         TextMatrix   T = P.text;
         Control     C = P.control;
@@ -388,7 +403,6 @@ public class Preset {
         C.draw_futures  = draw_futures;
         C.setFractal(true);
         C.setTree(tree_active);
-        C.setAudio(false);
         C.syncCursors();
         C.branching.set(XBranchingCursor,YBranchingCursor);
         C.alpha_cursor.set(XAlphaCursor,YAlphaCursor);

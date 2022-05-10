@@ -1859,7 +1859,7 @@ public class Object3D {
             if (query == oldpoints[i]) return (Point3D)(newpoints.get(i));
         return null;
     }
-    public void recenter(int i) {
+    public void recenter(int scale) {
         double minx = Double.MAX_VALUE ;
         double miny = Double.MAX_VALUE ;
         double minz = Double.MAX_VALUE ;
@@ -1880,7 +1880,7 @@ public class Object3D {
         double dx = (maxx + minx)/2 ;
         double dy = (maxy + miny)/2 ;
         double dz = (maxz + minz)/2 ;
-        double a = i / Math.max( maxz - minz , Math.max( maxx - minx , maxy - miny ));
+        double a = scale / Math.max( maxz - minz , Math.max( maxx - minx , maxy - miny ));
         for ( var p : mp_rotateable ) {
             p.x = ( p.x - dx ) * a ;
             p.y = ( p.y - dy ) * a ;

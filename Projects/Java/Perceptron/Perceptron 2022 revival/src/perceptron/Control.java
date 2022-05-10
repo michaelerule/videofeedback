@@ -5,51 +5,72 @@ package perceptron;
  */
 
 import java.awt.AWTException;
-import util.ColorUtil;
-import math.complex;
 import java.awt.Image;
 import java.awt.Robot;
 import java.awt.Point;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import static java.awt.MouseInfo.getPointerInfo;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-
-import static java.awt.event.KeyEvent.*;
-
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
-
-import static java.lang.Math.*;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 import javax.swing.SwingUtilities;
+
+import static java.awt.event.KeyEvent.*;
+import static java.lang.Math.pow;
+import static java.lang.Math.min;
+import static java.lang.Math.random;
+import static java.lang.System.exit;
+import static java.util.Arrays.binarySearch;
+import static java.util.Arrays.sort;
+import java.util.TreeSet;
+import static javax.swing.SwingUtilities.invokeAndWait;
+import static javax.swing.SwingUtilities.isEventDispatchThread;
+
+import math.complex;
+import util.ColorUtil;
+import static util.Fullscreen.isFullscreenWindow;
 import static util.Misc.clip;
 import static util.Misc.wrap;
 import static util.Matrix.rotation;
-import static util.Win.toClipboard;
-import static util.Win.fromClipboard;
+import static util.Sys.getClip;
+import static util.Sys.setClip;
+import static util.Sys.mouseIn;
+import static util.Sys.serr;
 
 /**
  * 
  * @author mer49
  */
-public final class Control implements MouseListener, MouseMotionListener, KeyListener {
+public final class Control extends MouseAdapter implements KeyListener {
+
+    // Number of dots (smoothing order) for cursors
+    // Speed is logarithmic, 0 leaves unchanged.
+    // Can range from -32 (1/16th) to 32 (16x)
+    public static final int INITIAL_CURSOR_NDOTS = 10;
+    public static final int INITIAL_SPEED        = 12;
  
-    Perceptron P;
-    Point      mouse = new Point(0, 0);
+    
+    final Perceptron P;
+    final Preset[]   presets;
+    final Robot      robot;
+    
+    /**
+     * This point is important.
+     * It contains the location on the perceptron screen to draw the mouse.
+     * This will be in (0,0,screen_width,screen_height) coordinates. 
+     */
+    final Point      mouse = new Point(0, 0);
     
     private float rate = 4f;
-    
-    // Scale from physical screen dimension to virtual screen dimensions
-    float xscale, yscale;
     
     // Control flags
     public int     preset_i;
@@ -58,38 +79,30 @@ public final class Control implements MouseListener, MouseMotionListener, KeyLis
     public boolean screensaver  = false;
     public void    toggleScreensaver() {screensaver = !screensaver;}
     
-    //CURSORS
     Cursor 
-        current, //active cursor
-        branching,
-        alpha_cursor,
-        branch_length,
-        tree_orientation,
-        map_offset,
-        map_rotation,
-        gradient,
-        tree_location;
+        current,          // currently active cursor
+        map_offset,       // constant offset i.e. z^2 + c
+        map_rotation,     // rotational constant
+        gradient,         // gradient bias and slope
+        branching,        // tree branching angles
+        alpha_cursor,     // tree brancing axial rotation (disabled)
+        branch_length,    // tree branching length
+        tree_orientation, // tree orientation (disabled)
+        tree_location;    // location of tree root
     
     //Specific sets of cursors
-    Set<Cursor> map_cursors, tree, audio_cursors, life_cursors;
+    Set<Cursor> map_cursors, tree, on, all;
     
-    //Set of active cursors (cursors become active, inactive based on the
-    //activation state of the controlled objects
-    Set<Cursor> active, all_cursors;
-    
-    /// PRESETS
-    Preset[] presets;
-
     public Control(
             Perceptron P_,
             Preset[] user_presets) {
         presets = user_presets;
 
         P = P_;
-        xscale = (float)(P.screen_width )/P.display_w;
-        yscale = (float)(P.screen_height)/P.display_h;
 
-        try {robot = new Robot();} catch (AWTException e) {}
+        Robot rb = null;
+        try {rb = new Robot();} catch (AWTException e) {}
+        robot = rb;
 
         branching = new Cursor("c1.png") {public void step(float rate) {
             // Controls tree's branching angles
@@ -105,7 +118,7 @@ public final class Control implements MouseListener, MouseMotionListener, KeyLis
             super.step(rate);
             P.fractal.setNormalizedRotation(x, y);
         }};
-        map_rotation.to.x = (int) (P.fractal.W - P.fractal.z2W - Fractal.UL.real);
+        map_rotation.to.x = (int) (P.fractal.W - P.fractal.z2W - Map.UL.real);
         map_rotation.to.y = P.halfScreenHeight();
         map_offset = new Cursor("c7.png") {public void step(float rate) {
             super.step(rate);
@@ -159,134 +172,395 @@ public final class Control implements MouseListener, MouseMotionListener, KeyLis
                 //alpha_cursor, 
                 branch_length, 
                 tree_location);
-        audio_cursors = Set.of();
-        all_cursors   = new HashSet<>();
-        all_cursors.addAll(map_cursors);
-        all_cursors.addAll(tree);
-        all_cursors.addAll(audio_cursors);
-        active = new HashSet<>();
-        active.addAll(map_cursors);
-        if (P.draw_tree) active.addAll(tree);
+        all   = new TreeSet<>();
+        all.addAll(map_cursors);
+        all.addAll(tree);
+        on = new TreeSet<>();
+        on.addAll(map_cursors);
+        if (P.draw_tree) on.addAll(tree);
         //Start with the map cursor
         current = map_offset;
     }
+    
+    /**
+     * Those little eyeball cursors.
+     * Things you should know:
+     *      - The point `to` is always within (0,0,screen_width,screen_height)
+     *      - Cursor locations are saved in fractional coordinates (0,0,1,1)
+     */
+    public abstract class Cursor implements Comparable<Cursor> {
+        public final String  name;
+        // Mouse-controlled position (we smoothly approach this)
+        private final Point to;
+        float   x, y; // Current cursor location
+        int     speed  = INITIAL_SPEED;
+        boolean wander = false;
+        Image   image;
+        Point   offset;
+        // Delay-line smoothed intermediate positions ("future")
+        float[] dx = new float[INITIAL_CURSOR_NDOTS], 
+                dy = new float[INITIAL_CURSOR_NDOTS]; 
+        
+        public Cursor(String imagename) {
+            name   = imagename;
+            to     = new Point(P.halfScreenWidth(), P.halfScreenHeight());
+            image  = defaultImage(imagename);
+            offset = new Point(image.getWidth(null)/2, image.getHeight(null)/2);
+        }
 
-    private Point bound(Point p) {
-        p.x = clip(p.x,0,P.screen_width);
-        p.y = clip(p.y,0,P.screen_height);
-        return p;
+        /**
+         * Advance this cursor one animation frame.
+         * Step `dt` should be greater than 0 and less than 1.
+         * @param dt 
+         */
+        public synchronized void step(float dt) {
+            if (wander) walk();     
+            dt = (float)pow(clip(dt,1e-6f,1-1e-6f),pow(2, -speed/8.));
+            dx[0]+=(to.x-dx[0])*dt;
+            dy[0]+=(to.y-dy[0])*dt;
+            int i=1;
+            while (i < dx.length) {
+                dx[i]+=(dx[i-1]-dx[i])*dt;
+                dy[i]+=(dy[i-1]-dy[i])*dt;
+                i++;
+            }
+            i--;
+            x += (dx[i]-x)*dt;
+            y += (dy[i]-y)*dt;
+        }
+
+        /**
+         * Draw this cursor on screen.
+         * @param g 
+         */
+        public synchronized void draw(Graphics g) {
+            g.drawImage(image, 
+                (int)x-offset.x, 
+                (int)y-offset.y, null);
+            if (draw_futures) for (int i=0; i<dx.length; i++) 
+                g.drawImage(trail, 
+                    (int)dx[i]-offset.x, 
+                    (int)dy[i]-offset.y, null);
+        }
+        
+        /**
+         * Increase path dots.
+         */
+        public synchronized void addDot() {
+            if (dx.length > 50) return;
+            float[] new_dx = new float[dx.length+1],
+                    new_dy = new float[dy.length+1];
+            System.arraycopy(dx, 0, new_dx, 0, dx.length);
+            System.arraycopy(dy, 0, new_dy, 0, dy.length);
+            new_dx[dx.length] = dx[dx.length-1];
+            new_dy[dy.length] = dy[dy.length-1];
+            dx = new_dx;
+            dy = new_dy;
+        }
+
+        /**
+         * Decrease path dots.
+         */
+        public synchronized void removeDot() {
+            if (dx.length <= 1) return;
+            float[] new_dx = new float[dx.length-1],
+                    new_dy = new float[dy.length-1];
+            System.arraycopy(dx, 0, new_dx, 0, new_dx.length);
+            System.arraycopy(dy, 0, new_dy, 0, new_dy.length);
+            dx = new_dx;
+            dy = new_dy;
+        }
+
+        /** 
+         * Speed control.
+         * Speed can range from -32 to 32; local_rate gets 2^(speed/8)
+         * => exponent ranges from 2^-4 2^4 i.e. 0.125 to 16;
+         * @param amt 
+         */
+        public void adjustSpeed(int amt) {
+            speed = clip(speed+amt,-32,64);      
+        }
+
+        /**
+         * Change the point that cursor is heading towards
+         * @param x
+         * @param y 
+         */
+        public synchronized void setDestination(int x, int y) {
+            to.setLocation(
+                clip(x,0,P.screen_width),
+                clip(y,0,P.screen_height));
+        }
+
+        /**
+         * Set destination using [0,1]^2 coordinates
+         * @param x
+         * @param y 
+         */
+        public synchronized void setDestination(float x, float y) {
+            setDestination(
+                (int)(x*P.screen_width+.5f),
+                (int)(y*P.screen_height+.5f));
+        }
+
+        /**
+         * Randomly perturb the destination. 
+         */
+        public synchronized void walk() {
+            setDestination(
+                to.x + (int)((random()-.5)*33),
+                to.y + (int)((random()-.5)*33));
+        }
+        
+        /**
+         * React to a mouseMoved event.
+         * Mouse Moved events are forwarded without modification.
+         * getX/Y return mouse location relative to Perceptron JFrame
+         * Subtract upper left corner of screen to get relative location.
+         * Account for screen scaling.
+         * @param e 
+         */
+        public void mouseMoved(MouseEvent e) {
+            Rectangle b = P.getPerceptBounds();
+            setDestination(
+                (int)((e.getX()-b.x)*P.screen_width /(float)b.width +.5),
+                (int)((e.getY()-b.y)*P.screen_height/(float)b.height+.5));
+        }
+        
+        /** 
+         * Move mouse to cursor if mouse is within window.
+         * 
+         * We need a few different behaviors: 
+         * - When toggling fullscreen or window borders, always set the mouse 
+         *   to DESTINATION of the current cursor
+         * - When moving to a new cursor, sometimes ... hmm
+         **/
+        public synchronized void catchup(boolean careful) {
+            if (this!=current) return;
+            if (robot == null) return;
+            
+            // Mouse location
+            Point m = getPointerInfo().getLocation();
+            
+            // Bounds of perceptron JFrame; absolute screen-pixel coordinates
+            // ( Don't move if mouse outside window )
+            Rectangle b = P.getBounds();
+            b.setLocation(P.getLocationOnScreen());
+            if (careful) if (!b.contains(m)) return;
+            
+            // True screen position of Cursor (move to here)
+            // - Ensure cursor is clipped to screen area
+            // - Account for any scaling of the screen area (always integer)
+            // - Offset relative to location of screen area (p)
+            // - Offset relative to location of Perceptron JFrame (b)
+            Rectangle p = P.getPerceptBounds();
+            int x = clip(to.x,0,P.screen_width )*(p.width /P.screen_width )+p.x+b.x;
+            int y = clip(to.y,0,P.screen_height)*(p.height/P.screen_height)+p.y+b.y;
+            
+            // Don't move if the mouse is in the right spot
+            if (m.x==x && m.y==y) return;
+            
+            moveTheMouse(x,y);
+        }
+
+        /** 
+         * Moves the system mouse to (x,y) location.
+         * Dangerous; This should only be called by Cursor.catchup()
+         * We can end up in this code
+         *  - From the event thread if the mouse is clicked
+         *  - From the perceptron constructor when loading presets 
+         *  - From the event thread when loading or setting presets 
+         *  - From the go() loop thread when checking cursor state DISABLED
+         * Perceptron is constructed within invokeLater(). Only the go() thread
+         * is a problem; We've removed calls into the cursor state from that
+         * thread (hopefully). 
+         */
+        private void moveTheMouse(int x, int y) {
+            if (!isEventDispatchThread()) {
+                serr("Expected to be on the event dispatch thread!");
+                serr("(I'm refusing to move the system mouse)");
+                return;
+            }
+            
+            P.removeMouseListener(Control.this);
+            robot.mouseMove(x,y);
+            P.addMouseListener(Control.this);
+            
+            // The mouse point should be in screen coordinates
+            // Move to relative to window
+            Point p = P.getLocationOnScreen();
+            x -= p.x;
+            y -= p.y;
+            // Move to relative to drawn area
+            Rectangle b = P.getPerceptBounds();
+            x -= b.x;
+            y -= b.y;
+            // Scale down to account for screen scaling
+            x  = (x*P.screen_width )/b.width;
+            y  = (y*P.screen_height)/b.height;
+            // Set internal mouse point
+            mouse.x = x;
+            mouse.y = y;
+        }
+        
+        // Boilerplate
+        public void  toggleWander()        {wander = !wander;}
+        public int   compareTo(Cursor c)   {return name.compareTo(c.name);}
+        public int   nDots()               {return dy.length;}
+        public float x()                   {return to.x/(float)P.screen_width;}
+        public float y()                   {return to.y/(float)P.screen_height;}
+        public void  set(float x, float y) {setDestination(x,y);catchup(true);}
     }
     
+    /**
+     * Advance (animate) cursor positions forward one frame.
+     * @param framerate 
+     */
     public synchronized void advance(int framerate) {
-        if (active.size() <= 0) return;
-        if (screensaver) for (var c :active) c.walk();
-        // User-controlled cursor moves quickly
+        if (on.size()<=0) return;
+        if (screensaver) for (var c:on) c.walk();
+        // User-controlled cursor moves quickly. Background cursors slowly.
         // both focus_drift and unfocus_drift must be >0 and <1
         if (framerate < 1) framerate = 1;
-        float focus_drift = (float)min(1,1-1/(1+rate/framerate));
-        if (current != null && !screensaver)
-            current.step(focus_drift);
-        // Background cursors move slowly
-        float unfocus_drift = (float)min(1,1-1/(1+.2*rate/framerate));
-        all_cursors.forEach((c)->c.step(unfocus_drift));
+        float base_drift  = (float)min(1,1-1/(1+.2*rate/framerate));
+        float focus_drift = (float)min(1,1-1/(1+1.*rate/framerate));
+        all.forEach((c)->c.step(base_drift));
+        if (current!=null && !screensaver) current.step(focus_drift);
     }
     
-
-    synchronized void cursorSelection(int step) {
-        //if there are no active cursors do nothing
-        if (active.isEmpty()) {current = null; return;}
-        Cursor[] activeArray = (Cursor[]) active.toArray(Cursor[]::new);
-        Arrays.sort(activeArray);
-        int index = Arrays.binarySearch(activeArray,current);
-        index = index<0? 0 : wrap(index + step, active.size());
-        current = activeArray[index];
-        //update mouse location to that of the new cursor, if possible
-        catchup();
+    /**
+     * Move focus to the next/previous cursor.
+     * n.b.: Java stdlib lacks an indexable sorted set collection.
+     * @param i 
+     */
+    synchronized void cursorSelection(int i) {
+        // if there are no active cursors do nothing
+        if (on.isEmpty()) {current = null; return;}
+        // get active set as a sorted list and move cursor by index i
+        Object[] a = on.toArray(Cursor[]::new);
+        sort(a);
+        int ix = binarySearch(a,current);
+        current = (Cursor)a[ix<0? 0 : wrap(ix + i, on.size())];
+        
+        // TODO
+        // Try to move mouse to new cursor
+        // Only do this if mouse is already over the window
+        current.catchup(true);
     }
     
     /**
      * Ensure that cursor state is synchronize with Perceptron's state. 
      * Only cursors that control active rendering operation should be shown.
      */
+    private void setActive(Cursor      c, boolean a) {if (a) on.add(c);    else on.remove(c);}
+    private void setActive(Set<Cursor> c, boolean a) {if (a) on.addAll(c); else on.removeAll(c);}
     public synchronized void syncCursors() {
-        Fractal F = P.fractal;
-        // The map cannot rotate if the rotation is locked
-        if (F.rotate_mode == Fractal.LOCKED) active.remove(map_rotation);
-        else if (!active.contains(map_rotation)) active.add(map_rotation);
-        // The map cannot translate if translation is locked
-        if (F.offset_mode == Fractal.LOCKED) active.remove(map_offset);
-        else if (!active.contains(map_offset)) active.add(map_offset);
-        // Gradient zero is no gradient at all 
-        if (F.grad_mode == 0) active.remove(gradient);
-        else if (!active.contains(gradient)) active.add(gradient);
-        // Is the tree on? 
-        if (!P.draw_tree)  active.removeAll(tree);
-        else active.addAll(tree);
+        Map F = P.fractal;
+        setActive(map_rotation, F.rotate_mode != Map.LOCKED);
+        setActive(map_offset  , F.offset_mode != Map.LOCKED);
+        setActive(gradient    , F.grad_mode   != 0);
+        setActive(tree        , P.draw_tree);
         checkCursor();
     }
     
-    
     /**
-     * Ensure one of the visible cursors is under user control.
+     * Ensure a visible cursor is under user control.
      */
     public synchronized void checkCursor() {
-        if (active.contains(current)) return;
-        if (active.isEmpty()) current=null;
-        else {current = active.iterator().next(); catchup();}
+        if (null!=current && on.contains(current)) return;
+        if (on.isEmpty()) current=null;
+        else {current=on.iterator().next(); current.catchup(true);}
     }
 
-    /** Draw all active controls
-     * @param G */
-    public synchronized void drawAll(Graphics G) {
-        //if there are no active cursors do nothing
-        if (active.size()<=0 || !draw_cursors)  return;
-        for (Cursor c :active) c.draw(G);
+    /** 
+     * Draw active cursors.
+     * @param g */
+    public synchronized void drawAll(Graphics g) {
+        if (on.size()<=0 || !draw_cursors)  return;
+        for (Cursor c :on) c.draw(g);
         if (!screensaver) {
-            G.drawImage(cursor_ring,(int)(mouse.x)-32,(int)(mouse.y)-32,null);
-            if (current != null) G.drawImage(focus,(int)current.x-11,(int)current.y-11,null);
+            // Draw a ring around the current mouse position
+            g.drawImage(cursor_ring,(int)(mouse.x)-32,(int)(mouse.y)-32,null);
+            // Draw a smaller ring around the active cursor
+            if (current != null) 
+                g.drawImage(focus,(int)current.x-11,(int)current.y-11,null);
         }
     }
 
     ////////////////////////////////////////////////////////////////////////////
     //MOUSE LISTENER IMPLEMENTATION
-    @Override
-    public synchronized void mouseEntered(MouseEvent e) {
-        P.stimulate();
-        //update mouse location to that of the cursor, if possible
-        if (current != null) {
-            int x = max(0,min(P.displayWidth(), (int)(current.to.x/xscale)));
-            int y = max(0,min(P.displayHeight(),(int)(current.to.y/yscale)));
-            moveTheMouse(x, y);
-        }
-    }
-    @Override
-    public synchronized void mousePressed(MouseEvent e) {
-        P.stimulate();
-        if (e.getButton() == MouseEvent.BUTTON1) cursorSelection(1);
-        else if (e.getButton() == MouseEvent.BUTTON3) cursorSelection(-1);
-    }
-    @Override
+    
+    /**
+     * Moving the mouse updates the location of the currently active cursor.
+     * 
+     * There are a few possible windowing configurations
+     *      - Windowed, both decorated and not
+     *      - Maximized, both decorated and not
+     *      - Full screen, hopefully undecorated but no promises
+     * 
+     * In any of these modes, the screen area might be scaled up by an integer 
+     * factor. It's location can change e.g. when window is resized.
+     * 
+     * If windowed, we track the mouse as-is. Cursor locations are clamped to 
+     * the screen area. 
+     * 
+     * @param e 
+     */
     public synchronized void mouseMoved(MouseEvent e) {
-        P.stimulate();
-        if (active.size() <= 0) return;
-        mouse = bound(new Point(
-                (int) (xscale * e.getX()),
-                (int) (yscale * e.getY())));
+        P.poke();
+        if (on.size() <= 0) return;
+        synchronized (mouse) {
+            Point     p = P.getLocationOnScreen();
+            Rectangle b = P.getPerceptBounds();
+            // Note: this is NOT clamped to the screen; This allows the
+            // mouse-tracking circle to exit the frame if the mouse does as well.             
+            mouse.setLocation(
+                (int)((e.getX()-b.x)*P.screen_width /(float)b.width +.5),
+                (int)((e.getY()-b.y)*P.screen_height/(float)b.height+.5));
+        }
         current.mouseMoved(e);
     }
-    @Override
-    public synchronized void mouseDragged(MouseEvent e) {mouseMoved(e);}
-    @Override
-    public synchronized void mouseExited(MouseEvent e) {}
-    @Override
-    public synchronized void mouseReleased(MouseEvent e) {}
-    @Override
-    public synchronized void mouseClicked(MouseEvent e) {}
+    
+    /**
+     * Dragging has same effect as moving. 
+     * @param e 
+     */
+    public synchronized void mouseDragged(MouseEvent e) {
+        mouseMoved(e);
+    }
+    
+    /**
+     * Update mouse location to that of the cursor, if possible.
+     * TODO: FIX ME
+     * @param e 
+     */
+    public void mouseEntered(MouseEvent e) {
+        P.poke();
+        if (current!=null && isFullscreenWindow(P)) {
+            //int x = max(0,min(P.getWidth(), (int)(current.to.x)));
+            //int y = max(0,min(P.getHeight(),(int)(current.to.y)));
+            // moveTheMouse(x, y);
+        }
+    }
+    
+    /**
+     * Cycle between active cursors using left and right mouse buttons
+     * @param e 
+     */
+    public synchronized void mousePressed(MouseEvent e) {
+        P.poke();
+        switch (e.getButton()) {
+            case MouseEvent.BUTTON1: cursorSelection( 1); return;
+            case MouseEvent.BUTTON3: cursorSelection(-1); return;
+        }
+    }
+    
+    
     
     ////////////////////////////////////////////////////////////////////////////
     //KEY LISTENER IMPLEMENTATION
     // text entry mode while entering the equation by hand (press CTRL)
-    boolean entry_mode   = false;
+    boolean text_mode   = false;
     boolean presets_mode = false;
 
     /** 
@@ -300,7 +574,7 @@ public final class Control implements MouseListener, MouseMotionListener, KeyLis
     @Override
     public void keyTyped(KeyEvent e) {
         char c = e.getKeyChar();
-        if (entry_mode) {
+        if (text_mode) {
             if (c=='\n' && (e.isShiftDown()||e.isControlDown())) P.textToMap();
             else P.text.append(c);
             return;
@@ -313,12 +587,12 @@ public final class Control implements MouseListener, MouseMotionListener, KeyLis
             else P.notify("No preset bound to "+c);
             return;
         }
-        Fractal F = P.fractal;
+        Map F = P.fractal;
         if (F==null) return;
         
         switch (c) {
             //case '\t':break; // Handled in keyPressed
-            case '`':P.running = !P.running; break;
+            case '`':P.toggleRunning(); break;
             case '~':break;
             case '1':F.setMap("i*ln(z)/2/P*w"); break;
             case '!':F.setMap("ln(z)/2/P*h"); break;
@@ -407,14 +681,14 @@ public final class Control implements MouseListener, MouseMotionListener, KeyLis
             case 'b':P.text.toggle(); break;
             case 'B':P.text.toggleCursor(); break;
             case 'n':break;
-            case 'N':P.show_notifications =!P.show_notifications; break;
+            case 'N':P.show_notices =!P.show_notices; break;
             case 'm':F.nexMirrorMode(1); break;
             case 'M':P.draw_moths = !P.draw_moths; break;
             case '/':
             case '?':P.toggleShowHelp(); break;
             case ' ':P.save(); break;
         }
-        mouseEntered(null);
+        syncCursors();
     }
     
     /**
@@ -459,80 +733,64 @@ public final class Control implements MouseListener, MouseMotionListener, KeyLis
 
         int c = e.getKeyCode();
         
-        String       modifiers = "control+";
-        if (option)  modifiers += "alt+";
-        if (shift )  modifiers += "shift+";
+        String       modifiers = "ctrl+";
+        if (option)  modifiers+= "alt+";
+        if (shift )  modifiers+= "shift+";
         String cmd = modifiers + (char)c;
         P.notify(cmd);
-        
-        // All sensible VK_ codes are just the ASCII code point. 
-        // Limit allowed VK_ codes to printable ASCII for nice readable code! 
-        //if (c<'!'||c>'~') {
-        //    P.notify("(VK "+c+") not mapped");
-        //    return;
-        //}
-
-        // Commands not affected by additional modifiers
-        switch (c) {
-            case 'Q': System.exit(0);
-        }
-        
-        /*
-        ⌘ Command (Cmd) U+2318
-        ⌥ Option (Opt or Alt) U+2325
-        ⌃ Control (Ctrl) U+2303
-        ⇧ Shift U+21E7
-        ⇪ Caps Lock U+21EA
-        ↩ Return U+21A9
-        ⌤ Enter U+2324
-        ⌫ Delete (Backspace) U+232B
-        ⌦ Forward Delete U+2326
-        ⎋ Escape (Esc) U+238B
-        ⏏ Eject U+23CF
-        ⌽ Power U+2333D
-        ⇥ Tab U+21E5
-        ⇞ Page Up U+21DE
-        ⇟ Page Down U+21DF
-        ↖ Home U+2196
-        ↘ End U+2198
-        */
         
         // ABCDEFGHIJKLMNOPQRSTUVWXYZ0987654321 are safe
         // pqrstuvwxyz( are f1-f12; support may vary
         // support may vary for -=[];,./\ 
-        switch (modifiers) {
-            case "control+": switch (c) {
-                case 'C':
-                    toClipboard(entry_mode?P.text.get():Preset.settings(P));
-                    return;
-                case 'X':
-                    toClipboard(entry_mode?P.text.get():Preset.settings(P));
-                    if (entry_mode) P.text.clear();
-                    return;
-                case 'D':
-                    if (entry_mode) P.text.clear();
-                    return; 
-                case 'V': {
-                    String clip = fromClipboard();
-                    if (clip.length()<=0) return;
-                    if (entry_mode) P.text.append(clip);
-                    else Preset.parse(clip).set(P);
-                } return;
-                case VK_LEFT: 
-                    if (entry_mode) P.text.prevWord();
-                    return;
-                case VK_RIGHT: 
-                    if (entry_mode) P.text.nextWord();
-                    return;
-            } break;
-            case "control+alt+": switch (c) {
-            } break;
-            case "control+shift+": switch (c) {
-            } break;
-            case "control+alt+shift+": switch (c) {
+        // Commands not affected by additional modifiers
+        switch (c) {
+            case 'Q': System.exit(0);
+        }
+        // Copy, cut, paste behave differently in text mode.
+        // In preset and regular mode these copy/paste preset state.
+        // In text mode these copy/past text.
+        if (text_mode) {
+            switch (modifiers) {
+                case "ctrl+": switch (c) {
+                    case 'C':setClip(P.text.get()); return;
+                    case 'X':setClip(P.text.get()); P.text.clear(); return;
+                    case 'V':{String s=getClip(); if (s.length()>0) P.text.append(s);} return;
+                    case 'D'     :P.text.clear();    return; 
+                    case VK_LEFT :P.text.prevWord(); return;
+                    case VK_RIGHT:P.text.nextWord(); return;
+                } break;
+                case "ctrl+alt+"      : switch (c) {} break;
+                case "ctrl+shift+"    : switch (c) {} break;
+                case "ctrl+alt+shift+": switch (c) {} break;
+            }
+        } else {
+            switch (modifiers) {
+                case "ctrl+": switch (c) {
+                    case 'C': setClip(Preset.settings(P)); return;
+                    case 'X': setClip(Preset.settings(P)); return;
+                    case 'V': {String s=getClip(); if (s.length()>0) Preset.parse(s).set(P);} return;
+                } break;
+                case "ctrl+alt+"      : switch (c) {} break;
+                case "ctrl+shift+"    : switch (c) {} break;
+                case "ctrl+alt+shift+": switch (c) {} break;
             }
         }
+        // commands that are the same everywhere
+        switch (modifiers) {
+            case "ctrl+": switch (c) {
+                case 'M': P.toggleHideMouse(); return;
+                case 'F': P.toggleFullscreen(); return;
+                case 'E': P.toggleFrame(); return;
+                case 'S': P.save(); return;
+            } break;
+            case "ctrl+alt+"      : switch (c) {
+                case 'S': P.toggleAnimation(); return;
+            } break;
+            case "ctrl+shift+"    : switch (c) {} break;
+            case "ctrl+alt+shift+": switch (c) {} break;
+        }
         P.notify("not mapped");
+        syncCursors();
     }
     
     /**
@@ -560,10 +818,11 @@ public final class Control implements MouseListener, MouseMotionListener, KeyLis
      */
     @Override
     public void keyPressed(KeyEvent e) {
-        Fractal F = P.fractal;
+        Map F = P.fractal;
         int code = e.getKeyCode();
         if (code==VK_ESCAPE||code==VK_STOP) System.exit(0); 
         
+        /*
         // For debugging
         P.notify("-------------");
         P.notify("Control: "+e.isControlDown());
@@ -575,38 +834,42 @@ public final class Control implements MouseListener, MouseMotionListener, KeyLis
         P.notify("ExtendedKeyCode: "+e.getExtendedKeyCode());
         P.notify("ModifiersEx: "+e.getModifiersEx());
         P.notify("KeyCode: "+e.getKeyCode());
-        
+        */
         if (e.isControlDown()) {handleCommand(e); return;}
         
-        if (entry_mode) switch (code) {
-            case VK_TAB       : entry_mode=P.text.cursor_on=false; break;
-            case VK_LEFT      : P.text.left(); break;
-            case VK_RIGHT     : P.text.right(); break;
-            case VK_UP        : P.text.up(); break;
-            case VK_DOWN      : P.text.down(); break;
-            case VK_ENTER     : if (e.isShiftDown()||e.isControlDown()) P.textToMap(); break;
-            case VK_PAGE_UP   : P.text.pageUp(); break;
-            case VK_PAGE_DOWN : P.text.pageDown(); break;
-            case VK_HOME      : P.text.home(); break;
-            case VK_END       : P.text.end(); break;
-            case VK_INSERT    : P.text.toggleInsert(); break;
-            // keyTyped gets these
-            //case VK_BACK_SPACE: P.text.backspace(); break;
-            //case VK_DELETE    : P.text.delete(); break;
-            default: return;
+        if (text_mode) {
+            // keyTyped handles backspace and delete
+            // Some other commands handled if isControlDown()
+            switch (code) {
+                case VK_TAB      : text_mode=P.text.cursor_on=false; break;
+                case VK_LEFT     : P.text.left(); break;
+                case VK_RIGHT    : P.text.right(); break;
+                case VK_UP       : P.text.up(); break;
+                case VK_DOWN     : P.text.down(); break;
+                case VK_ENTER    : if (e.isShiftDown()||e.isControlDown()) P.textToMap(); break;
+                case VK_PAGE_UP  : P.text.pageUp(); break;
+                case VK_PAGE_DOWN: P.text.pageDown(); break;
+                case VK_HOME     : P.text.home(); break;
+                case VK_END      : P.text.end(); break;
+                case VK_INSERT   : P.text.toggleInsert(); break;
+            }
+            return;
         } 
-        else if (presets_mode) {
+        
+        if (presets_mode) {
             if (code==VK_ENTER) presets_mode = false;
-            else if (code==VK_TAB) entry_mode=P.text.on=P.text.cursor_on=true;
+            else if (code==VK_TAB) text_mode=P.text.on=P.text.cursor_on=true;
             return;
         }
-        else switch (code) {
-            case VK_TAB      : entry_mode=P.text.on=P.text.cursor_on=true; break;
+        
+        // Neither text-entry or presets mode
+        switch (code) {
+            case VK_TAB      : text_mode=P.text.on=P.text.cursor_on=true; break;
             case VK_ENTER    : presets_mode = true; break;
             case VK_UP       : F.setMotionBlur(F.motion_blur + 16); break;
             case VK_DOWN     : F.setMotionBlur(F.motion_blur - 16); break;
-            case VK_LEFT     : P.setColorFilterWeight(P.blursharp_rate-16); break;
-            case VK_RIGHT    : P.setColorFilterWeight(P.blursharp_rate+16); break;
+            case VK_LEFT     : P.setBlurWeight(P.blursharp_rate-16); break;
+            case VK_RIGHT    : P.setBlurWeight(P.blursharp_rate+16); break;
             case VK_PAGE_UP  : P.mic.adjustVolume(0.2f); break;
             case VK_PAGE_DOWN: P.mic.adjustVolume(-0.2f); break;
             case VK_HOME     : P.mic.adjustSpeed(0.2f); break;
@@ -627,7 +890,6 @@ public final class Control implements MouseListener, MouseMotionListener, KeyLis
             case VK_F12: F.setMap("(imag(z)*i+ln(abs(real(z))))*.3/(abs(real(z)))*"+F.W+"/"+F.H);break;
         }
         syncCursors();
-        mouseEntered(null);
     }
     
     /**
@@ -641,6 +903,7 @@ public final class Control implements MouseListener, MouseMotionListener, KeyLis
      */
     @Override
     public void keyReleased(KeyEvent e) {
+        syncCursors(); 
     }
     
     public synchronized void setPreset(int preset) {
@@ -656,164 +919,24 @@ public final class Control implements MouseListener, MouseMotionListener, KeyLis
             P.notify("Applied preset #"+preset+" ("+ps.name()+")");
         } catch (Exception e) {
             P.notify("Error applying preset " + preset);
-            System.out.println("Error applying preset " + preset + ":");
+            serr("Error applying preset " + preset + ":");
             e.printStackTrace();
         }
+        syncCursors();
     }
     public void nextPreset(int n) {
         setPreset(preset_i = wrap(preset_i + n, P.presets.length));
     }
-    public synchronized void setAudio(boolean active) {
-        if (active) this.active.addAll(audio_cursors);
-        else this.active.removeAll(audio_cursors);
-        checkCursor();
-    }
     public synchronized void setFractal(boolean active) {
-        if (active) this.active.addAll(map_cursors);
-        else this.active.removeAll(map_cursors);
+        if (active) this.on.addAll(map_cursors);
+        else this.on.removeAll(map_cursors);
         checkCursor();
     }
     public synchronized void setTree(boolean active) {
-        if (active) this.active.addAll(tree);
-        else this.active.removeAll(tree);
+        if (active) this.on.addAll(tree);
+        else this.on.removeAll(tree);
         checkCursor();
         P.draw_tree = active;
-    }
-
-    // Number of dots (smoothing order) for cursors
-    // Speed is logarithmic, 0 leaves unchanged.
-    // Can range from -32 (1/16th) to 32 (16x)
-    public static final int INITIAL_CURSOR_NDOTS = 10;
-    public static final int INITIAL_SPEED        = 12;
-    
-    public abstract class Cursor implements Comparable<Cursor> {
-        public final String  name;
-        // Mouse-controlled position (we smoothly approach this)
-        private final Point to;
-        float   x, y; // Current cursor location
-        int     speed  = INITIAL_SPEED;
-        boolean wander = false;
-        Image   image;
-        Point   offset;
-        // Delay-line smoothed intermediate positions ("future")
-        float[] dx = new float[INITIAL_CURSOR_NDOTS], 
-                dy = new float[INITIAL_CURSOR_NDOTS]; 
-        
-        public Cursor(String imagename) {
-            name   = imagename;
-            to     = new Point(P.halfScreenWidth(), P.halfScreenHeight());
-            image  = defaultImage(imagename);
-            offset = new Point(image.getWidth(null)/2, image.getHeight(null)/2);
-        }
-        
-        public synchronized void addDot() {
-            if (dx.length > 50) return;
-            float[] new_dx = new float[dx.length+1],
-                    new_dy = new float[dy.length+1];
-            System.arraycopy(dx, 0, new_dx, 0, dx.length);
-            System.arraycopy(dy, 0, new_dy, 0, dy.length);
-            new_dx[dx.length] = dx[dx.length-1];
-            new_dy[dy.length] = dy[dy.length-1];
-            dx = new_dx;
-            dy = new_dy;
-        }
-
-        public synchronized void removeDot() {
-            if (dx.length <= 1) return;
-            float[] new_dx = new float[dx.length-1],
-                    new_dy = new float[dy.length-1];
-            System.arraycopy(dx, 0, new_dx, 0, new_dx.length);
-            System.arraycopy(dy, 0, new_dy, 0, new_dy.length);
-            dx = new_dx;
-            dy = new_dy;
-        }
-
-        /** Speed control.
-         * Speed can range from -32 to 32
-         * local_rate gets 2^(speed/8)
-         * So that exponent ranges from 2^-4 2^4 i.e. .125 to 16
-         * @param amt 
-         */
-        public void adjustSpeed(int amt) {
-            speed = clip(speed+amt,-32,64);      
-        }
-
-        public synchronized void setDestination(int x, int y) {
-            to.x = clip(x,0,P.display_w);
-            to.y = clip(y,0,P.display_h);
-            if (current!=this) return;
-            int X = clip((int) (x/xscale + .5f), 0, P.display_w);
-            int Y = clip((int) (y/yscale + .5f), 0, P.display_h);
-            moveTheMouse(X, Y);
-        }
-        
-        public void mouseMoved(MouseEvent e) {
-            setDestination((int)(xscale*e.getX()),(int)(yscale*e.getY()));
-        }
-
-        public void walk() {
-            to.x = clip(to.x + (int)((random()-.5)*33), 0, P.display_w);
-            to.y = clip(to.y + (int)((random()-.5)*33), 0, P.display_h);
-        }
-
-        /**
-         * Drift rate should be greater than 0 and less than 1
-         * @param dt 
-         */
-        public synchronized void step(float dt) {
-            if (wander) walk();     
-            dt = (float)pow(clip(dt,1e-6f,1-1e-6f),pow(2, -speed/8.));
-            dx[0]+=(to.x-dx[0])*dt;
-            dy[0]+=(to.y-dy[0])*dt;
-            int i=1;
-            while (i < dx.length) {
-                dx[i]+=(dx[i-1]-dx[i])*dt;
-                dy[i]+=(dy[i-1]-dy[i])*dt;
-                i++;
-            }
-            i--;
-            x += (dx[i]-x)*dt;
-            y += (dy[i]-y)*dt;
-        }
-
-        public synchronized void draw(Graphics g) {
-            g.drawImage(image, (int) (x) - offset.x, (int) (y) - offset.y, null);
-            if (draw_futures) 
-                for (int i = 0; i < dx.length; i++) 
-                    g.drawImage(trail, (int) (dx[i]) - offset.x, (int) (dy[i]) - offset.y, null);
-        }
-        public void  mouseDragged(MouseEvent e) {mouseMoved(e);}
-        public void  toggleWander() {wander = !wander;}
-        public int   compareTo(Cursor other) {return this.name.compareTo(other.name);}
-        public int   nDots() {return dy.length;}
-        // Used to set/retrieve data from presets
-        public float x() {return to.x/(float)P.displayWidth();}
-        public float y() {return to.y/(float)P.displayHeight();}
-        public void  set(float x, float y) {
-            setDestination(
-                    (int)(x*P.displayWidth()+.5f),
-                    (int)(y*P.displayHeight()+.5f)
-            );}
-    }
-    
-    Robot robot;
-    private synchronized void moveTheMouse(int x, int y) {
-        if (mouse.x==x && mouse.y==y) return;
-        SwingUtilities.invokeLater(() -> {
-            P.removeMouseListener(this);
-            robot.mouseMove(x, y);
-            mouse = new Point(x,y);
-            P.addMouseListener(this);
-        });
-    }
-    
-    // Use a robot ro move mouse to control point for active cursor
-    private synchronized void catchup() {
-        if (current==null) return;
-        if (robot  ==null) return;
-        int x = clip((int) (current.to.x / xscale + 0.5), 0, P.displayWidth());
-        int y = clip((int) (current.to.y / yscale + 0.5), 0, P.displayHeight());
-        robot.mouseMove(x, y);
     }
      
     ////////////////////////////////////////////////////////////////////////////

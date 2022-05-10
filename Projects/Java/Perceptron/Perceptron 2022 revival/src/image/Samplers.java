@@ -32,12 +32,12 @@ public class Samplers {
             MR = 0x800080,
             GR = 0x008000;
     
-    public final int W, H, W1, H1, N;
+    public final int w, h, w1, h1, n;
     public final DataBuffer buffer;
     
     /** Abstract class that retrieves pixel data from a texture.
      */
-    public abstract class Sampler {
+    public abstract class Sampler8Bit extends AbstractSampler {
         /** Retrieve color data at given (x,y) coordinate.
          *
          * @param x
@@ -47,13 +47,13 @@ public class Samplers {
         public abstract int it(int x, int y);
     }
     
-    public final Sampler 
-            get, 
-            getNoReflect, 
-            getFixed8Bit, 
-            getFixed8BitNoReflect,
+    public final Sampler8Bit 
+            getWrap,  
+            getWrap8Bit,
+            getReflect, 
+            getReflect8Bit,
             getTriangle,
-            getTriangleFixed8Bit;
+            getTriangle8Bit;
     
     /** Construct a sampler collection matching given buffered image
      * 
@@ -71,15 +71,15 @@ public class Samplers {
      * @param buffer_ 
      */
     public Samplers(int W_, int H_, DataBuffer buffer_) {
-        W = W_;
-        H = H_;
-        N = W*H;
-        W1 = W - 1;
-        H1 = H - 1;
+        w = W_;
+        h = H_;
+        n = w*h;
+        w1 = w - 1;
+        h1 = h - 1;
         buffer = buffer_;
     
         // Nearest-neighbor interpolation with reflected boundaries.
-        get = new Sampler() {
+        getReflect = new Sampler8Bit() {
             @Override
             public int it(int x, int y) {
                 // The input is in 8-bit fixed point; Here, we round it to the
@@ -91,14 +91,14 @@ public class Samplers {
                 // If we're an even number of screens in the horizontal/vertical
                 // direction, we just wrap via modulo. If we're at an odd number
                 // of screens, we need reflect it.
-                x = ((x / W & 1) == 0) ? x%W : W1-x%W;
-                y = ((y / H & 1) == 0) ? y%H : H1-y%H;
-                return buffer.getElem(x+y*W);
+                x = ((x / w & 1) == 0) ? x%w : w1-x%w;
+                y = ((y / h & 1) == 0) ? y%h : h1-y%h;
+                return buffer.getElem(x+y*w);
             }
         };
 
         // Nearest-neighbor with periodic boundaries.
-        getNoReflect = new Sampler() {
+        getWrap = new Sampler8Bit() {
             @Override
             public int it(int x, int y) {
                 // The input is in 8-bit fixed point; Here, we round it to the
@@ -106,12 +106,12 @@ public class Samplers {
                 x = x >> 8;
                 y = y >> 8;
                 // Don't reflect at all: periodic.
-                return buffer.getElem(((x+y*W)%N+N)%N);
+                return buffer.getElem(((x+y*w)%n+n)%n);
             }
         };
 
         // Linear interpolation with 8-bit fixed point and reflection.
-        getFixed8Bit = new Sampler() {
+        getReflect8Bit = new Sampler8Bit() {
             @Override
             public int it(int x, int y) {
                 int x1, x2, y1, y2;
@@ -125,14 +125,14 @@ public class Samplers {
                 x2 = x1 + 1;
                 y2 = y1 + 1;
                 // Reflect location as appropriate
-                x1 = (x1/W & 1) == 0 ? x1%W : W1 - x1%W;
-                y1 = (y1/H & 1) == 0 ? y1%H : H1 - y1%H;
+                x1 = (x1/w & 1) == 0 ? x1%w : w1 - x1%w;
+                y1 = (y1/h & 1) == 0 ? y1%h : h1 - y1%h;
                 // Reflect location as appropriate
-                x2 = (x2/W & 1) == 0 ? x2%W : W1 - x2%W;
-                y2 = (y2/H & 1) == 0 ? y2%H : H1 - y2%H;
+                x2 = (x2/w & 1) == 0 ? x2%w : w1 - x2%w;
+                y2 = (y2/h & 1) == 0 ? y2%h : h1 - y2%h;
                 // Multiply by W to prepare for linear indexing
-                y2 *= W;
-                y1 *= W;
+                y2 *= w;
+                y1 *= w;
                 // Retrieve color data for 2x2 neighborhood
                 int c1 = buffer.getElem(y1 + x1);
                 int c2 = buffer.getElem(y1 + x2);
@@ -161,7 +161,7 @@ public class Samplers {
         };
 
         // Linear interpolation with fixed-point and no reflection
-        getFixed8BitNoReflect = new Sampler() {
+        getWrap8Bit = new Sampler8Bit() {
             @Override
             public int it(int x, int y) {
                 int x1, x2, y1, y2;
@@ -169,14 +169,14 @@ public class Samplers {
                 x1 = x >> 8;
                 y1 = y >> 8;
                 // Wrap location
-                x1 = (x1%W+W)%W;
-                y1 = (y1%H+H)%H;
+                x1 = (x1%w+w)%w;
+                y1 = (y1%h+h)%h;
                 // Subsequent pixels, also wrapped
-                x2 = (x1+1)%W;
-                y2 = (y1+1)%H;
+                x2 = (x1+1)%w;
+                y2 = (y1+1)%h;
                 // Rescale y to prepare for row-major indexing
-                y2 *= W;
-                y1 *= W;
+                y2 *= w;
+                y1 *= w;
                 // Retrieve color data for 2x2 neighborhood
                 int c1 = buffer.getElem(y1 + x1);
                 int c2 = buffer.getElem(y1 + x2);
@@ -203,8 +203,8 @@ public class Samplers {
                      | G & (G4 + ((G1-G4)*C1 + (G2-G4)*C2 + (G3-G4)*C3 + GR >> 8));
             }
         };
-        getTriangle = new Barysampler(get);
-        getTriangleFixed8Bit = new Barysampler(getFixed8Bit);
+        getTriangle = new Barysampler(getReflect);
+        getTriangle8Bit = new Barysampler(getReflect8Bit);
     }
     
     /**
@@ -213,8 +213,8 @@ public class Samplers {
      * @param scale
      * @return
      */
-    public Sampler makeScaledGrabber(final Sampler original, final float scale) {
-        return new Sampler() {
+    public Sampler8Bit makeScaledGrabber(final Sampler8Bit original, final float scale) {
+        return new Sampler8Bit() {
             @Override
             public int it(int x, int y) {
                 return original.it((int)(x*scale),(int)(y*scale));
@@ -223,20 +223,20 @@ public class Samplers {
     }
 
     //Triangular reflected tiling
-    public class Barysampler extends Sampler {
+    public class Barysampler extends Sampler8Bit {
         private final int height,base,h8,b8,h81,b81,h83,b83,xshift;
         private final float b2h, h2b; 
-        private final Sampler orthosampler;
-        public Barysampler(Sampler orthosampler) {
+        private final Sampler8Bit orthosampler;
+        public Barysampler(Sampler8Bit orthosampler) {
             this.orthosampler = orthosampler;
             // Triangular region of screen
-            height = H;
+            height = h;
             base   = (int)(height*(float)(2f/sqrt(3))+0.5);
             // In 8-bit fixedpoint
             h8  = height<<8; b8  = base<<8;
             h81 = h8-1;      b81 = b8-1;
             h83 = h8*3;      b83 = b8*3;
-            xshift = (W*256-b8)/2;
+            xshift = (w*256-b8)/2;
             b2h = (float)height/(float)base;
             h2b = (float)base/(float)height;
             System.out.println(height+" "+base+" "+
@@ -245,11 +245,11 @@ public class Samplers {
                 h83+" "+b83);
         }
         public int it(int x, int y) {
-            assert (W>=H);
+            assert (w>=h);
             
-            x = W*256-1-x;
+            x = w*256-1-x;
             x -= xshift;
-            y = H*256-y;
+            y = h*256-y;
             
             // x shifts by 1.5 triangles widths (half a unit cell
             // for every integer multiple of the unit cell in the y 
