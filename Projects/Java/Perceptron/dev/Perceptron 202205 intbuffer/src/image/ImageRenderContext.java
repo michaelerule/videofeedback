@@ -4,7 +4,6 @@
  */
 package image;
 
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import static java.awt.image.BufferedImage.TYPE_INT_RGB;
@@ -19,30 +18,29 @@ import static color.ColorUtil.fast;
 public class ImageRenderContext 
 {
     public static final int 
-        REFLECT_MIRROR   = 0,
-        REFLECT_REPEAT   = 0,
-        REFLECT_TRIANGLE = 0;
+        MIRROR   = 0,
+        WRAP     = 0,
+        TRIANGLE = 0;
     
-    public BufferedImage img;
+    public final BufferedImage img;
+    public final int w, h;
+
+    final boolean is_scaled;
+    final float   scale;
+    
     public Graphics2D    g0;
     public Graphics2D    g2D;
     public Graphics2D    g;
+    
     public DataBuffer    buf;
+    
     public Samplers      samplers;
     public Samplers.Sampler8Bit get;
-    public final int w, h;
     
-    boolean is_scaled = false;
-    float   scale = 1f;
 
-    /**
-     *
-     * @param b
-     * @param interpolate
-     * @param reflect
-     */
-    public ImageRenderContext(BufferedImage b, 
-            boolean interpolate, int reflect) {
+    
+    public ImageRenderContext(BufferedImage b, boolean interp, int reflect, boolean is_scaled, float scale) {
+
         img  = b;
         img.setAccelerationPriority(1.f);
         
@@ -52,50 +50,39 @@ public class ImageRenderContext
         buf  = b.getRaster().getDataBuffer();
         samplers = new Samplers(b);
         
-        setInterpolatedAndReflected(interpolate, reflect);
+        setInterpolatedAndReflected(interp, reflect);
         
         get = samplers.getReflect8Bit;
         w = b.getWidth();
         h = b.getHeight();
+        
+        this.is_scaled = is_scaled;
+        this.scale     = scale;
+        
+        get = samplers.makeScaledGrabber(get, scale);
     }
     
-    public ImageRenderContext(BufferedImage b, 
-            boolean interpolate, int reflect, float scale) {
-        this(b, interpolate, reflect);
-        this.is_scaled = true;
-        this.scale = scale;
-        get = samplers.makeScaledGrabber(get, scale);
+    public ImageRenderContext(BufferedImage b, boolean interp, int reflect) {
+        this(b,interp,reflect,false,1.0f);
     }
     
     public ImageRenderContext(int w, int h, boolean interpolate, int reflect) {
         this(new BufferedImage(w,h,TYPE_INT_RGB), interpolate, reflect);
     }
-
-    /**
-     *
-     * @param fancy
-     */
+    
     public void setFancy(boolean fancy) {
         g = fancy ? g2D : g0;
     }
 
-    /**
-     *
-     * @param inter
-     * @param reflect
-     */
     public final void setInterpolatedAndReflected(boolean inter, int reflect) {
-        switch (reflect) {
-            case 0:
-                get = inter? samplers.getReflect8Bit : samplers.getReflect;
-                break;
-            case 1:
-                get = inter? samplers.getWrap8Bit : samplers.getWrap;
-                break;
-            case 2:
-                get = inter? samplers.getTriangle8Bit : samplers.getTriangle;
-                break;
-        }
+        int i = (inter?1:0)*3 + reflect;
+        get = (new Samplers.Sampler8Bit[]{
+            samplers.getReflect,
+            samplers.getWrap,
+            samplers.getTriangle,
+            samplers.getReflect8Bit,
+            samplers.getWrap8Bit,
+            samplers.getTriangle8Bit})[i];
         if (is_scaled)    
             get = samplers.makeScaledGrabber(get, scale);
     }

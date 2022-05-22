@@ -4,11 +4,6 @@
  */
 package color;
 
-import static color.ColorUtil.G;
-import static color.ColorUtil.GR;
-import static color.ColorUtil.M;
-import static color.ColorUtil.MR;
-
 /**
  *
  * @author mer49
@@ -28,12 +23,12 @@ public class RGB24 extends RGB {
      * @return 
      */
     public final int blend(int c, int q, int w) {
-        int mc = c&M;
-        int gc = c&G;
-        int mq = q&M;
-        int gq = q&G;
-        return  M&( mc+((mq-mc)*w+MR>>8) )
-              | G&( gc+((gq-gc)*w+GR>>8) );
+        int mc = c&M8;
+        int gc = c&G8;
+        int mq = q&M8;
+        int gq = q&G8;
+        return  M8 & ( mc+((mq-mc)*w + ME8 >> 8) )
+              | G8 & ( gc+((gq-gc)*w + GE8 >> 8) );
     }
 
     /**
@@ -162,6 +157,11 @@ public class RGB24 extends RGB {
             c & 0x7c00 << 9 ;
         c |= c & 0x739c;
         return c;
+    }
+
+    @Override
+    public int blend(int c1, int c2, int w, int q) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
     
 }

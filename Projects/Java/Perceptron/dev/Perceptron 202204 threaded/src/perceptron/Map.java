@@ -15,7 +15,6 @@ import math.MathToken;
 import math.complex;
 import math.Equation;
 import math.ComplexContex;
-import java.awt.Color;
 import java.awt.image.DataBuffer;
 import java.util.ArrayList;
 import static java.lang.Math.min;
@@ -27,16 +26,16 @@ import static math.complex.arg;
 import static math.complex.mod;
 import static util.Misc.clip;
 import static util.Misc.wrap;
+import static util.Misc.dither;
 import static math.complex.polar;
 import color.RGB;
-import static java.lang.System.currentTimeMillis;
+import static java.awt.Color.HSBtoRGB;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.function.BiConsumer;
 import static util.Sys.sout;
 
 /**
@@ -47,7 +46,7 @@ public class Map {
     // Experimental: render scanlines in parallel
     // we limit this to two threads to avoid overloading the system
     //ExecutorService executor = newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-    ExecutorService executor = newFixedThreadPool(2);
+    ExecutorService ex = newFixedThreadPool(8);
     
     // Desired rectangular span of complex plane on screen
     // Changing this changes everything! Presets break. 
@@ -147,15 +146,15 @@ public class Map {
         grads = new char[9][MLEN];
         int i = 0;
         for (int y=-hH; y<hH; y++) for (int x=-hW;x<hW; x++) {
-            grads[0][i]=(char)(255-512*((float)x*x/(W*W)+(float)y*y/(H*H)));
-            grads[1][i]=(char)(255-(x+hW)*255/W);
-            grads[2][i]=(char)(255-(y+hH)*255/H);
-            grads[3][i]=(char)(255-(y+hH)*(x+hW)*255/(W*H));
-            grads[4][i]=(char)(255-(abs(x)+abs(y))*255/(hW+hH));
-            grads[5][i]=(char)(255-(abs(x)*abs(y))*255/(hW*hH));
-            grads[6][i]=(char)(255*(1-min(1,sqrt(x*x+y*y)/min(hH,hW))));
-            grads[7][i]=(char)(255*(1-pow(min(1,sqrt(x*x+y*y)/min(hH,hW)),9)));
-            grads[8][i]=(char)(255*(1-pow(max(0,min(1,1.3-(sqrt(x*x+y*y))/(min(hH,hW)))),9)));
+            grads[0][i]=dither(2*(x*x/(float)(W*W)+y*y/(float)(H*H)));
+            grads[1][i]=dither((x+hW)/(float)W);
+            grads[2][i]=dither((y+hH)/(float)H);
+            grads[3][i]=dither((y+hH)*(x+hW)/(float)(W*H));
+            grads[4][i]=dither((abs(x)+abs(y))/(float)(hW+hH));
+            grads[5][i]=dither((abs(x)*abs(y))/(float)(hW*hH));
+            grads[6][i]=dither(min(1,sqrt(x*x+y*y)/min(hH,hW)));
+            grads[7][i]=dither(pow(min(1,sqrt(x*x+y*y)/min(hH,hW)),9));
+            grads[8][i]=dither(pow(max(0,min(1,1.3-(sqrt(x*x+y*y))/(min(hH,hW)))),9));
             i++;
         }
         grad_i = 0;
@@ -221,71 +220,58 @@ public class Map {
      */
     public class Cache {
         public TranslucentLayer 
-                translucency  = new TranslucentLayer(),
-                translucency_ = new TranslucentLayer();
+            trnc = new TranslucentLayer(),
+            trnb = new TranslucentLayer();
         public MapCache 
-                map_cache  = new MapCache(),
-                map_cache_ = new MapCache();
-        AtomicBoolean map_stale = new AtomicBoolean(true);
-        AtomicBoolean trn_ready = new AtomicBoolean(false);
-        AtomicBoolean map_ready = new AtomicBoolean(false);
-        /** 
-         * Check if caches are stale and recompute them if needed.
-         */
+            mapc = new MapCache(),
+            mapb = new MapCache();
+        AtomicBoolean 
+            map_stale = new AtomicBoolean(true),
+            trn_ready = new AtomicBoolean(false),
+            map_ready = new AtomicBoolean(false);
         public synchronized void cache() {
-            // Map cache is explicitly invalidated in response to user input or
-            // preset loading. Since it pre-renders the exterior image, it
-            // should also be invalidated if this image source changes, or if
-            // the reflection/interpolation mode for the image texture changes.
-            if (map_stale.getAndSet(false) || map_cache.looksStale()) {
-                // Other threads may mark the map stale while were caching. 
-                // This will be picked up on the next frame
-                map_cache_.cache();
+            if (map_stale.getAndSet(false) || mapc.stale()) {
+                mapb.cache();
                 map_ready.set(true);
             }
-            // Translucent layer detects when it is stale by checking if colors 
-            // have changed
-            if (translucency.looksStale()) {
-                sout(currentTimeMillis()+" Overlay is stale");
-                translucency_.cache();
+            if (trnc.stale()) {
+                trnb.cache();
                 trn_ready.set(true);
             }
         }
-        /**
-         * Move newly computed caches into the active slots if they are ready.
-         */
         public synchronized void flip() {
             if (trn_ready.getAndSet(false)) {
-                TranslucentLayer tempt = translucency;
-                translucency = translucency_;
-                translucency_ = tempt;
+                TranslucentLayer tempt = trnc;
+                trnc = trnb;
+                trnb = tempt;
             }
             if (map_ready.getAndSet(false)) {
-                MapCache tempm = map_cache;
-                map_cache = map_cache_;
-                map_cache_ = tempm;
+                MapCache tempm = mapc;
+                mapc = mapb;
+                mapb = tempm;
             }
         }
         /**
          * Merge translucent effects into a single layer.
          */
         public class TranslucentLayer {
-            int []  C   = new  int[MLEN]; // premultiplied intRGB
-            char[]  A   = new char[MLEN]; // alpha values in [0..256]
+            final int []  C   = new  int[MLEN]; // premultiplied intRGB
+            final char[]  A   = new char[MLEN]; // alpha values in [0..256]
             boolean off = true;           // whether layer is enabled
             // Track these so we can tell if they change
-            private int grad_mode, gc1, gc2, tint_color, tint_level, grad_i;
+            private int grad_mode, gc1, gc2, tint_color, tint_level, grad_i, mirror_mode;
             private float gslope, gbias;
             public synchronized void cache() {
                 // Track these so we can tell if they change
-                grad_mode = Map.this.grad_mode;
-                gc1 = Map.this.gc1;
-                gc2 = Map.this.gc2;
+                grad_mode  = Map.this.grad_mode;
+                gc1        = Map.this.gc1;
+                gc2        = Map.this.gc2;
                 tint_color = Map.this.tint_color;
                 tint_level = Map.this.tint_level;
-                grad_i = Map.this.grad_i;
-                gslope = Map.this.gslope;
-                gbias = Map.this.gbias;
+                grad_i     = Map.this.grad_i;
+                gslope     = Map.this.gslope;
+                gbias      = Map.this.gbias;
+                mirror_mode= Map.this.mirror_mode;
                 // Copy, so they don't change mid-frame
                 int g=grad_mode, c1=gc1, c2=gc2, t=tint_level, q=tint_color;
                 if (off=(g==0&&t==0)) return; // Do nothing if transparent
@@ -293,7 +279,7 @@ public class Map {
                 for (int i=0; i<MLEN; i++) {  // Loop over pixels
                     compose[0]=compose[1]=0;  // Base: transparent black
                     if (g>0) {                // Add gradient if it is on
-                        int w = 256-grad_modes[g].w(i);
+                        int w = grad_modes[g].w(i);
                         int c = g==1? c1 : rgb.blend(c1, c2,w);
                         rgb.composePremultiplied(compose, c, w);
                     }                         // Apply tint if it is on
@@ -302,33 +288,34 @@ public class Map {
                     A[i] = (char)compose[1];
                 }
             }
-            public boolean looksStale() {
-                if (grad_mode != Map.this.grad_mode) return true;
+            public boolean stale() {
                 if (grad_mode>0) {
-                    if (gc1    != Map.this.gc1) return true;
-                    if (gc2    != Map.this.gc2) return true;
-                    if (grad_i != Map.this.grad_i) return true;
-                    if (gslope != Map.this.gslope) return true;
-                    if (gbias  != Map.this.gbias) return true;
+                    if (gc1    != Map.this.gc1    ||
+                        gc2    != Map.this.gc2    ||
+                        grad_i != Map.this.grad_i ||
+                        gslope != Map.this.gslope ||
+                        gbias  != Map.this.gbias) return true;
                 }
-                if (tint_level != Map.this.tint_level) return true;
-                if (tint_level>0 && tint_color != Map.this.tint_color) return true;
-                return false; 
+                return mirror_mode != Map.this.mirror_mode || 
+                       grad_mode   != Map.this.grad_mode   ||
+                       tint_level  != Map.this.tint_level  ||
+                       tint_color  != Map.this.tint_color  && tint_level>0;
             }
         }
         /** 
          * Apply the current translation and rotation to the map.
          */
         public class MapCache {
-            int     [] fxy    = new     int[MLEN*2];
-            int     [] rate   = new     int[MLEN];
-            boolean [] bounds = new boolean[MLEN];
-            int     [] image  = new     int[MLEN];
-            private int f1;
+            final int     [] fxy    = new     int[MLEN*2];
+            final int     [] rate   = new     int[MLEN];
+            final boolean [] bounds = new boolean[MLEN];
+            final int     [] image  = new     int[MLEN];
+            private int f1,mirror_mode;
             private int [] offset = new int[2];
             private complex oldr;
             private boolean did_image;
-            public boolean looksStale() {
+            public boolean stale() {
+                if (mirror_mode !=Map.this.mirror_mode) return true;
                 if ((outi==3||outi==4)!=this.did_image) return true;
                 if (f1!=this.f1) return true;
                 int [] c = getOffset();
@@ -338,62 +325,41 @@ public class Map {
             }
             public synchronized void cache() {
                 final int f1 = (int)(map_fade*256 + 0.5);
-                int []  c = getOffset();
-                complex r = getRotation();
-                this.f1     = f1;
-                this.offset = c;
-                this.oldr   = new complex(r);
-                final complex R = new complex(r);
-                Future scanline[] = new Future[H];
-                final int CX = c[0], CY = c[1];
-                for (int y=0; y<H; y++) {
-                    final int line = y;
-                    scanline[y] = executor.submit(()->{return scanline(line,CX,CY,R,f1);});
-                }
-                for (int y=0; y<H; y++) try {
-                    scanline[y].get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    scanline(y,CX,CY,r,f1);
-                }
+                this.mirror_mode = Map.this.mirror_mode;
+                this.f1          = f1;
+                this.offset      = getOffset();
+                this.oldr        = getRotation();
+                this.did_image   = outi==3||outi==4;
+                final complex R  = oldr;
+                final int 
+                        CX = this.offset[0]+W7, 
+                        CY = this.offset[1]+H7;
+                scanMirror((a,b)->{scanline(a,b,CX,CY,R,f1);});
             }
             private int[] getOffset() {
-                // Mode 0: (normal) offset is converted to 8-bit fixed point. 
-                // Mode 1: Velocity mode. 
-                // Mode 2: Locked: the offset is clamped to zero.
-                int cx = W7, cy = H7;
                 switch (offset_mode) {
-                    case POSITION: 
-                        cx=(int)(.5f+256*normc[0])+W7; 
-                        cy=(int)(.5f+256*normc[1])+H7; 
-                        break;
-                    case VELOCITY:
-                        cx = (int)(.5f+256*((dr=(abs(dr)>MAXC)?0:dr+.1f*normc[0])))+W7;
-                        cy = (int)(.5f+256*((di=(abs(di)>MAXC)?0:di+.1f*normc[1])))+H7;
-                        break;
-                    case LOCKED: 
-                        break;
+                    case POSITION: return new int[]{
+                        (int)(.5f+256*normc[0]),
+                        (int)(.5f+256*normc[1])}; 
+                    case VELOCITY: return new int[]{
+                        (int)(.5f+256*((dr=(abs(dr)>MAXC)?0:dr+.1f*normc[0]))),
+                        (int)(.5f+256*((di=(abs(di)>MAXC)?0:di+.1f*normc[1])))};
+                    default: return new int[]{0,0};
                 }
-                return new int[]{cx,cy};
             }
             private complex getRotation() {
-                // Mode 0: Blue cursor controls scale and rotation
-                // Mode 1: Blue cursor controls velocity
-                // Mode 2: Scale and rotation are locked at 1, pi/2, respectively. 
-                complex r = new complex();
                 switch (rotate_mode) {
-                    case POSITION: r = rotation; break;
-                    case VELOCITY: theta += arg(rotation)*.01f; r = polar(mod(rotation),theta); break;
-                    case LOCKED: r = polar(1f,(float)PI_OVER_TWO); break;
+                    case POSITION: return new complex(rotation);
+                    case LOCKED:   return polar(1f,(float)PI_OVER_TWO); 
+                    case VELOCITY: 
+                        theta += arg(rotation)*.01f; 
+                        return polar(mod(rotation),theta);
                 }
-                return r;
-            }
-            private int scanline(int y,int cx,int cy,complex r, int f1) {
-                float 
-                    RX = r.real,
-                    RY = r.imag,
-                    RC = r.real+r.imag;
-                for (int x=0; x<W; x++) {
-                    int i = y*W+x;
+                return null;
+            }            
+            private void scanline(int a, int b,int cx,int cy,complex r, int f1) {
+                float RX = r.real, RY = r.imag, RC = r.real+r.imag;
+                for (int i=a; i<b; i++) {
                     int j = i<<1;
                     int real, imag;
                     if (f1 > 0) {
@@ -407,22 +373,10 @@ public class Map {
                     int fy = cy + (int)(x5 - x4 + RC*(imag-real) + 0.5f);
                     fxy [j  ] = fx;
                     fxy [j|1] = fy;
-                    // Save the boundary test result
                     bounds[i] = bound_op.test(fx,fy,i);
-                    // Save the divergence rate
                     rate[i] = divergenceRate(fx,fy,i);
-                    // Save the out of bounds color from the image buffer
-                    did_image = outi==3||outi==4;
-                    if (did_image)
-                        image[i] = B.img.get.it(fx,fy);
-                    // Precomputed convergence test (prdrag's addition)
-                    // TODO: this needs to be moved to the cache so it can adapt to 
-                    //zconv[i] = (Z.real-z.real)*(Z.real-z.real)+(Z.imag-z.imag)*(Z.imag-z.imag)>0.1f;
-                    double dx = x-fx/256.0;
-                    double dy = y-fy/256.0;
-                    zconv[i]  = dx*dx+dy*dy>5*5;
+                    if (did_image) image[i] = B.img.get.it(fx,fy);
                 }
-                return 0;
             }
             int divergenceRate(int fx,int fy,int i) {
                 float pr,qr;
@@ -462,6 +416,63 @@ public class Map {
         }
     }
     
+    ////////////////////////////////////////////////////////////////////////////
+    // Threading support
+    private void runAll(Runnable [] fn) {
+        int N = fn.length;
+        Future f[] = new Future[N];
+        for (int i=0;i<N;i++) f[i]=ex.submit(fn[i]);
+        for (int i=0;i<N;i++) try {
+            f[i].get();
+        } catch (InterruptedException | ExecutionException ex) {
+            fn[i].run();
+        }
+    }
+    private void scanAll(BiConsumer<Integer,Integer> fn) {
+        Runnable [] f= new Runnable[H];
+        for (int y=0; y<H; y++) {
+            final int a=y*W, b=y*W+W;
+            f[y]=()->fn.accept(a,b);
+        }
+        runAll(f);
+    }
+    private void scanLeft(BiConsumer<Integer,Integer> fn) {
+        Runnable [] f= new Runnable[H];
+        int hW=(W+1)/2;
+        for (int y=0; y<H; y++) {
+            final int a=y*W, b=y*W+hW;
+            f[y]=()->fn.accept(a,b);
+        }
+        runAll(f);
+    }
+    private void scanTop(BiConsumer<Integer,Integer> fn) {
+        int hH=(H+1)/2;
+        Runnable [] f= new Runnable[hH];
+        for (int y=0; y<hH; y++) {
+            final int a=y*W, b=y*W+W;
+            f[y]=()->fn.accept(a,b);
+        }
+        runAll(f);
+    }
+    private void scanCorner(BiConsumer<Integer,Integer> fn) {
+        int hW=(W+1)/2, hH=(H+1)/2;
+        Runnable [] f= new Runnable[hH];
+        for (int y=0; y<hH; y++) {
+            final int a=y*W, b=y*W+hW;
+            f[y]=()->fn.accept(a,b);
+        }
+        runAll(f);
+    }
+    private void scanMirror(BiConsumer<Integer,Integer> fn) {
+        switch (mirror_mode) {
+            case MIRROR_OFF:        scanAll   (fn); break;
+            case MIRROR_HORIZONTAL: scanLeft  (fn); break;
+            case MIRROR_VERTICAL: 
+            case MIRROR_TURN:       scanTop   (fn); break;
+            case MIRROR_QUADRANT:   scanCorner(fn); break;
+            default: throw new RuntimeException("Mirror should be in 0..3");
+        }
+    }
     
     ////////////////////////////////////////////////////////////////////////////
     // Apply current map to screen raster, storing result in output raster. 
@@ -471,94 +482,34 @@ public class Map {
         this.dsp = B.dsp.buf;
         if (B.img != null) this.img = B.img.buf;
         
-        int hH=(H+1)/2, hW=(W+1)/2, hM=(MLEN+1)/2;
-        switch (mirror_mode) {
-            case MIRROR_OFF: {
-                Future scanline[] = new Future[H];
-                for (int y=0; y<H; y++) {
-                    final int start=y*W, stop=y*W+W;
-                    scanline[y] = executor.submit(()->{render(start,stop); return 0;});
-                }
-                for (int y=0; y<H; y++) try {
-                    scanline[y].get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    render(y*W, y*W+W);
-                }
-            } break;
-            case MIRROR_HORIZONTAL: {
-                Future scanline[] = new Future[H];
-                for (int y=0; y<H; y++) {
-                    final int start=y*W, stop=y*W+hW;
-                    scanline[y] = executor.submit(()->{render(start,stop); return 0;});
-                }
-                for (int y=0; y<H; y++) {
-                    try {
-                        scanline[y].get();
-                    } catch (InterruptedException | ExecutionException ex) {
-                        render(y*W, y*W+hW);
-                    }
-                    int i=y*W+W-1, j=y*W;
-                    for (int x=0; x<hW; x++) buf.setElem(i--,buf.getElem(j++));
-                } 
-            } break;
-            case MIRROR_VERTICAL: {
-                Future scanline[] = new Future[hH];
-                for (int y=0; y<hH; y++) {
-                    final int start=y*W, stop=y*W+W;
-                    scanline[y] = executor.submit(()->{render(start,stop); return 0;});
-                }
-                for (int y=0; y<hH; y++) {
-                    try {
-                        scanline[y].get();
-                    } catch (InterruptedException | ExecutionException ex) {
-                        render(y*W, y*W+W);
-                    }
-                    int i = W*(H-1-y), j=W*y;
-                    for (int x=0; x<W; x++) buf.setElem(i++, buf.getElem(j++));
-                }
-            } break;
-            case MIRROR_TURN: {
-                Future scanline[] = new Future[hH];
-                for (int y=0; y<hH; y++) {
-                    final int start=y*W, stop=y*W+W;
-                    scanline[y] = executor.submit(()->{render(start,stop); return 0;});
-                }
-                for (int y=0; y<hH; y++) {
-                    try {
-                        scanline[y].get();
-                    } catch (InterruptedException | ExecutionException ex) {
-                        render(y*W, y*W+W);
-                    }
-                }
-                int i=MLEN-1; for (int j=0; j<hM; j++) buf.setElem(i--, buf.getElem(j));
-            } break;
-            case MIRROR_QUADRANT: {
-                Future scanline[] = new Future[hH];
-                for (int y=0; y<hH; y++) {
-                    final int start=y*W, stop=y*W+hW;
-                    scanline[y] = executor.submit(()->{render(start,stop); return 0;});
-                }
-                for (int y=0; y<hH; y++) {
-                    try {
-                        scanline[y].get();
-                    } catch (InterruptedException | ExecutionException ex) {
-                        render(y*W, y*W+hW);
-                    }
-                    int i=y*W+W-1, j=y*W;
-                    for (int x=0; x<hW; x++) buf.setElem(i--,buf.getElem(j++));
-                }
-                for (int y=0; y<hH; y++) {
-                    int i = W*(H-1-y), j = W*y;
-                    for (int x=0; x<W; x++) buf.setElem(i++,buf.getElem(j++));
-                }
-            } break;
+        scanMirror(this::render);
+        if (mirror_mode==MIRROR_HORIZONTAL|mirror_mode==MIRROR_QUADRANT) 
+            for (int y=0; y<H; y++) {
+                int i=y*W+W-1,j=y*W; 
+                for (int x=0;x<(W+1)/2;x++) 
+                    buf.setElem(i--,buf.getElem(j++));
+            }
+        if (mirror_mode==MIRROR_VERTICAL |mirror_mode==MIRROR_QUADRANT) 
+            for (int y=0;y<(H+1)/2;y++) {
+                int i=W*(H-1-y),j=W*y; 
+                for (int x=0;x<W;x++) 
+                    buf.setElem(i+x,buf.getElem(j+x));
+            }
+        if (mirror_mode==MIRROR_TURN) {
+            int i=MLEN-1; 
+            for (int j=0; j<(MLEN+1)/2; j++) 
+                buf.setElem(i--,buf.getElem(j));
         }
         
         // Update map cross-fader
         if (map_fade > 0) {
             map_fade -= .05f;
             if (map_fade <= 0) {int[] t=map;map=map_buf;map_buf=t;}
+            this.cache.map_stale.set(true);
         } 
+        
+        // Update flavor color registers
+        updateColorRegisters();
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -569,11 +520,11 @@ public class Map {
         int rn = (int)((long)(Math.random()*4294967296L)&0xffffffff)|1,
             rA = 0x343FD, rC = 0x269EC3;
         
-        int     [] fxy  = cache.map_cache.fxy;
-        int     [] rate = cache.map_cache.rate;
-        boolean [] in   = cache.map_cache.bounds;
-        char    [] A    = cache.translucency.A;
-        int     [] C    = cache.translucency.C;
+        int     [] fxy  = cache.mapc.fxy;
+        int     [] rate = cache.mapc.rate;
+        boolean [] in   = cache.mapc.bounds;
+        char    [] A    = cache.trnc.A;
+        int     [] C    = cache.trnc.C;
         
         for (int i = start; i<end; i++) {
             int fx = fxy[i*2];
@@ -662,34 +613,30 @@ public class Map {
     public final int[] color_registers = new int[N_COLOR_REGISTERS];
     private int rotation_hue = 0;
     public void updateColorRegisters() {
-        color_registers[0] = rgb.blend(0x00000000, color_registers[0],color_dampen);
-        color_registers[1] = rgb.blend(0x00ffffff, color_registers[1],color_dampen);
-        int MMID   = (W/2) + W*(H/2);
-        int middle = buf.getElem(MMID);
+        color_registers[0] = 0x000000;
+        color_registers[1] = 0xffffff;
+        int middle = buf.getElem((W/2) + W*(H/2));
         float[] HSV = java.awt.Color.RGBtoHSB(
                 (middle >> 16) & 0xff,
-                (middle >> 8) & 0xff,
-                (middle) & 0xff,
+                (middle >> 8 ) & 0xff,
+                (middle      ) & 0xff,
                 new float[]{0, 0, 0});
-        int c;
-        int i = 2;
-        c = Color.HSBtoRGB(HSV[0], 1.f, 1.f);
-        color_registers[i] = rgb.blend(c, color_registers[i++],color_dampen);
-        c = ~middle;
-        color_registers[i] = rgb.blend(c, color_registers[i++],color_dampen);
-        c = Color.HSBtoRGB(HSV[0]+0.2f, 1.f, 1.f);
-        color_registers[i] = rgb.blend(c, color_registers[i++],color_dampen);
+
+        color_registers[2] = rgb.fromIntRGB(HSBtoRGB(HSV[0], 1f, 1f));
+        color_registers[3] = ~middle;
+        color_registers[4] = rgb.fromIntRGB(HSBtoRGB(HSV[0]+0.2f, 1f, 1f));
         rotation_hue++;
-        c = Color.HSBtoRGB((float)rotation_hue*.01f, 1.f, 1.f);
-        color_registers[i] = rgb.blend(c, color_registers[i++],color_dampen);
+        color_registers[5] = rgb.fromIntRGB(HSBtoRGB(rotation_hue*.01f, 1f, 1f));
         color_registers[6] = out_color;
+        
         // TODO: need to also apply color transform and tint from previous frame here?
         pout_color = out_color^feedback_mask^color_mask; // needed for special edge mode
-        gc1    = color_registers[gcolor1_i];
-        gc2    = color_registers[gcolor2_i];
-        bar_color  = color_registers[barcolor_i  ]; 
-        out_color  = color_registers[outcolor_i  ];
-        tint_color = color_registers[tintcolor_i ];
+        
+        gc1        = rgb.blend(gc1,        color_registers[gcolor1_i  ],color_dampen);
+        gc2        = rgb.blend(gc2,        color_registers[gcolor2_i  ],color_dampen);
+        bar_color  = rgb.blend(bar_color,  color_registers[barcolor_i ],color_dampen);
+        out_color  = rgb.blend(out_color,  color_registers[outcolor_i ],color_dampen);
+        tint_color = rgb.blend(tint_color, color_registers[tintcolor_i],color_dampen);
     }
     
     ////////////////////////////////////////////////////////////////////////////
@@ -715,11 +662,11 @@ public class Map {
         new PixOp("Color"){int f(int x,int y,int i,int w){return out_color; }},
         new PixOp("Edge" ){int f(int x,int y,int i,int w){return B.buf.get.it(clip(x,0,W8),clip(y,0,H8));}},
         new PixOp("Tile" ){int f(int x,int y,int i,int w){return B.buf.get.it(x,y);}},
-        new PixOp("Image"){int f(int x,int y,int i,int w){return cache.map_cache.image[i];}},
-        new PixOp("Fade") {int f(int x,int y,int i,int w){return rgb.blend(cache.map_cache.image[i], B.buf.get.it(x,y), w);}},
+        new PixOp("Image"){int f(int x,int y,int i,int w){return cache.mapc.image[i];}},
+        new PixOp("Fade") {int f(int x,int y,int i,int w){return rgb.blend(cache.mapc.image[i], B.buf.get.it(x,y), w);}},
         new PixOp("Rate1"){int f(int x,int y,int i,int w){return rgb.blend(out_color, bar_color, w);}},
         new PixOp("Rate2"){int f(int x,int y,int i,int w){w=(256-w)*w;return rgb.blend(out_color, bar_color,(w*w)>>20);}},
-        new PixOp("Rate3"){int f(int x,int y,int i,int w){w=((768-2*w)*w*w)>>16;return rgb.blend(rgb.blend(bar_color, out_color, w), B.buf.get.it(w,clip(y,0,H8-1)),w);}},
+        new PixOp("Rate3"){int f(int x,int y,int i,int w){w=((768-2*w)*w*w)>>16;return rgb.blend(rgb.blend(bar_color, out_color, w), B.buf.get.it(x,clip(y,0,H8-1)),w);}},
     };
     
     ////////////////////////////////////////////////////////////////////////////

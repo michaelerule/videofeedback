@@ -44,6 +44,15 @@ public class RGB15 extends RGB {
         return W5 & (c2 + ( (c1-c2)*w + E5 >> SHIFT ));
     }
     
+
+    @Override
+    public int blend(int c1, int c2, int w, int q) {
+        // c = W5 & ( c+((q-c)*tint_level + eq>>SHIFT) );
+        return W5 & (c2 + ( (c1-c2)*w + (q&E5) >> SHIFT ));
+        //throw new UnsupportedOperationException("Not supported yet.");
+        // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+    
     /**
      * 
      * @param c1
@@ -104,7 +113,8 @@ public class RGB15 extends RGB {
 
     @Override
     public int blendPremultiplied(int c, int q, int w) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        throw new UnsupportedOperationException("Not supported yet."); 
+        // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
     
     /**
@@ -112,8 +122,11 @@ public class RGB15 extends RGB {
      * @return 0888 RGB packed color
      */
     public final int toIntRGB(int c) {
-        c |= c<<5;
-        return (R8&(c>>8))|(G8&(c>>4))|(B8&(c>>2));
+        //c |= c<<5;
+        return 
+            ((c & 0b000001111100000000000000000000)>>1)|
+            ((c & 0b000000000000000111110000000000)<<1)|
+            ((c & 0b000000000000000000000000011111)<<3);
     }
     
     /**

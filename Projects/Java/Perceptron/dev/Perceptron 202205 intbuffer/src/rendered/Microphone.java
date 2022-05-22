@@ -40,7 +40,6 @@ public class Microphone {
     static final int   START_NOTE = -(3 * 12)*SUBSAMPLE, 
                        END_NOTE   =  (2 * 12)*SUBSAMPLE;
     
-    DoubleBuffer   buffer;
     TargetDataLine line;
     CaptureThread  capture;
     public int     audio_line = 0;
@@ -65,13 +64,12 @@ public class Microphone {
     int   max_pitch;
     int   image_width, image_height, half_image_height, buffer_size;
     
-    public Microphone(DoubleBuffer b, int iline) {
+    public Microphone(int w, int h, int iline) {
         
-        buffer = b;
-        image_width  = buffer.out.img.getWidth();
-        image_height = buffer.out.img.getHeight();
+        image_width  = w;
+        image_height = h;
         half_image_height = image_height / 2;
-        buffer_size = buffer.out.buf.getSize();
+        buffer_size = w*h;
 
         int counter = 0;
         index = new float[END_NOTE - START_NOTE];
@@ -146,10 +144,10 @@ public class Microphone {
     public int     soundColor()         {return spect_color;}
     public int     pitchColor()         {return pitch_color;}
     
-    public void render() {
+    public void render(Graphics g) {
         if (!(active && ((capture != null) && capture.running))) return;
         computeHistogram();
-        vis.draw(buffer.out.g);
+        vis.draw(g);
     }
     
     /** compute the frequency histogram */

@@ -99,17 +99,16 @@ public class Tree3D {
      * @param tree_location
      * @param b */
     public Tree3D(
+            int w, int h,
             int min_tree_depth,
             int max_tree_depth,
             float[][] tree_root,
             int tree_color,
             TreeForm[] tree_form,
-            java.awt.Point tree_location,
-            DoubleBuffer b) {
+            java.awt.Point tree_location) {
         
-        buffer = b;
-        width  = buffer.out.img.getWidth();
-        rasterLength = buffer.out.buf.getSize();
+        width  = w;
+        rasterLength = w*h;
 
         max_tree_depth = clip(max_tree_depth, 1, 13);
         max_depth = (byte) max_tree_depth;
@@ -143,8 +142,7 @@ public class Tree3D {
     /** re-render the tree with a new tree form by applying the tree form
      *  transformations to this data set, rather than recursing through the
      *  tree and recalculating all the branching angles */
-    public void render() {
-        Graphics g = buffer.out.g;
+    public void render(Graphics g) {
         theta = (float) ((theta + .01) % complex.TWOPI);
 
         //Combine rotations into a single transform

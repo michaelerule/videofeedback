@@ -30,11 +30,13 @@ public class ImageCache {
         if (null != f.listFiles()) {
             File[] files = f.listFiles();
             Arrays.sort(files);
-            for (var file : files) try {
-                images.add(file);
-                sout("loaded image " + file.getName());
-            } catch (Exception e) {
-                System.err.println("could not open image \"" + file.getName() + "\"");
+            for (var file : files) {
+                String [] parts = file.getName().toLowerCase().split("\\.");
+                String extension = parts[parts.length-1];
+                if ("png jpg gif bmp".contains(extension)) {
+                    images.add(file);
+                    sout("loaded image " + file.getName());
+                }
             }
         }
         size = images.size();

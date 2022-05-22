@@ -22,7 +22,7 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.image.BufferStrategy;
 import java.io.BufferedReader;
-import java.io.File;
+import java.io.File;                
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -46,7 +46,6 @@ import java.awt.GraphicsDevice;
 import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.DataBuffer;
 import static java.lang.Math.min;
 import static java.lang.Math.pow;
 import static java.lang.Math.round;
@@ -69,6 +68,10 @@ import static perceptron.Map.Mapping;
 import static perceptron.Parse.parseSettings;
 import static color.ColorUtil.colorFilter;
 import static color.ColorUtil.fast;
+import color.RGB;
+import image555.BlurSharpen555;
+import image555.DoubleBuffer555;
+import java.awt.image.BufferedImage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import static java.util.concurrent.Executors.newFixedThreadPool;
@@ -97,19 +100,23 @@ import static util.Sys.sout;
 public final class Perceptron extends javax.swing.JFrame {
     
     ////////////////////////////////////////////////////////////////////////////
-    public final DoubleBuffer buf;
-    Graphics2D                graph2D;
-    ArrayList<Mapping>        maps;
-    Settings[]                  presets;
-    ImageCache                images = null;
-    JFileChooser              savers;
-    final Control             control;
-    final Map             fractal;
-    final Tree3D              tree;
-    final TextMatrix          text;
-    final BlurSharpen         blursharp;
-    final Moths               moths;
-    final Microphone          mic;
+    // Create two threads for running two things at once
+    ExecutorService executor = newFixedThreadPool(2);
+    
+    ////////////////////////////////////////////////////////////////////////////
+    public final DoubleBuffer555 buf;
+    Graphics2D           graph2D;
+    ArrayList<Mapping>   maps;
+    Settings[]           presets;
+    ImageCache           images = null;
+    JFileChooser         savers;
+    final Control        control;
+    final Map            fractal;
+    final Tree3D         tree;
+    final TextMatrix     text;
+    final BlurSharpen555 blursharp;
+    final Moths          moths;
+    final Microphone     mic;
     
     int image_i = 0;
     public String image_directory = "resource/images/";
@@ -122,7 +129,7 @@ public final class Perceptron extends javax.swing.JFrame {
     public int boredome_ms       = 100000;
     public int preset_rotate_ms  = 500000;
     public int screen_timeout_ms = 60000;
-    public int max_frame_length  = 1000/20;
+    public int max_dt  = 1000/20;
     public int audio_line        = -1;
     public int min_tree_depth    = 9;
     public int max_tree_depth    = 6;
@@ -237,7 +244,7 @@ public final class Perceptron extends javax.swing.JFrame {
             String crash_log_filename,
             String presets_filename) {
         
-        super("Perceptron"); 
+        super("Perceptron (intbuffer)"); 
         Component root = getRootPane();
         Component cont = getContentPane();
         this.setBackground(BLACK);
@@ -267,21 +274,22 @@ public final class Perceptron extends javax.swing.JFrame {
         // screen_height and screen_width are only initialized AFTER parsing
         // the settings file. 
         // Initialise the frame rendering,background,and display buffers
-        buf             = new DoubleBuffer(screen_width,screen_height);
-        blursharp       = new BlurSharpen(buf);
-        text            = new TextMatrix(screen_width,screen_height);  
-        text.loadString(crash_log_filename);  
+        //buf             = new DoubleBuffer(screen_width,screen_height);
+        buf             = new DoubleBuffer555(screen_width,screen_height);
+        blursharp       = new BlurSharpen555(buf);
+        text            = new TextMatrix(screen_width,screen_height);
+        text.loadString(crash_log_filename);
         image_directory = requireNonNull(image_directory);
         images          = new ImageCache(image_directory);
         fractal         = new Map(buf,maps,this);
         moths           = new Moths(screen_width,screen_height);
-        mic             = new Microphone(buf, 0); 
+        mic             = new Microphone(screen_width,screen_height,0);
         //mic.start();
         
-        tree = new Tree3D(min_tree_depth, max_tree_depth,
+        tree = new Tree3D(screen_width,screen_height,min_tree_depth, max_tree_depth,
             new float[][]{{0,0,0},{0,(float) (-(screen_height/12)),0}},0,
             new TreeForm[]{new TreeForm(.5f,-.2f,.7f,7),new TreeForm(.5f,.2f,.7f,-7)},
-            new Point(half_screen_w,half_screen_h),buf);
+            new Point(half_screen_w,half_screen_h));
         
         control = new Control(this,presets);
         addMouseListener(control);
@@ -331,23 +339,6 @@ public final class Perceptron extends javax.swing.JFrame {
     public final boolean isRunning()    {return running.get();}
     public final void    toggleRunning(){running.set(!running.get());}
     
-    /*
-     * Window scenarios: 
-     *  - True full-screen window with matched display resolution
-     *      * Don't scale image; Center and pad it. 
-     *  - Full-screen with wrong resolution
-     *      * Scale image up during drawing
-     *      * Restrict to integer scale factors? What's fast?
-     *  - Fake full screen window: maximized and undecorated
-     *      Don't allow this, interaction with system menus unpredictable
-     *  - Normal window, exact size
-     *      Ensure 
-     * 
-     */
-    
-    ////////////////////////////////////////////////////////////////////////////
-    // Create two threads for running two things at once
-    ExecutorService executor = newFixedThreadPool(2);
     long cache_time = 0, render_time = 0;
     public void go() {
         sout("Starting...");
@@ -365,7 +356,7 @@ public final class Perceptron extends javax.swing.JFrame {
         fractal.cache.map_stale.set(true);
         while (true) 
             if (running.get()) try {
-                long frame_started_at = currentTimeMillis();
+                long frame_start = currentTimeMillis();
 
                 synchronized (is_fullscreen) {
                     Future<Long> runner = executor.submit(()->{
@@ -381,7 +372,6 @@ public final class Perceptron extends javax.swing.JFrame {
                     render_time = runner.get();
                     cache_time  = cacher.get();
                     fractal.cache.flip();
-                    //sout("cache time "+cache_time+" render time "+render_time);
                 }
 
                 // Frame counters and framerate monitoring
@@ -393,9 +383,8 @@ public final class Perceptron extends javax.swing.JFrame {
                     frame           = 0;
                 }
                 if (cap_frame_rate) {
-                    long delta = frame_started_at + max_frame_length 
-                               - currentTimeMillis();
-                    if (delta>0) Thread.sleep(delta);
+                    long d = frame_start + max_dt - currentTimeMillis();
+                    if (d>0) Thread.sleep(d);
                 }
 
             } catch (Exception e) {
@@ -410,23 +399,27 @@ public final class Perceptron extends javax.swing.JFrame {
      * Render a single frame.
      */
     private void doFrame() {
+        
+        if (buf.buf.isFrozen() || buf.out.isFrozen())
+            throw new RuntimeException("Somehow our buffers are frozen.");
+        
         // This code expects the "output" buffer to be ready for the next frame
-        // It touches both the output and buffer buffers. s
+        // It touches both the output and "buffer" buffers. 
         // Apply the fractal mapping. This draws into the "buf" buffer
         // Exchange "out" and "buf" data buffers
         fractal.operate();
+        buf.buf.coldFreeze();
         buf.flip();
-        if (objects_on_top) drawObjects();
+        
+        if (objects_on_top) drawObjects(buf.out.g);
+        // The controls and text are always on top
         control.advance((int)framerate);
         control.drawAll(buf.out.g);
-        // Fade to visible if on,otherwise fade away
-        state_α = fadeout(state_α,show_state  );
-        info_α  = fadeout(info_α ,show_monitor);
-        note_α  = fadeout(note_α ,show_notices);
-        if (state_α>0) drawState();
-        if (info_α >0) drawInfo();
-        if (note_α >0) noticeChanges();
-        // Save frame to disk
+        // Text translucency: Fade to visible if on, otherwise fade away
+        if ((state_α=fadeout(state_α,show_state  ))>0) drawState();
+        if ((info_α =fadeout(info_α ,show_monitor))>0) drawInfo();
+        if ((note_α =fadeout(note_α ,show_notices))>0) noticeChanges();
+        // Save drawn frame to disk
         if (write_animation) try {
             String filename = "animate/frame "+animation_frame+".png";
             animation_frame++;
@@ -436,6 +429,10 @@ public final class Perceptron extends javax.swing.JFrame {
             System.err.println("File write error in animation.");
             ex.printStackTrace();
         }
+        
+        // Copy to physical screen with double buffering.
+        showOnScreen();
+        
         // Motion blur averages the next color with the previous 
         // output buffer,if `objects_on_top`; or with the previous
         // buffer buffer if the objects are in the background. 
@@ -444,38 +441,18 @@ public final class Perceptron extends javax.swing.JFrame {
         // the background. I think this means I always need to
         // save a copy in buf.buf,and switch motion blur to only
         // use this copy.
-        buf.buf.img.getRaster().setDataElements(0,0,buf.out.img.getRaster());
-        // Copy to physical screen with double buffering.
-        showOnScreen();
+        //buf.buf.copy(buf.out);
         
-        // Update fractal's color registers
-        fractal.buf = buf.buf.buf;
-        fractal.updateColorRegisters();
-        
-        // 
-        postprocess();
-    }
-    
-    /**
-     * These drawing operations transform the pixels in the output buffer
-     */
-    private void postprocess() {
-        // This must be done before the copy in objects on top? 
-        if (do_color_transform) colorTransform(buf.out.buf);
+        // (The edge bars are NEVER on top)
         drawBars();
-        // Background objects: the .output buffer must not be used
-        // to draw these,since this will cause motion blur to 
-        // reveal the drawn objects in the foreground. Neverthelss,
-        // the .output buffer must contain these objects by the time
-        // that the fractal map is applied. 
-        // If we didn't draw objects,draw them now. They will 
-        // show up behind the map in the next frame. 
-        // So,we need to save a copy of the untainted output for
-        // the motion blur code (FractalMap) to use later.
-        if (!objects_on_top) drawObjects();
+        if (!objects_on_top) drawObjects(buf.out.g);
+        buf.out.thaw();
+                
+        // Applies color transform in-place to output buffer
+        //if (do_color_transform) colorTransform(buf.out.buf);
         // Applies the blur or sharpen convolution operation.
         // This acts in-place on the output buffer.
-        blursharp.operate(blursharp_rate);
+        //blursharp.operate(blursharp_rate);
     }
     
     ////////////////////////////////////////////////////////////////////////////
@@ -499,8 +476,10 @@ public final class Perceptron extends javax.swing.JFrame {
     public void paint(Graphics g) {
         if (g instanceof Graphics2D) g=fast((Graphics2D)g);
         Rectangle b = getPerceptBounds();
-        if (null!=buf && null!=buf.out && null!=buf.out.img && null!=g)
-            g.drawImage(buf.buf.img,b.x,b.y,b.width,b.height,null);
+        if (null!=buf && null!=buf.out && null!=buf.out.img && null!=g) {
+            BufferedImage img = buf.buf.img;
+            g.drawImage(img,b.x,b.y,b.width,b.height,null);
+        }
     }
     
     /**
@@ -586,7 +565,8 @@ public final class Perceptron extends javax.swing.JFrame {
     
     ////////////////////////////////////////////////////////////////////////////
     // Color transform /////////////////////////////////////////////////////////
-    private void colorTransform(DataBuffer b) {
+    //private void colorTransform(DataBuffer b) {
+    private void colorTransform(int [] b) {
         hue_rate = wrap(hue_rate,256);
         sat_rate = clip(sat_rate,-256,256);
         lum_rate = clip(lum_rate,-256,256);
@@ -598,40 +578,38 @@ public final class Perceptron extends javax.swing.JFrame {
         float cr = (float)(pow(2.0,con_rate/256f));
         float br = (1+bri_rate/256f)/2;
         
-        int N = b.getSize();
+        int N = b.length;
         Future t1 = executor.submit(()->{colorFilter(b,0,N/2,hr,sr,lr,cr,br); });
         Future t2 = executor.submit(()->{colorFilter(b,N/2,N,hr,sr,lr,cr,br); });
         try {
             t1.get();
             t2.get();
         } catch (InterruptedException | ExecutionException ex) {
-            colorFilter(b,0,b.getSize(),hr,sr,lr,cr,br); 
+            colorFilter(b,0,N,hr,sr,lr,cr,br); 
         }
-                    
-        
     }
     
     ////////////////////////////////////////////////////////////////////////////
     private float tree_spinner = 0f;
-    private void drawObjects() {
+    private void drawObjects(Graphics2D g) {
         if (draw_tree) {
             tree_spinner = wrap(tree_spinner-0.01f,2f*(float)Math.PI);
             tree.form[0].setAlpha(tree_spinner);
             tree.form[1].setAlpha(tree_spinner+(float)Math.PI);
-            tree.render();
+            tree.render(g);
         }
-        text.renderTextBuffer(buf.out.g2D);
+        text.renderTextBuffer(g);
         if (draw_moths) {
             moths.step((float)(20.0/framerate));
-            moths.paint(buf.out.g);
+            moths.paint(g);
         }
         if (draw_dino) {
-            o.draw(buf.out.g, buf.out.img, screen_width/2, screen_height/2, 0);
+            o.draw(g, buf.out.img, screen_width/2, screen_height/2, 0);
             o.rotatex(0.01);
             o.rotatey(0.03);
             o.rotatez(0.05);
         }
-        mic.render();
+        mic.render(g);
     }
     
     ////////////////////////////////////////////////////////////////////////////
@@ -678,14 +656,13 @@ public final class Perceptron extends javax.swing.JFrame {
     ////////////////////////////////////////////////////////////////////////////
     void drawBars() {
         final int BAR_WIDTH = 8;
+        buf.out.g.setColor(new Color(RGB.c15.toIntRGB(fractal.bar_color)));
         // Bars accentuate the frame edges for a nice effect
         if (draw_top_bars) {
-            buf.out.g.setColor(new Color(fractal.bar_color));
             buf.out.g.fillRect(0,0,screen_width,BAR_WIDTH);
             buf.out.g.fillRect(0,screen_height - BAR_WIDTH,screen_width,BAR_WIDTH);
         }
         if (draw_side_bars) {
-            buf.out.g.setColor(new Color(fractal.bar_color));
             buf.out.g.fillRect(0,0,BAR_WIDTH,screen_height);
             buf.out.g.fillRect(screen_width-BAR_WIDTH,0,BAR_WIDTH,screen_height);
         }

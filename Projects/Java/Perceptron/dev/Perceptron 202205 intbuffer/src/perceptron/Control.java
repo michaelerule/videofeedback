@@ -610,8 +610,8 @@ public final class Control extends MouseAdapter implements KeyListener {
             case '*':P.tree.toggleSymmetry(); break;
             case '9':F.setMap("i*ln(z)/(2p)*sqrt(w*w*9+h*h)*e^(i*atan(h/w/3))");break;
             case '0':F.setMap("2*i*ln(z)/(2p)*sqrt(w*w*9+h*h)*e^(i*atan(h/w/3))");break;
-            case '(':F.nextNoise(-8);break;
-            case ')':F.nextNoise(8);break;
+            case '(':F.nextNoise(-1);break;
+            case ')':F.nextNoise(1);break;
             case '-':current.adjustSpeed(-1); break;
             case '_':P.draw_top_bars = !P.draw_top_bars; break;
             case '=':
@@ -646,8 +646,8 @@ public final class Control extends MouseAdapter implements KeyListener {
             case 'A':P.mic.setActive(!P.mic.isActive()); break;
             case 's':P.draw_dino=!P.draw_dino; break;
             case 'S':P.save();                 break;
-            case 'd':F.nextColorDamp( 8);      break;
-            case 'D':F.nextColorDamp(-8);      break;
+            case 'd':F.nextColorDamp( 1);      break;
+            case 'D':F.nextColorDamp(-1);      break;
             case 'f':F.nextGColor1(1);         break;
             case 'F':F.nextGColor2(1);         break;
             case 'g':F.nextGradient( 1);       break;
@@ -660,18 +660,18 @@ public final class Control extends MouseAdapter implements KeyListener {
             case 'K':P.do_color_transform=!P.do_color_transform;break;
             case 'l':P.buf.toggleInterpolation(); F.cache.map_stale.set(true); break;
             case 'L':P.toggleAntialias(); break;
-            case ';' :P.hue_rate = wrap(P.hue_rate-4,256); break;
-            case '\'':P.hue_rate = wrap(P.hue_rate+4,256); break;
-            case ':' :P.sat_rate = clip(P.sat_rate-4,-256,256); break;
-            case '"' :P.sat_rate = clip(P.sat_rate+4,-256,256); break;
-            case ',' :P.con_rate = clip(P.con_rate-4,-256,256); break;
-            case '.' :P.con_rate = clip(P.con_rate+4,-256,256); break;
-            case '<' :P.bri_rate = clip(P.bri_rate-4,-256,256); break;
-            case '>' :P.bri_rate = clip(P.bri_rate+4,-256,256); break;
+            case ';' :P.hue_rate = wrap(P.hue_rate-4,F.UNIT); break;
+            case '\'':P.hue_rate = wrap(P.hue_rate+4,F.UNIT); break;
+            case ':' :P.sat_rate = clip(P.sat_rate-4,-F.UNIT,F.UNIT); break;
+            case '"' :P.sat_rate = clip(P.sat_rate+4,-F.UNIT,F.UNIT); break;
+            case ',' :P.con_rate = clip(P.con_rate-4,-F.UNIT,F.UNIT); break;
+            case '.' :P.con_rate = clip(P.con_rate+4,-F.UNIT,F.UNIT); break;
+            case '<' :P.bri_rate = clip(P.bri_rate-4,-F.UNIT,F.UNIT); break;
+            case '>' :P.bri_rate = clip(P.bri_rate+4,-F.UNIT,F.UNIT); break;
             case 'z':F.nextTintColor( 1); break;
             case 'Z':F.nextTintColor(-1); break;
-            case 'x':F.nextTintLevel( 8); break;
-            case 'X':F.nextTintLevel(-8); break;
+            case 'x':F.nextTintLevel( 1); break;
+            case 'X':F.nextTintLevel(-1); break;
             case 'c':draw_cursors = !draw_cursors; break;
             case 'C':draw_futures = !draw_futures; break;
             case 'v':if (current!=null) current.toggleWander(); break;
@@ -860,10 +860,10 @@ public final class Control extends MouseAdapter implements KeyListener {
         switch (code) {
             case VK_TAB      : text_mode=P.text.on=P.text.cursor_on=true; break;
             case VK_ENTER    : presets_mode = true; break;
-            case VK_UP       : F.setMotionBlur(F.motion_blur + 16); break;
-            case VK_DOWN     : F.setMotionBlur(F.motion_blur - 16); break;
-            case VK_LEFT     : P.setBlurWeight(P.blursharp_rate-16); break;
-            case VK_RIGHT    : P.setBlurWeight(P.blursharp_rate+16); break;
+            case VK_UP       : F.setMotionBlur(F.motion_blur + 2); break;
+            case VK_DOWN     : F.setMotionBlur(F.motion_blur - 2); break;
+            case VK_LEFT     : P.setBlurWeight(P.blursharp_rate-2); break;
+            case VK_RIGHT    : P.setBlurWeight(P.blursharp_rate+2); break;
             case VK_PAGE_UP  : P.mic.adjustVolume(0.2f); break;
             case VK_PAGE_DOWN: P.mic.adjustVolume(-0.2f); break;
             case VK_HOME     : P.mic.adjustSpeed(0.2f); break;

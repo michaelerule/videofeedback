@@ -5,6 +5,7 @@
 package util;
 
 import static java.lang.Math.max;
+import static java.lang.Math.random;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -67,10 +68,25 @@ public class Misc {
         }
     }
     
+    /**
+     * 
+     * @param <S>
+     * @param <T>
+     * @param collection
+     * @param mapFunction
+     * @return 
+     */
     public static <S, T> List<T> map(Collection<S> collection, Function<S, T> mapFunction) {
         return collection.stream().map(mapFunction).collect(Collectors.toList());
     }
 
-    
+    /**
+     * 
+     * @param w
+     * @return 
+     */
+    public static char dither(double w) {
+        return (char)clip((int)(w*255 + random()),0,255);
+    }
     
 }

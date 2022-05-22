@@ -55,6 +55,16 @@ public abstract class RGB {
     public abstract int blend(int c1, int c2, int w);
     
     /**
+     * 
+     * @param c1
+     * @param c2
+     * @param w
+     * @param q entropy
+     * @return 
+     */
+    public abstract int blend(int c1, int c2, int w,int q);
+    
+    /**
      * Generate premultiplied alpha format from two transparent colors.
      * Color 2 is treated as drawn atop color 1
      * 

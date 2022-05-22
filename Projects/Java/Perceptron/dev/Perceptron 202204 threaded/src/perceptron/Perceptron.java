@@ -97,6 +97,11 @@ import static util.Sys.sout;
 public final class Perceptron extends javax.swing.JFrame {
     
     ////////////////////////////////////////////////////////////////////////////
+    // Create two threads for running two things at once
+    ExecutorService executor = newFixedThreadPool(2);
+    
+    
+    ////////////////////////////////////////////////////////////////////////////
     public final DoubleBuffer buf;
     Graphics2D                graph2D;
     ArrayList<Mapping>        maps;
@@ -132,6 +137,7 @@ public final class Perceptron extends javax.swing.JFrame {
     ////////////////////////////////////////////////////////////////////////////
     // Render control flags: all public, on the honor system. 
     public boolean objects_on_top     = true;
+    public boolean text_on_top        = true;
     public boolean cap_frame_rate     = true;
     public boolean write_animation    = false;
     public boolean rotate_images      = false;
@@ -183,11 +189,13 @@ public final class Perceptron extends javax.swing.JFrame {
     public int     halfScreenHeight()        {return half_screen_h; }
     public boolean isAntialiased()           {return buf.antialiased; }
     public void    setObjectsOnTop(boolean b){objects_on_top = b; }
+    public void    setTextOnTop(boolean b)   {text_on_top = b; }
     public void    setAntialias(boolean s)   {if (s!=isAntialiased()) toggleAntialias();}
     public void    setHideMouse(boolean b)   {hide_mouse=b;setCursor(b?NONE:CROSS);}
     public void    setBlurWeight(int k)      {blursharp_rate = clip(k,-256,256);}
     public void    toggleAntialias()         {buf.toggleAntialias(); }
     public void    toggleObjectsOnTop()      {objects_on_top = !objects_on_top; }
+    public void    toggleTextOnTop()         {text_on_top = !text_on_top; }
     public void    toggleCapFramerate()      {cap_frame_rate = !cap_frame_rate; }
     public void    toggleAnimation()         {write_animation = !write_animation; }
     public void    toggleTree()              {draw_tree    = !draw_tree; }
@@ -237,7 +245,7 @@ public final class Perceptron extends javax.swing.JFrame {
             String crash_log_filename,
             String presets_filename) {
         
-        super("Perceptron"); 
+        super("Perceptron (threaded)"); 
         Component root = getRootPane();
         Component cont = getContentPane();
         this.setBackground(BLACK);
@@ -331,23 +339,6 @@ public final class Perceptron extends javax.swing.JFrame {
     public final boolean isRunning()    {return running.get();}
     public final void    toggleRunning(){running.set(!running.get());}
     
-    /*
-     * Window scenarios: 
-     *  - True full-screen window with matched display resolution
-     *      * Don't scale image; Center and pad it. 
-     *  - Full-screen with wrong resolution
-     *      * Scale image up during drawing
-     *      * Restrict to integer scale factors? What's fast?
-     *  - Fake full screen window: maximized and undecorated
-     *      Don't allow this, interaction with system menus unpredictable
-     *  - Normal window, exact size
-     *      Ensure 
-     * 
-     */
-    
-    ////////////////////////////////////////////////////////////////////////////
-    // Create two threads for running two things at once
-    ExecutorService executor = newFixedThreadPool(2);
     long cache_time = 0, render_time = 0;
     public void go() {
         sout("Starting...");
@@ -381,7 +372,6 @@ public final class Perceptron extends javax.swing.JFrame {
                     render_time = runner.get();
                     cache_time  = cacher.get();
                     fractal.cache.flip();
-                    //sout("cache time "+cache_time+" render time "+render_time);
                 }
 
                 // Frame counters and framerate monitoring
@@ -417,6 +407,7 @@ public final class Perceptron extends javax.swing.JFrame {
         fractal.operate();
         buf.flip();
         if (objects_on_top) drawObjects();
+        if (text_on_top) text.renderTextBuffer(buf.out.g2D);
         control.advance((int)framerate);
         control.drawAll(buf.out.g);
         // Fade to visible if on,otherwise fade away
@@ -453,13 +444,6 @@ public final class Perceptron extends javax.swing.JFrame {
         fractal.updateColorRegisters();
         
         // 
-        postprocess();
-    }
-    
-    /**
-     * These drawing operations transform the pixels in the output buffer
-     */
-    private void postprocess() {
         // This must be done before the copy in objects on top? 
         if (do_color_transform) colorTransform(buf.out.buf);
         drawBars();
@@ -473,6 +457,7 @@ public final class Perceptron extends javax.swing.JFrame {
         // So,we need to save a copy of the untainted output for
         // the motion blur code (FractalMap) to use later.
         if (!objects_on_top) drawObjects();
+        if (!text_on_top) text.renderTextBuffer(buf.out.g2D);
         // Applies the blur or sharpen convolution operation.
         // This acts in-place on the output buffer.
         blursharp.operate(blursharp_rate);
@@ -620,7 +605,6 @@ public final class Perceptron extends javax.swing.JFrame {
             tree.form[1].setAlpha(tree_spinner+(float)Math.PI);
             tree.render();
         }
-        text.renderTextBuffer(buf.out.g2D);
         if (draw_moths) {
             moths.step((float)(20.0/framerate));
             moths.paint(buf.out.g);

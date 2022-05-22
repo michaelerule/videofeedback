@@ -2,6 +2,7 @@ package perceptron;
 
 import rendered.TextMatrix;
 import image.DoubleBuffer;
+import image555.DoubleBuffer555;
 import image.Samplers;
 import java.io.BufferedReader;
 import java.io.File;
@@ -137,7 +138,8 @@ public class Settings {
      * @return  */
     public static String settings(Perceptron P) {
         Map   F = P.fractal;
-        DoubleBuffer B = P.buf;
+        //DoubleBuffer B = P.buf;
+        DoubleBuffer555 B = P.buf;
         TextMatrix   T = P.text;
         Control   C = P.control;
         String GAP = "      ";
@@ -346,7 +348,8 @@ public class Settings {
      */
     public void set(Perceptron P) {
         Map          F = P.fractal;
-        DoubleBuffer B = P.buf;
+        //DoubleBuffer B = P.buf;
+        DoubleBuffer555 B = P.buf;
         TextMatrix   T = P.text;
         Control      C = P.control;
         
@@ -375,28 +378,28 @@ public class Settings {
         P.setImage(image_file);
         P.setAntialias(anti_alias);
         
-        F.offset_mode           = offset_mode;
-        F.rotate_mode           = rotate_mode;
-        F.mirror_mode           = mirror_mode;
-        F.motion_blur           = motion_blur;
-        F.bounds_i              = bounds_i;
-        F.invert_bound          = bounds_invert;
-        F.outi                  = outside_i;
-        F.gslope                = grad_slope;
-        F.gbias               = grad_offset;
-        F.color_mask            = color_mask;
-        F.feedback_mask         = feedback_mask;
-        F.gc2               = grad_accent;
-        F.grad_i                = grad_i;
-        F.grad_mode             = grad_mode;
-        F.gcolor1_i             = gradcolor1_i;
-        F.gcolor2_i             = gradcolor2_i;
-        F.barcolor_i            = barcolor_i;
-        F.tintcolor_i           = tintcolor_i;
-        F.tint_level            = tint_level;
-        F.outcolor_i            = outcolor_i;
-        F.noise_level           = noise_level;
-        F.color_dampen          = color_dampen;
+        F.offset_mode   = offset_mode;
+        F.rotate_mode   = rotate_mode;
+        F.mirror_mode   = mirror_mode;
+        F.motion_blur   = motion_blur;
+        F.bounds_i      = bounds_i;
+        F.invert_bound  = bounds_invert;
+        F.outi          = outside_i;
+        F.gslope        = grad_slope;
+        F.gbias         = grad_offset;
+        F.color_mask    = color_mask>0? F.w5 : 0;
+        F.feedback_mask = feedback_mask>0? F.w5 : 0;
+        F.gc2           = grad_accent;
+        F.grad_i        = grad_i;
+        F.grad_mode     = grad_mode;
+        F.gcolor1_i     = gradcolor1_i;
+        F.gcolor2_i     = gradcolor2_i;
+        F.barcolor_i    = barcolor_i;
+        F.tintcolor_i   = tintcolor_i;
+        F.tint_level    = tint_level;
+        F.outcolor_i    = outcolor_i;
+        F.noise_level   = noise_level;
+        F.color_dampen  = color_dampen;
         F.syncOps();
 
         B.reflect       = reflect;
