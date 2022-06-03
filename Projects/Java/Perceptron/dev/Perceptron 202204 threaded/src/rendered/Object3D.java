@@ -1048,7 +1048,7 @@ public class Object3D {
                     super.setColor(parseColor(k));
                     break;
                 }
-                A.add(new Integer(s));
+                A.add(Integer.valueOf(s));
             }    
             p = new Point3D [A.size()];
             
@@ -1667,7 +1667,7 @@ public class Object3D {
     }
     
     int point_counter = 0;
-    boolean parse(
+    final boolean parse(
         String t, 
         StringTokenizer k, 
         ArrayList<Shape3D> shape_dest, 
@@ -1676,84 +1676,47 @@ public class Object3D {
         ArrayList<RotateablePoint3D> rotate_point_dest,
         ArrayList<InterpolatedPoint3D> interpoint_dest) {
         switch (t) {
-            case "p":
-            case "v":
-            case "point": {
+            case "p", "v", "point" -> {
                 RotateablePoint3D p = new RotateablePoint3D(k);
                 point_dest.add(point_counter,p);
                 rotate_point_dest.add(p);
                 master_rotateable_point_dest.add(p.clone2());
                 point_counter++;
-                break;
             }
-            case "i":
-            case "vr":
-            case "interpolatedpoint":
-            case "intepoint": {
+            case "i", "vr", "interpolatedpoint", "intepoint" -> {
                 InterpolatedPoint3D p = new InterpolatedPoint3D(k,point_dest);
                 point_dest.add(point_counter, p);
                 interpoint_dest.add(p);
                 point_counter++;
-                break;
             }
-            case "c": case "circle":
-                shape_dest.add(new Circle3D(k,point_dest));
-                break;
-            case "s": case "sphere":
-                shape_dest.add(new Sphere3D(k,point_dest));
-                break;
-            case "l": case "line":
-                shape_dest.add(new Line3D(k,point_dest));
-                break;
-            case "t": case "thickline":
-                shape_dest.add(new ThickLine3D(k,point_dest));
-                break;
-            case "h": case "shadedline":
-                shape_dest.add(new ShadedLine3D(k,point_dest));
-                break;
-            case "j": case "shadedcylinder":
-                shape_dest.add(new ShadedCylinder3D(k,point_dest));
-                break;
-            case "m": case "image":
-                shape_dest.add(new Image3D(k,point_dest));
-                break;
-            case "a": case "stationaryimage":
-                shape_dest.add(new StationaryImage3D(k,point_dest));
-                break;
-            case "y": case "cylinder":
-                shape_dest.add(new Cylinder3D(k,point_dest));
-                break;
-            case "n": case "cone":
-                shape_dest.add(new Cone3D(k,point_dest));
-                break;
-            case "o": case "outline":
-                shape_dest.add(new Outline3D(k,point_dest));
-                break;
-            case "x": case "text":
-                shape_dest.add(new RotateableText3D(k,point_dest));
-                break;
-            case "r": case "pointsphere":
-                shape_dest.add(new PointSphere3D(k,point_dest,shape_dest));
-                break;
-            case "f": case "fo": case "form":
-                shape_dest.add(new Form3D(k,point_dest));
-                break;
-            case "e": case "color": case "coloredpoint":
-                shape_dest.add(new ColoredPoint3D(k,point_dest));
-                break;
-            default:
-                try {
-                    RotateablePoint3D p = new RotateablePoint3D(
-                        Double.parseDouble(t),
-                        Double.parseDouble(k.nextToken()),
-                        Double.parseDouble(k.nextToken()));
-                    point_dest.add(point_counter,p);
-                    rotate_point_dest.add(p);
-                    master_rotateable_point_dest.add(p.clone2());
-                    point_counter++;
-                }
-                catch ( NumberFormatException e ) { return false; }   
-                break;
+            case "c", "circle" -> shape_dest.add(new Circle3D(k,point_dest));
+            case "s", "sphere" -> shape_dest.add(new Sphere3D(k,point_dest));
+            case "l", "line" -> shape_dest.add(new Line3D(k,point_dest));
+            case "t", "thickline" -> shape_dest.add(new ThickLine3D(k,point_dest));
+            case "h", "shadedline" -> shape_dest.add(new ShadedLine3D(k,point_dest));
+            case "j", "shadedcylinder" -> shape_dest.add(new ShadedCylinder3D(k,point_dest));
+            case "m", "image" -> shape_dest.add(new Image3D(k,point_dest));
+            case "a", "stationaryimage" -> shape_dest.add(new StationaryImage3D(k,point_dest));
+            case "y", "cylinder" -> shape_dest.add(new Cylinder3D(k,point_dest));
+            case "n", "cone" -> shape_dest.add(new Cone3D(k,point_dest));
+            case "o", "outline" -> shape_dest.add(new Outline3D(k,point_dest));
+            case "x", "text" -> shape_dest.add(new RotateableText3D(k,point_dest));
+            case "r", "pointsphere" -> shape_dest.add(new PointSphere3D(k,point_dest,shape_dest));
+            case "f", "fo", "form" -> shape_dest.add(new Form3D(k,point_dest));
+            case "e", "color", "coloredpoint" -> shape_dest.add(new ColoredPoint3D(k,point_dest));
+            default -> {
+                    try {
+                            RotateablePoint3D p = new RotateablePoint3D(
+                    Double.parseDouble(t),
+                    Double.parseDouble(k.nextToken()),
+                    Double.parseDouble(k.nextToken()));
+                            point_dest.add(point_counter,p);
+                            rotate_point_dest.add(p);
+                            master_rotateable_point_dest.add(p.clone2());
+                            point_counter++;
+                            }
+                            catch ( NumberFormatException e ) { return false; }
+            }
         }
         
         return true;            

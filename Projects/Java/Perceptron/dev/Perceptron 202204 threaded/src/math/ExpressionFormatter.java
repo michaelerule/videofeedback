@@ -29,7 +29,7 @@ public class ExpressionFormatter extends JFormattedTextField.AbstractFormatter {
         try {
             complex number = (MathToken.toEquation(text)).eval(ComplexContex.standard());
             if (number.imag == 0)
-                return new Double(number.real);
+                return number.real;
             else throw new ParseException("",0);
         }catch (ParseException e) {
             throw new ParseException("",0);}}
