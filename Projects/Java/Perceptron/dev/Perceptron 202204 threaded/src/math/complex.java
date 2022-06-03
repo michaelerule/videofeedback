@@ -16,11 +16,11 @@ public class complex {
     // STATIC CONSTANTS
     public static float e = (float) Math.E;
     public static float pi = (float) Math.PI;
-    public static final float TWOPI = 2 * pi;
+    public static final float TWOPI = 2 * complex.pi;
     // Common complex constants
     public static final complex I = new complex(0, 1);
-    public static final complex E = new complex(e);
-    public static final complex PI = new complex(pi);
+    public static final complex E = new complex(complex.e);
+    public static final complex PI = new complex(complex.pi);
     public static final complex PHI = new complex((float) ((Math.sqrt(5) - 1) / 2));
 
     /**
@@ -747,5 +747,13 @@ public class complex {
     
     public boolean equals(complex o) {
         return (this.real==o.real && this.imag==o.imag);
+    }
+
+    public float length() {
+        return complex.mod(this);
+    }
+
+    public float angle() {
+        return complex.arg(this);
     }
 }

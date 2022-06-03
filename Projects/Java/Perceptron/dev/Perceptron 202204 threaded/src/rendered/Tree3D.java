@@ -1,9 +1,7 @@
 package rendered;
 
 import image.DoubleBuffer;
-import util.Matrix;
 import color.ColorUtil;
-import perceptron.*;
 import math.complex;
 import java.awt.Color;
 import java.awt.Graphics;

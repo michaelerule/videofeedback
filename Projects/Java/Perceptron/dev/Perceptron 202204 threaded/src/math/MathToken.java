@@ -311,15 +311,17 @@ public class MathToken {
     private static Equation toEquation(MathToken[] token) {
         if (token != null) {
             switch (token.length) {
-                case 1:
+                case 1 -> {
                     return token[0].equals(0)
-                        ? new Equation(toEquation(token[0].getEquation())) 
-                        : new Equation(token[0]);
-                case 2:
+                            ? new Equation(toEquation(token[0].getEquation()))
+                            : new Equation(token[0]);
+                }
+                case 2 -> {
                     return token[0].isOperator()
-                        ? new Equation(toEquation(token[1].getEquation()), token[0])
-                        : new Equation(toEquation(token[0].getEquation()), token[1]);
-                case 3:
+                            ? new Equation(toEquation(token[1].getEquation()), token[0])
+                            : new Equation(toEquation(token[0].getEquation()), token[1]);
+                }
+                case 3 -> {
                     Equation left = token[0].equals(0)
                             ? toEquation(token[0].getEquation())
                             : new Equation(token[0]);
@@ -327,8 +329,9 @@ public class MathToken {
                             ? toEquation(token[2].getEquation())
                             : new Equation(token[2]);
                     return new Equation(left, token[1], right);
-                default:
-                    break;
+                }
+                default -> {
+                }
             }
         }
         return new Equation();
@@ -651,13 +654,16 @@ public class MathToken {
      */
 
     public static void main(String args[]) throws IOException {
-        System.out.println("\n___________________________________________________________________________________\n"
-                + "This is the testing mode of the math classes to be used in a larger project\n"
-                + "it can evaluate just about anything that can be expressed by one argument functions\n"
-                + "and algebraic operators (no summations, power series, or calculus)\n"
-                + '"' + "exit" + '"' + " to end testing\n"
-                + '"' + "functions" + '"' + " to display a list of legal functions and operators.\n"
-                + "___________________________________________________________________________________\n");
+        System.out.println("""
+                           
+                           ___________________________________________________________________________________
+                           This is the testing mode of the math classes to be used in a larger project
+                           it can evaluate just about anything that can be expressed by one argument functions
+                           and algebraic operators (no summations, power series, or calculus)
+                           "exit" to end testing
+                           "functions" to display a list of legal functions and operators.
+                           ___________________________________________________________________________________
+                           """);
         BufferedReader keyBoard = new BufferedReader(new InputStreamReader(System.in));
         Equation equ;
         ComplexContex variables = ComplexContex.standard();

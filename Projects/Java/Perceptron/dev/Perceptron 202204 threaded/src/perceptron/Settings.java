@@ -125,10 +125,10 @@ public class Settings {
      * @param file
      * @throws java.io.IOException */
     public static void write(Perceptron percept, File file) throws IOException {
-        FileWriter out = new FileWriter(file);
-        out.write("preset " + file.getName() + " {\n" + settings(percept) + "}\n");
-        out.flush();
-        out.close();
+        try (FileWriter out = new FileWriter(file)) {
+            out.write("preset " + file.getName() + " {\n" + settings(percept) + "}\n");
+            out.flush();
+        }
     }
 
     /** Save the current state into a file (or input the settings in as they 

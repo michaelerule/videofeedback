@@ -33,7 +33,6 @@ import javax.swing.JFileChooser;
 import image.ImageCache;
 import static java.awt.Color.BLACK;
 import java.awt.Component;
-import java.awt.Container;
 import java.awt.Dimension;
 import rendered.Object3D;
 import rendered.TreeForm;
@@ -73,8 +72,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import static util.Misc.clip;
 import static util.Misc.zip;
@@ -482,7 +479,7 @@ public final class Perceptron extends javax.swing.JFrame {
      * @param g 
      */
     public void paint(Graphics g) {
-        if (g instanceof Graphics2D) g=fast((Graphics2D)g);
+        if (g instanceof Graphics2D graphics2D) g=fast(graphics2D);
         Rectangle b = getPerceptBounds();
         if (null!=buf && null!=buf.out && null!=buf.out.img && null!=g)
             g.drawImage(buf.buf.img,b.x,b.y,b.width,b.height,null);
@@ -719,17 +716,17 @@ public final class Perceptron extends javax.swing.JFrame {
         rtext(g,render_time+" ms render time",x,y-=dy,info_α);
         rtext(g,cache_time+" ms cache time",x,y-=dy,info_α);
         switch (fractal.offset_mode) {
-            case Map.LOCKED  :rtext(g,"(constant locked at 0)",x,y-=dy,info_α); break;
-            case Map.POSITION:rtext(g,fractal.offset+" c"     ,x,y-=dy,info_α); break;
-            case Map.VELOCITY:rtext(g,fractal.offset+" dc/dt" ,x,y-=dy,info_α); break;
+            case Map.LOCKED   -> rtext(g,"(constant locked at 0)",x,y-=dy,info_α);
+            case Map.POSITION -> rtext(g,fractal.offset+" c"     ,x,y-=dy,info_α);
+            case Map.VELOCITY -> rtext(g,fractal.offset+" dc/dt" ,x,y-=dy,info_α);
         }
         switch (fractal.rotate_mode) {
-            case Map.LOCKED  :rtext(g,"(rotation locked at 1)",x,y-=dy,info_α);break;
-            case Map.POSITION:rtext(g,fractal.rotation.over(complex.I)+" ρ",x,y-=dy,info_α);break;
-            case Map.VELOCITY:
+            case Map.LOCKED -> rtext(g,"(rotation locked at 1)",x,y-=dy,info_α);
+            case Map.POSITION -> rtext(g,fractal.rotation.over(complex.I)+" ρ",x,y-=dy,info_α);
+            case Map.VELOCITY -> {
                 rtext(g,arg(fractal.rotation)*.01f+" dθ/dt",x,y-=dy,info_α);
                 rtext(g,mod(fractal.rotation)+" r",x,y-=dy,info_α);
-                break;
+            }
         }
         if (fractal.grad_mode>0) {
             rtext(g,fractal.gslope+" grad slope",x,y-=dy,info_α);
@@ -798,7 +795,7 @@ public final class Perceptron extends javax.swing.JFrame {
                 System.err.println("Error in drawNotifications "+n.s);
                 e.printStackTrace();
             }
-        };
+        }
         notifications.removeAll(remove);
         // Make room for the montior information, which has up to 11 lines
         int monitor_height = show_monitor? LINEHEIGHT*13 : 0; 

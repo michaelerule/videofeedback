@@ -68,6 +68,7 @@ public class Matrix {
      * @param elements
      * @return
      */
+    @SuppressWarnings("ManualArrayToCollectionCopy")
     public static float[][] diag(float... elements) {
         int N = elements.length;
         float [][] result = new float[N][N];

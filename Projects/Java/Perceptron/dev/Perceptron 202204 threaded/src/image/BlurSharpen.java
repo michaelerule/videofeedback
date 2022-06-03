@@ -1,11 +1,7 @@
 package image;
 
-import image.DoubleBuffer;
 import java.awt.image.DataBuffer;
 import static util.Misc.clip;
-import static color.ColorUtil.mean;
-import static color.ColorUtil.mean;
-import static color.ColorUtil.blend;
 import static color.ColorUtil.blend;
 
 /**
@@ -128,7 +124,6 @@ public class BlurSharpen {
         int W = buffer.out.w;
         int H = buffer.out.h;
         horizontalBlur12();
-        int B = 256 - A;
         // Blur columns, saving in the output buffer
         int H2 = H-2;
         for (int x=0; x<W; x++) {
@@ -242,7 +237,6 @@ public class BlurSharpen {
         int W = buffer.out.w;
         int H = buffer.out.h;
         horizontalBlur24();
-        int B = 256 - A;
         // Blur columns, saving in the output buffer
         int H2 = H-2;
         for (int x=0; x<W; x++) {

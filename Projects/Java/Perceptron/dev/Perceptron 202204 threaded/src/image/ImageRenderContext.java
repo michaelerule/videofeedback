@@ -4,7 +4,6 @@
  */
 package image;
 
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import static java.awt.image.BufferedImage.TYPE_INT_RGB;
@@ -81,20 +80,14 @@ public class ImageRenderContext
 
     /**
      *
-     * @param inter
-     * @param reflect
+     * @param ip
+     * @param ref
      */
-    public final void setInterpolatedAndReflected(boolean inter, int reflect) {
-        switch (reflect) {
-            case 0:
-                get = inter? samplers.getReflect8Bit : samplers.getReflect;
-                break;
-            case 1:
-                get = inter? samplers.getWrap8Bit : samplers.getWrap;
-                break;
-            case 2:
-                get = inter? samplers.getTriangle8Bit : samplers.getTriangle;
-                break;
+    public final void setInterpolatedAndReflected(boolean ip, int ref) {
+        switch (ref) {
+            case 0 -> get = ip? samplers.getReflect8Bit : samplers.getReflect;
+            case 1 -> get = ip? samplers.getWrap8Bit : samplers.getWrap;
+            case 2 -> get = ip? samplers.getTriangle8Bit : samplers.getTriangle;
         }
         if (is_scaled)    
             get = samplers.makeScaledGrabber(get, scale);

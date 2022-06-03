@@ -2,7 +2,6 @@ package rendered;
 /* TreeForm.java
  * Created on March 7, 2007, 12:16 PM
  */
-import static java.lang.Math.max;
 import color.ColorUtil;
 import util.Matrix;
 import static util.Misc.clip;

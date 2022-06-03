@@ -41,12 +41,12 @@ import static util.Sys.sout;
 /**
  * @author Michael Everett Rule
  */
-public class Map {
+public final class Map {
        
     // Experimental: render scanlines in parallel
     // we limit this to two threads to avoid overloading the system
     //ExecutorService executor = newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-    ExecutorService ex = newFixedThreadPool(8);
+    ExecutorService ex = newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     
     // Desired rectangular span of complex plane on screen
     // Changing this changes everything! Presets break. 
@@ -140,7 +140,7 @@ public class Map {
         outi = wrap(outi, outops.length);
         grad_mode = wrap(grad_mode, grad_modes.length);
         syncOps();
-        if (!maps.isEmpty()) mapping = maps.get(map_i %= maps.size());
+        if (maps!=null && !maps.isEmpty()) mapping = maps.get(map_i %= maps.size());
         // Prepare the gradient maps
         int hW = W/2, hH=H/2;
         grads = new char[9][MLEN];
@@ -337,23 +337,19 @@ public class Map {
                 scanMirror((a,b)->{scanline(a,b,CX,CY,R,f1);});
             }
             private int[] getOffset() {
-                switch (offset_mode) {
-                    case POSITION: return new int[]{
-                        (int)(.5f+256*normc[0]),
-                        (int)(.5f+256*normc[1])}; 
-                    case VELOCITY: return new int[]{
+                return switch (offset_mode) {
+                    case POSITION -> new int[]{(int)(.5f+256*normc[0]), (int)(.5f+256*normc[1])};
+                    case VELOCITY -> new int[]{
                         (int)(.5f+256*((dr=(abs(dr)>MAXC)?0:dr+.1f*normc[0]))),
                         (int)(.5f+256*((di=(abs(di)>MAXC)?0:di+.1f*normc[1])))};
-                    default: return new int[]{0,0};
-                }
+                    default -> new int[]{0,0};
+                };
             }
             private complex getRotation() {
                 switch (rotate_mode) {
-                    case POSITION: return new complex(rotation);
-                    case LOCKED:   return polar(1f,(float)PI_OVER_TWO); 
-                    case VELOCITY: 
-                        theta += arg(rotation)*.01f; 
-                        return polar(mod(rotation),theta);
+                    case POSITION -> {return new complex(rotation);}
+                    case LOCKED   -> {return polar(1f,(float)PI_OVER_TWO);}
+                    case VELOCITY -> {theta += arg(rotation)*.01f;return polar(mod(rotation),theta);}
                 }
                 return null;
             }            
@@ -424,7 +420,7 @@ public class Map {
         for (int i=0;i<N;i++) f[i]=ex.submit(fn[i]);
         for (int i=0;i<N;i++) try {
             f[i].get();
-        } catch (InterruptedException | ExecutionException ex) {
+        } catch (InterruptedException | ExecutionException ex2) {
             fn[i].run();
         }
     }
@@ -465,12 +461,11 @@ public class Map {
     }
     private void scanMirror(BiConsumer<Integer,Integer> fn) {
         switch (mirror_mode) {
-            case MIRROR_OFF:        scanAll   (fn); break;
-            case MIRROR_HORIZONTAL: scanLeft  (fn); break;
-            case MIRROR_VERTICAL: 
-            case MIRROR_TURN:       scanTop   (fn); break;
-            case MIRROR_QUADRANT:   scanCorner(fn); break;
-            default: throw new RuntimeException("Mirror should be in 0..3");
+            case MIRROR_OFF                   -> scanAll (fn);
+            case MIRROR_HORIZONTAL            -> scanLeft(fn);
+            case MIRROR_VERTICAL, MIRROR_TURN -> scanTop (fn);
+            case MIRROR_QUADRANT              -> scanCorner(fn);
+            default -> throw new RuntimeException("Mirror should be in 0..3");
         }
     }
     
@@ -530,9 +525,7 @@ public class Map {
             int fx = fxy[i*2];
             int fy = fxy[i*2+1];
             int c;
-            boolean out = in[i]== invert_bound;
-            int o = out?1:0;
-            if (out) {
+            if (in[i]== invert_bound) {
                 // out of bounds (unless boundary test is inverted)
                 c = outop.f(fx,fy,i,rate[i]);
                 c^= color_mask;  
@@ -695,11 +688,9 @@ public class Map {
     public void setNormalizedRotation(float x, float y) {
         rotation.real = ((W - x) / z2W + UL.real);
         rotation.imag = ((H - y) / z2H + UL.imag);
-        float theta = complex.arg(rotation);
-        float r = complex.mod(rotation) * 2; 
-        inverse_radius = complex.mod(rotation);
+        inverse_radius = rotation.length();
         radius = 1 / inverse_radius;
-        rotation = complex.polar(1 / r, theta);   
+        rotation = complex.polar(.5f / rotation.length() , rotation.angle());   
     }
     final static ComplexContex vars = ComplexContex.standard();
     public static abstract class Mapping {

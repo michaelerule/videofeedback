@@ -16,12 +16,12 @@ public class RGB15 extends RGB {
         UNIT  = 1 << SHIFT, // 32
         MASK  = UNIT -  1,  // 31
         ROUND = MASK >> 1,  // 16
-        R5 = 0b0000001111100000000000000000000,
-        G5 = 0b0000000000000000111110000000000,
-        B5 = 0b0000000000000000000000000011111,
-        W5 = 0b0000001111100000111110000011111,
-        O5 = 0b0000000000100000000010000000001,
-        E5 = O5*ROUND;
+        R05 = 0b0000001111100000000000000000000,
+        G05 = 0b0000000000000000111110000000000,
+        B05 = 0b0000000000000000000000000011111,
+        W05 = 0b0000001111100000111110000011111,
+        O05 = 0b0000000000100000000010000000001,
+        E05 = O05*ROUND;
     
     // Colors for int050505 format
     public final static int
@@ -41,7 +41,7 @@ public class RGB15 extends RGB {
      * @return 
      */
     public final int blend(int c1, int c2, int w) {
-        return W5 & (c2 + ( (c1-c2)*w + E5 >> SHIFT ));
+        return W05 & (c2 + ( (c1-c2)*w + E05 >> SHIFT ));
     }
     
     /**
@@ -51,7 +51,7 @@ public class RGB15 extends RGB {
      * @return 
      */
     public int mean(int c1, int c2) {
-        return W5 & (c1 + c2 >> 1);
+        return W05 & (c1 + c2 >> 1);
     }
     
     /**
@@ -71,7 +71,7 @@ public class RGB15 extends RGB {
         int p = ux*uy + ROUND >> SHIFT;
         int q = wx*uy + ROUND >> SHIFT;
         int r = ux*wy + ROUND >> SHIFT;
-        return W5&(c11+((c00-c11)*p+(c01-c11)*q+(c10-c11)*r+E5>>SHIFT));
+        return W05&(c11+((c00-c11)*p+(c01-c11)*q+(c10-c11)*r+E05>>SHIFT));
     }
     
     /**
@@ -85,7 +85,7 @@ public class RGB15 extends RGB {
      */
     public void composeBlend(int[] result, int c1, int w1, int c2, int w2) {
         w1 -= (w2 * w1 >> 5);
-        result[0] = W5 & (c1*w1 + c2*w2 + E5 >> 5);
+        result[0] = W05 & (c1*w1 + c2*w2 + E05 >> 5);
         result[1] = w1 + w2;
     }
     
@@ -98,7 +98,7 @@ public class RGB15 extends RGB {
      * @param w 
      */
     public void composePremultiplied(int[] result, int c, int a, int q, int w) {
-        result[0] = W5 & (c + ((q-c)*w + E5 >> SHIFT));
+        result[0] = W05 & (c + ((q-c)*w + E05 >> SHIFT));
         result[1] = w + a - (w * a >> SHIFT);
     }
 

@@ -11,7 +11,6 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import static java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment;
-import java.awt.HeadlessException;
 import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -47,6 +46,7 @@ public class Sys {
 
     /** 
      * Make windowed, "not fullscreen".
+     * @param j
      */
     public static void makeNotFullscreen(JFrame j) {
         GraphicsDevice g = getLocalGraphicsEnvironment().getDefaultScreenDevice();

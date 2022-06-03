@@ -97,7 +97,6 @@ public class Fullscreen {
      * @return 
      */
     public static GraphicsDevice getScreen(JFrame j){
-        GraphicsConfiguration gc = j.getGraphicsConfiguration();
         Rectangle window = j.getBounds();
         float x = window.x + .5f*window.width;
         float y = window.y + .5f*window.height;
@@ -143,6 +142,7 @@ public class Fullscreen {
      * Sets whether to draw the window borders on a JFrame.
      * @param j
      * @param frame_on 
+     * @param preserve_size 
      */
     public static void setFrame(JFrame j, boolean frame_on, boolean preserve_size) {
         if (!isEventDispatchThread()) {

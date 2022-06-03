@@ -84,8 +84,7 @@ public class Parse {
     {
         ArrayList<Settings> presets = new ArrayList<>();
         //Create exc FileReader for reading the file
-        try {
-            BufferedReader in = new BufferedReader(new FileReader(settings_path));
+        try (BufferedReader in = new BufferedReader(new FileReader(settings_path))) {
             String thisLine;
             while ((thisLine = in.readLine()) != null) {
                 if (thisLine.length() > 0 && thisLine.charAt(0) != '*') {
@@ -102,15 +101,15 @@ public class Parse {
                                 System.out.println("map : "+val);
                             } catch (Exception e) {
                                 e.printStackTrace();
-                            } 
+                            }
                         } else {
                             //parse primitive
                             Object value = Parse.bestEffortParse(val);
                             if (null != value)
                                 try {
                                     P.getClass().getField(var).set(P,value);
-                                } catch (NoSuchFieldException 
-                                        | SecurityException 
+                                } catch (NoSuchFieldException
+                                        | SecurityException
                                         | IllegalArgumentException
                                         | IllegalAccessException ex) {
                                     System.err.println("I could not set "+var+" to "+val+"; parsed as "+value);
@@ -120,7 +119,6 @@ public class Parse {
                     }
                 }
             }
-            in.close();
         } catch (IOException ex) {
             System.err.println("Error reading settings file");
             Logger.getLogger(Perceptron.class.getName()).log(Level.SEVERE,null,ex);
@@ -130,11 +128,9 @@ public class Parse {
         sort(fileList);
         for (String name : fileList) {
             if (name.endsWith(".state")) {
-                try {
-                    BufferedReader in = new BufferedReader(new FileReader(new File(presets_path+name)));
+                try (BufferedReader in = new BufferedReader(new FileReader(new File(presets_path+name)))) {
                     System.out.println("parsing preset "+name+":");
                     presets.add(Settings.parse(name, in));
-                    in.close();
                 } catch (FileNotFoundException ex) {
                     System.err.println("Could not find preset file "+name);
                     Logger.getLogger(Perceptron.class.getName()).log(Level.SEVERE,null,ex);

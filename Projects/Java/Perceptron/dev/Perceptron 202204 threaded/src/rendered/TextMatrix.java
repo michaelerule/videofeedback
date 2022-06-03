@@ -11,7 +11,6 @@ import java.awt.font.GlyphVector;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import perceptron.Perceptron;
 import static util.Misc.wrap;
 
 /**
@@ -63,15 +62,13 @@ public class TextMatrix {
         g.setFont(F);
         int k = 0;
         for (int j = 0; j < ROWS; j++) {
-            for (int i = 0; i < COLUMNS; i++) {
-                String CHAR = "" + buf[k];
+            for (int i = 0; i < COLUMNS; i++) {String CHAR = "" + buf[k];
                 k = (k + 1) % buf.length;
                 g.setColor(new Color(COLORS[(int) (Math.random() * COLORS.length)]));
                 GlyphVector G = g.getFont().createGlyphVector(g.getFontRenderContext(),CHAR);
                 g.drawGlyphVector(G, 
                     (int) ((double) i * W / COLUMNS + XOFF), 
-                    (int) ((double) j * H / ROWS1 + YOFF));
-            }
+                    (int) ((double) j * H / ROWS1 + YOFF));}
         }
         g.setColor(new Color(COLORS[(int) (Math.random() * COLORS.length)]));
         g.drawString("" + buf[I], 
@@ -96,11 +93,9 @@ public class TextMatrix {
         try {
             BufferedReader infile = new BufferedReader(new FileReader(string));
             read = infile.read();
-            while (read > 0 && bufferSourceIndex < buf.length) {
-                buf[bufferSourceIndex % buf.length] = ' ';
+            while (read > 0 && bufferSourceIndex < buf.length) {buf[bufferSourceIndex % buf.length] = ' ';
                 read = infile.read();
-                bufferSourceIndex++;
-            }
+                bufferSourceIndex++;}
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -118,14 +113,11 @@ public class TextMatrix {
     
     void makeRoom() {
         for (int i=I; i<LENGTH-1; i++) {
-            if (buf[i]==' ' && buf[i+1]==' ') {
-                // There is room. 
+            if (buf[i]==' ' && buf[i+1]==' ') {// There is room. 
                 // Move text between here and cursor to the right. 
-                for (int j=i+1; j>=I; j--) {
-                    buf[j]=buf[j-1];
+                for (int j=i+1; j>=I; j--) {    buf[j]=buf[j-1];
                 }
-                return;
-            }
+                return;}
         }
     }
     
@@ -139,44 +131,40 @@ public class TextMatrix {
      */
     public void append(char c) {
         switch (c) {
-            case 0: break; // null
-            case 1: break; // start heading
-            case 2: break; // start text
-            case 3: break; // end text
-            case 4: break; // end transmit
-            case 5: break; // query
-            case 6: break; // ack
-            case 7: break; // bell
-            case '\b': backspace(); break;
-            // Ignore tab; this is used to switch focus
-            case '\t': break; //append("    "); break;
-            case '\n': down(); home(); break;
-            case 0x0b: down(); break; // vertical tab
-            case '\f': down(); home(); break;
-            case '\r': home(); break;
-            case 0x0e: break; // shift out
-            case 0x0f: break; // shift in
-            case 0x10: break; // datalink escape
-            case 0x11: break; // device control 1
-            case 0x12: break; // device control 2
-            case 0x13: break; // device control 3
-            case 0x14: break; // device control 4
-            case 0x15: break; // negack
-            case 0x16: break; // sync
-            case 0x17: break; // end transmit
-            case 0x18: break; // cancel
-            case 0x19: break; // end medium
-            case 0x1a: break; // substitute
-            case 0x1b: break; // escape
-            case 0x1c: break; // file sep
-            case 0x1d: break; // grp sep
-            case 0x1e: break; // rcd sep
-            case 0x1f: break; // unit sep
-            case 0x7f: delete(); break; // delete
-            default: 
-            if (insert) makeRoom();
-            buf[I] = c;
-            I = wrap(I+1,buf.length);
+            case 0 -> {}// null
+            case 1 -> {}// start heading
+            case 2 -> {}// start text
+            case 3 -> {}// end text
+            case 4 -> {}// end transmit
+            case 5 -> {}// query
+            case 6 -> {}// ack
+            case 7 -> {}// bell
+            case '\b' -> backspace();
+            case '\t' -> {}// Ignore tab; this is used to switch focus
+            case '\n' -> {down(); home();}//append("    "); break;
+            case 0x0b -> down();// vertical tab
+            case '\f' -> {down(); home();}
+            case '\r' -> home();
+            case 0x0e -> {}// shift out
+            case 0x0f -> {}// shift in
+            case 0x10 -> {}// datalink escape
+            case 0x11 -> {}// device control 1
+            case 0x12 -> {}// device control 2
+            case 0x13 -> {}// device control 3
+            case 0x14 -> {}// device control 4
+            case 0x15 -> {}// negack
+            case 0x16 -> {}// sync
+            case 0x17 -> {}// end transmit
+            case 0x18 -> {}// cancel
+            case 0x19 -> {}// end medium
+            case 0x1a -> {}// substitute
+            case 0x1b -> {}// escape
+            case 0x1c -> {}// file sep
+            case 0x1d -> {}// grp sep
+            case 0x1e -> {}// rcd sep
+            case 0x1f -> {}// unit sep
+            case 0x7f -> delete();// delete
+            default -> {if (insert) makeRoom();buf[I]=c;I=wrap(I+1,buf.length);}
         }
     }
 

@@ -182,7 +182,7 @@ public class ImageRGB15 extends RGB15 {
         if (x<0 || x>=w || y<0 || y>=h) throw new IllegalArgumentException(
                 "point ("+x+","+y+") out of range for "+w+"x"+h+" image");
         if (frozen) throw new RuntimeException(PLEASE_THAW);
-        data[x+y*w]=c&W5;
+        data[x+y*w]=c&W05;
     }
     
     

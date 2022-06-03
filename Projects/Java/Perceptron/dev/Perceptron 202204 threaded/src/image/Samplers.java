@@ -352,14 +352,14 @@ public class Samplers {
             int code = (row+col)%3;
             if (upper) code = 5-code;
             switch (code) {
-                case 0: case 4: px = x; break;
-                case 1: case 5: px = qy; break;
-                case 2: case 3: px = b81-x-qy; break;
+                case 0, 4 -> px = x;
+                case 1, 5 -> px = qy;
+                case 2, 3 -> px = b81-x-qy;
             }
             switch (code) {
-                case 0: case 3: py = h81-y; break;
-                case 2: case 5: py = h81-qx; break;
-                case 1: case 4: py = y+qx; break;
+                case 0, 3 -> py = h81-y;
+                case 2, 5 -> py = h81-qx;
+                case 1, 4 -> py = y+qx;
             }
             px += ((h81-py)*148+127>>8)+xshift;
             return new int[]{px,py};

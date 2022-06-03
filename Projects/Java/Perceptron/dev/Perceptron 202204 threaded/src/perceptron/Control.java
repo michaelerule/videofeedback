@@ -324,12 +324,8 @@ public final class Control extends MouseAdapter implements KeyListener {
         }
         
         /** 
-         * Move mouse to cursor if mouse is within window.
-         * 
-         * We need a few different behaviors: 
-         * - When toggling fullscreen or window borders, always set the mouse 
-         *   to DESTINATION of the current cursor
-         * - When moving to a new cursor, sometimes ... hmm
+         * hmm
+         * @param careful
          **/
         public synchronized void catchup(boolean careful) {
             if (this!=current) return;
@@ -351,13 +347,13 @@ public final class Control extends MouseAdapter implements KeyListener {
             // - Offset relative to location of Perceptron JFrame (b)
             // The padding by 3 is to prevent us from moving outside the window
             Rectangle p = P.getPerceptBounds();
-            int x = clip(to.x,3,P.screen_width -3)*(p.width /P.screen_width )+p.x+b.x;
-            int y = clip(to.y,3,P.screen_height-3)*(p.height/P.screen_height)+p.y+b.y;
+            int mx = clip(to.x,3,P.screen_width -3)*(p.width /P.screen_width )+p.x+b.x;
+            int my = clip(to.y,3,P.screen_height-3)*(p.height/P.screen_height)+p.y+b.y;
             
             // Don't move if the mouse is in the right spot
-            if (m.x==x && m.y==y) return;
+            if (m.x==mx && m.y==my) return;
             
-            moveMouse(x,y);
+            moveMouse(mx,my);
         }
 
         /** 
@@ -547,8 +543,8 @@ public final class Control extends MouseAdapter implements KeyListener {
     public synchronized void mousePressed(MouseEvent e) {
         P.poke();
         switch (e.getButton()) {
-            case MouseEvent.BUTTON1: cursorSelection( 1); return;
-            case MouseEvent.BUTTON3: cursorSelection(-1); return;
+            case MouseEvent.BUTTON1 -> cursorSelection( 1);
+            case MouseEvent.BUTTON3 -> cursorSelection(-1);
         }
     }
     
@@ -588,103 +584,105 @@ public final class Control extends MouseAdapter implements KeyListener {
         if (F==null) return;
         
         switch (c) {
-            //case '\t':break; // Handled in keyPressed
-            case ' ':
-            case '`':P.toggleRunning(); break;
-            case '~':break;
-            case '1':F.setMap("i*ln(z)/2/P*w"); break;
-            case '!':F.setMap("ln(z)/2/P*h"); break;
-            case '2':F.setMap("i*ln(z)/P*w"); break;
-            case '@':F.setMap("ln(z)/P*h"); break;
-            case '3':F.setMap("3*i*ln(z)/2/P*w"); break;
-            case '#':case '£':F.setMap("3*ln(z)/2/P*h"); break;
-            case '4':F.setMap("4*i*ln(z)/2/P*w"); break;
-            case '$':F.setMap("4*ln(z)/2/P*h"); break;
-            case '5':F.setMap("z/abs(sqrt((absz)^2-1.5))"); break;
-            case '%':F.setMap("z^(1.5)"); break;
-            case '6':F.setMap("z-(z^3-1)/(3*z^2)"); break;
-            case '^':F.setMap("z-(z^4-1)/(4*z^3)"); break;
-            case '7':F.setMap("i*ln(z)/(2p)*sqrt(w*w+h*h)*e^(i*atan(h/w))");break;
-            case '&':P.tree.toggleLeaves(); break;
-            case '8':F.setMap("2*i*ln(z)/(2p)*sqrt(w*w+h*h)*e^(i*atan(h/w))");break;
-            case '*':P.tree.toggleSymmetry(); break;
-            case '9':F.setMap("i*ln(z)/(2p)*sqrt(w*w*9+h*h)*e^(i*atan(h/w/3))");break;
-            case '0':F.setMap("2*i*ln(z)/(2p)*sqrt(w*w*9+h*h)*e^(i*atan(h/w/3))");break;
-            case '(':F.nextNoise(-8);break;
-            case ')':F.nextNoise(8);break;
-            case '-':current.adjustSpeed(-1); break;
-            case '_':P.draw_top_bars = !P.draw_top_bars; break;
-            case '=':
-            case '+':current.adjustSpeed(1); break;
-            case 'q':F.nextMap(1); break;
-            case 'Q':F.nextMap(-1);break;
-            case 'w':F.nextOutside(1); break;
-            case 'W':F.nextOutside(-1); break;
-            case 'e':F.nextBound(1); break;
-            case 'E':F.nextBound(-1); break;
-            case 'r':P.buf.nextReflection(1); F.cache.map_stale.set(true); break;
-            case 'R':F.invert_bound=!F.invert_bound; break;
-            case 't':setTree(!P.draw_tree); break;
-            case 'T':P.toggleObjectsOnTop(); break;
-            case 'y':F.nextOutColor(1); break;
-            case 'Y':F.nextOutColor(-1); break;
-            case 'u':P.toggleShowFramerate(); break;
-            case 'U':P.toggleCapFramerate(); break;
-            case 'i':P.nextImage(1); break;
-            case 'I':P.nextImage(-1); break;
-            case 'o':F.nextOrthoMode(1); break;
-            case 'O':F.nextOrthoMode(-1); break;
-            case 'p':F.nextPolarMode(1); break;
-            case 'P':F.nextPolarMode(-1); break;
-            case '[':F.nextBarColor(1); break;
-            case ']':F.nextBarColor(-1); break;
-            case '{':current.removeDot(); break;
-            case '}':current.addDot(); break;
-            case '\\':P.rotate_images=!P.rotate_images; break;
-            case '|':P.draw_side_bars=!P.draw_side_bars; break;
-            case 'a':P.mic.nextVis(1); break;
-            case 'A':P.mic.setActive(!P.mic.isActive()); break;
-            case 's':P.draw_dino=!P.draw_dino; break;
-            case 'S':P.save();                 break;
-            case 'd':F.nextColorDamp( 8);      break;
-            case 'D':F.nextColorDamp(-8);      break;
-            case 'f':F.nextGColor1(1);         break;
-            case 'F':F.nextGColor2(1);         break;
-            case 'g':F.nextGradient( 1);       break;
-            case 'G':F.nextGradient(-1);       break;
-            case 'h':F.nextGradientShape(1);   break;
-            case 'H':F.nextGradientShape(-1);  break;
-            case 'j':F.toggleInversion();      break;
-            case 'J':F.toggleFeedbackInvert(); break;
-            case 'k':P.fore_tint=!P.fore_tint; break;
-            case 'K':P.do_color_transform=!P.do_color_transform;break;
-            case 'l':P.buf.toggleInterpolation(); F.cache.map_stale.set(true); break;
-            case 'L':P.toggleAntialias(); break;
-            case ';' :P.hue_rate = wrap(P.hue_rate-4,256); break;
-            case '\'':P.hue_rate = wrap(P.hue_rate+4,256); break;
-            case ':' :P.sat_rate = clip(P.sat_rate-4,-256,256); break;
-            case '"' :P.sat_rate = clip(P.sat_rate+4,-256,256); break;
-            case ',' :P.con_rate = clip(P.con_rate-4,-256,256); break;
-            case '.' :P.con_rate = clip(P.con_rate+4,-256,256); break;
-            case '<' :P.bri_rate = clip(P.bri_rate-4,-256,256); break;
-            case '>' :P.bri_rate = clip(P.bri_rate+4,-256,256); break;
-            case 'z':F.nextTintColor( 1); break;
-            case 'Z':F.nextTintColor(-1); break;
-            case 'x':F.nextTintLevel( 8); break;
-            case 'X':F.nextTintLevel(-8); break;
-            case 'c':draw_cursors = !draw_cursors; break;
-            case 'C':draw_futures = !draw_futures; break;
-            case 'v':if (current!=null) current.toggleWander(); break;
-            case 'V':toggleScreensaver(); break;
-            case 'b':P.text.toggle(); break;
-            case 'B':P.text.toggleCursor(); break;
-            case 'n':break;
-            case 'N':P.show_notices =!P.show_notices; break;
-            case 'm':F.nexMirrorMode(1); break;
-            case 'M':P.draw_moths = !P.draw_moths; break;
-            case '/':
-            case '?':P.toggleShowHelp(); break;
+            case ' ', '`' -> P.toggleRunning();
+            case '~' -> {}
+            case '1' -> F.setMap("i*ln(z)/2/P*w");
+            case '!' -> F.setMap("ln(z)/2/P*h");
+            case '2' -> F.setMap("i*ln(z)/P*w");
+            case '@' -> F.setMap("ln(z)/P*h");
+            case '3' -> F.setMap("3*i*ln(z)/2/P*w");
+            case '#', '£' -> F.setMap("3*ln(z)/2/P*h");
+            case '4' -> F.setMap("4*i*ln(z)/2/P*w");
+            case '$' -> F.setMap("4*ln(z)/2/P*h");
+            case '5' -> F.setMap("z/abs(sqrt((absz)^2-1.5))");
+            case '%' -> F.setMap("z^(1.5)");
+            case '6' -> F.setMap("z-(z^3-1)/(3*z^2)");
+            case '^' -> F.setMap("z-(z^4-1)/(4*z^3)");
+            case '7' -> F.setMap("i*ln(z)/(2p)*sqrt(w*w+h*h)*e^(i*atan(h/w))");
+            case '&' -> P.tree.toggleLeaves();
+            case '8' -> F.setMap("2*i*ln(z)/(2p)*sqrt(w*w+h*h)*e^(i*atan(h/w))");
+            case '*' -> P.tree.toggleSymmetry();
+            case '9' -> F.setMap("i*ln(z)/(2p)*sqrt(w*w*9+h*h)*e^(i*atan(h/w/3))");
+            case '0' -> F.setMap("2*i*ln(z)/(2p)*sqrt(w*w*9+h*h)*e^(i*atan(h/w/3))");
+            case '(' -> F.nextNoise(-8);
+            case ')' -> F.nextNoise(8);
+            case '-' -> current.adjustSpeed(-1);
+            case '_' -> P.draw_top_bars = !P.draw_top_bars;
+            case '=', '+' -> current.adjustSpeed(1);
+            case 'q' -> F.nextMap(1);
+            case 'Q' -> F.nextMap(-1);
+            case 'w' -> F.nextOutside(1);
+            case 'W' -> F.nextOutside(-1);
+            case 'e' -> F.nextBound(1);
+            case 'E' -> F.nextBound(-1);
+            case 'r' -> {P.buf.nextReflection(1); F.cache.map_stale.set(true);}
+            case 'R' -> F.invert_bound=!F.invert_bound;
+            case 't' -> setTree(!P.draw_tree);
+            case 'T' -> P.toggleObjectsOnTop();
+            case 'y' -> F.nextOutColor(1);
+            case 'Y' -> F.nextOutColor(-1);
+            case 'u' -> P.toggleShowFramerate();
+            case 'U' -> P.toggleCapFramerate();
+            case 'i' -> P.nextImage(1);
+            case 'I' -> P.nextImage(-1);
+            case 'o' -> F.nextOrthoMode(1);
+            case 'O' -> F.nextOrthoMode(-1);
+            case 'p' -> F.nextPolarMode(1);
+            case 'P' -> F.nextPolarMode(-1);
+            case '[' -> F.nextBarColor(1);
+            case ']' -> F.nextBarColor(-1);
+            case '{' -> current.removeDot();
+            case '}' -> current.addDot();
+            case '\\' -> P.rotate_images=!P.rotate_images;
+            case '|' -> P.draw_side_bars=!P.draw_side_bars;
+            case 'a' -> P.mic.nextVis(1);
+            case 'A' -> P.mic.setActive(!P.mic.isActive());
+            case 's' -> P.draw_dino=!P.draw_dino;
+            case 'S' -> P.save();
+            case 'd' -> F.nextColorDamp( 8);
+            case 'D' -> F.nextColorDamp(-8);
+            case 'f' -> F.nextGColor1(1);
+            case 'F' -> F.nextGColor2(1);
+            case 'g' -> F.nextGradient( 1);
+            case 'G' -> F.nextGradient(-1);
+            case 'h' -> F.nextGradientShape(1);
+            case 'H' -> F.nextGradientShape(-1);
+            case 'j' -> F.toggleInversion();
+            case 'J' -> F.toggleFeedbackInvert();
+            case 'k' -> P.fore_tint=!P.fore_tint;
+            case 'K' -> P.do_color_transform=!P.do_color_transform;
+            case 'l' -> {
+                P.buf.toggleInterpolation(); F.cache.map_stale.set(true);
+            }
+            case 'L' -> P.toggleAntialias();
+            case ';' -> P.hue_rate = wrap(P.hue_rate-4,256);
+            case '\'' -> P.hue_rate = wrap(P.hue_rate+4,256);
+            case ':' -> P.sat_rate = clip(P.sat_rate-4,-256,256);
+            case '"' -> P.sat_rate = clip(P.sat_rate+4,-256,256);
+            case ',' -> P.con_rate = clip(P.con_rate-4,-256,256);
+            case '.' -> P.con_rate = clip(P.con_rate+4,-256,256);
+            case '<' -> P.bri_rate = clip(P.bri_rate-4,-256,256);
+            case '>' -> P.bri_rate = clip(P.bri_rate+4,-256,256);
+            case 'z' -> F.nextTintColor( 1);
+            case 'Z' -> F.nextTintColor(-1);
+            case 'x' -> F.nextTintLevel( 8);
+            case 'X' -> F.nextTintLevel(-8);
+            case 'c' -> draw_cursors = !draw_cursors;
+            case 'C' -> draw_futures = !draw_futures;
+            case 'v' -> {
+                if (current!=null) current.toggleWander();
+            }
+            case 'V' -> toggleScreensaver();
+            case 'b' -> P.text.toggle();
+            case 'B' -> P.text.toggleCursor();
+            case 'n' -> {
+            }
+            case 'N' -> P.show_notices =!P.show_notices;
+            case 'm' -> F.nexMirrorMode(1);
+            case 'M' -> P.draw_moths = !P.draw_moths;
+            case '/', '?' -> P.toggleShowHelp();
         }
+        //case '\t':break; // Handled in keyPressed
         syncCursors();
     }
     
@@ -837,17 +835,17 @@ public final class Control extends MouseAdapter implements KeyListener {
             // keyTyped handles backspace and delete
             // Some other commands handled if isControlDown()
             switch (code) {
-                case VK_TAB      : text_mode=P.text.cursor_on=false; break;
-                case VK_LEFT     : P.text.left(); break;
-                case VK_RIGHT    : P.text.right(); break;
-                case VK_UP       : P.text.up(); break;
-                case VK_DOWN     : P.text.down(); break;
-                case VK_ENTER    : if (e.isShiftDown()||e.isControlDown()) P.textToMap(); break;
-                case VK_PAGE_UP  : P.text.pageUp(); break;
-                case VK_PAGE_DOWN: P.text.pageDown(); break;
-                case VK_HOME     : P.text.home(); break;
-                case VK_END      : P.text.end(); break;
-                case VK_INSERT   : P.text.toggleInsert(); break;
+                case VK_TAB -> text_mode=P.text.cursor_on=false;
+                case VK_LEFT -> P.text.left();
+                case VK_RIGHT -> P.text.right();
+                case VK_UP -> P.text.up();
+                case VK_DOWN -> P.text.down();
+                case VK_ENTER -> {if (e.isShiftDown()||e.isControlDown()) P.textToMap();}
+                case VK_PAGE_UP -> P.text.pageUp();
+                case VK_PAGE_DOWN -> P.text.pageDown();
+                case VK_HOME -> P.text.home();
+                case VK_END -> P.text.end();
+                case VK_INSERT -> P.text.toggleInsert();
             }
             return;
         } 
@@ -858,30 +856,30 @@ public final class Control extends MouseAdapter implements KeyListener {
         }
         // Neither text-entry or presets mode
         switch (code) {
-            case VK_TAB      : text_mode=P.text.on=P.text.cursor_on=true; break;
-            case VK_ENTER    : presets_mode = true; break;
-            case VK_UP       : F.setMotionBlur(F.motion_blur + 16); break;
-            case VK_DOWN     : F.setMotionBlur(F.motion_blur - 16); break;
-            case VK_LEFT     : P.setBlurWeight(P.blursharp_rate-16); break;
-            case VK_RIGHT    : P.setBlurWeight(P.blursharp_rate+16); break;
-            case VK_PAGE_UP  : P.mic.adjustVolume(0.2f); break;
-            case VK_PAGE_DOWN: P.mic.adjustVolume(-0.2f); break;
-            case VK_HOME     : P.mic.adjustSpeed(0.2f); break;
-            case VK_END      : P.mic.adjustSpeed(-0.2f); break;
-            case VK_INSERT   : break;
-            case VK_DELETE   : P.toggleAnimation(); break;
-            case VK_F1 : F.setMap("z*z"); break;
-            case VK_F2 : F.setMap("z*abs(z)"); break;
-            case VK_F3 : F.setMap("f/z+i*z"); break;
-            case VK_F4 : F.setMap("z"); break;
-            case VK_F5 : F.setMap("1/z"); break;
-            case VK_F6 : F.setMap("e^z+e^(iz)"); break;
-            case VK_F7 : F.setMap("conj(e^z+e^(z*e^(i*p/4)))"); break;
-            case VK_F8 : F.setMap("z*z*e^(i*abs(z))"); break;
-            case VK_F9 : F.setMap("abs(z)*e^(i*arg(z)*2)*2"); break;
-            case VK_F10: F.setMap("z*e^(i*abs(z))*abs(z)/f"); break;
-            case VK_F11: F.setMap("(real(z)+i*ln(abs(imag(z))))*.3/(abs(imag(z)))*"+F.W+"/"+F.H);break;
-            case VK_F12: F.setMap("(imag(z)*i+ln(abs(real(z))))*.3/(abs(real(z)))*"+F.W+"/"+F.H);break;
+            case VK_TAB -> text_mode=P.text.on=P.text.cursor_on=true;
+            case VK_ENTER -> presets_mode = true;
+            case VK_UP -> F.setMotionBlur(F.motion_blur + 16);
+            case VK_DOWN -> F.setMotionBlur(F.motion_blur - 16);
+            case VK_LEFT -> P.setBlurWeight(P.blursharp_rate-16);
+            case VK_RIGHT -> P.setBlurWeight(P.blursharp_rate+16);
+            case VK_PAGE_UP -> P.mic.adjustVolume(0.2f);
+            case VK_PAGE_DOWN -> P.mic.adjustVolume(-0.2f);
+            case VK_HOME -> P.mic.adjustSpeed(0.2f);
+            case VK_END -> P.mic.adjustSpeed(-0.2f);
+            case VK_INSERT -> {}
+            case VK_DELETE -> P.toggleAnimation();
+            case VK_F1 -> F.setMap("z*z");
+            case VK_F2 -> F.setMap("z*abs(z)");
+            case VK_F3 -> F.setMap("f/z+i*z");
+            case VK_F4 -> F.setMap("z");
+            case VK_F5 -> F.setMap("1/z");
+            case VK_F6 -> F.setMap("e^z+e^(iz)");
+            case VK_F7 -> F.setMap("conj(e^z+e^(z*e^(i*p/4)))");
+            case VK_F8 -> F.setMap("z*z*e^(i*abs(z))");
+            case VK_F9 -> F.setMap("abs(z)*e^(i*arg(z)*2)*2");
+            case VK_F10 -> F.setMap("z*e^(i*abs(z))*abs(z)/f");
+            case VK_F11 -> F.setMap("(real(z)+i*ln(abs(imag(z))))*.3/(abs(imag(z)))*"+F.W+"/"+F.H);
+            case VK_F12 -> F.setMap("(imag(z)*i+ln(abs(real(z))))*.3/(abs(real(z)))*"+F.W+"/"+F.H);
         }
         syncCursors();
     }

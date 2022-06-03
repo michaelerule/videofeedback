@@ -81,6 +81,7 @@ public abstract class RGB {
      * @param c
      * @param q
      * @param w 
+     * @return  
      */
     public abstract int blendPremultiplied(int c, int q, int w);
     

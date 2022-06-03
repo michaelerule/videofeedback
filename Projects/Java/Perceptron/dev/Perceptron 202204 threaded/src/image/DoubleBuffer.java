@@ -3,7 +3,6 @@ package image;
 //  Created by Michael Rule on 6/1/07.
 
 import java.awt.image.*;
-import perceptron.Perceptron;
 import static util.Misc.wrap;
 
 public class DoubleBuffer {
@@ -60,11 +59,7 @@ public class DoubleBuffer {
     }
 
     /**
-     * 
      * @param s
-     * @param W
-     * @param rr
-     * @param P
      */
     public synchronized void set(BufferedImage s) {
         if (s == null) return;

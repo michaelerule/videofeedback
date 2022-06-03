@@ -7,15 +7,9 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.DataBuffer;
-import static java.lang.Math.cos;
-import static java.lang.Math.max;
-import static java.lang.Math.round;
-import static java.lang.Math.sin;
 import static util.Matrix.diag;
-import static util.Misc.clip;
 import static util.Matrix.invert_3x3;
 import static util.Matrix.multiply;
-import static util.Matrix.multiply_3x3_Laderman;
 import static util.Matrix.multiply_3x3_point;
 import static util.Matrix.rotation;
 import static util.Misc.clip;
@@ -433,6 +427,8 @@ public class ColorUtil {
     /** Linear color transform.
      * 
      * @param b  databuffer RGB888
+     * @param start
+     * @param stop
      * @param hr hue adjust
      * @param sr saturation adjust
      * @param lr luminance adjust
@@ -445,10 +441,9 @@ public class ColorUtil {
             gamma= br<=.5? cr*br*2   : 2*cr*(1-br),
             beta = br<=.5? br*(1-cr) : br-cr+br*cr;
         beta *= 255;
-        float [] D = {beta,beta,beta};
         float [][] H = makeHueSatLumaOperator(hr,sr,lr);
-        float [][] B = diag(gamma,gamma,gamma);
-        H = multiply(B,H);
+        float [][] Q = diag(gamma,gamma,gamma);
+        H = multiply(Q,H);
         int beta8 = (int)(beta*256+0.5);
         int M00 = (int)(H[0][0]*256+0.5);
         int M01 = (int)(H[0][1]*256+0.5);
