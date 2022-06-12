@@ -85,6 +85,7 @@ import static util.Sys.CROSS;
 import static util.Sys.NONE;
 import static util.Sys.makeNotFullscreen;
 import static util.Fullscreen.isFullscreenWindow;
+import util.ScreenCap;
 import static util.Sys.serr;
 import static util.Sys.sout;
 
@@ -102,16 +103,17 @@ public final class Perceptron extends javax.swing.JFrame {
     public final DoubleBuffer buf;
     Graphics2D                graph2D;
     ArrayList<Mapping>        maps;
-    Settings[]                  presets;
+    Settings[]                presets;
     ImageCache                images = null;
     JFileChooser              savers;
     final Control             control;
-    final Map             fractal;
+    final Map                 fractal;
     final Tree3D              tree;
     final TextMatrix          text;
     final BlurSharpen         blursharp;
     final Moths               moths;
     final Microphone          mic;
+    final ScreenCap           cap;
     
     int image_i = 0;
     public String image_directory = "resource/images/";
@@ -124,7 +126,7 @@ public final class Perceptron extends javax.swing.JFrame {
     public int boredome_ms       = 100000;
     public int preset_rotate_ms  = 500000;
     public int screen_timeout_ms = 60000;
-    public int max_frame_length  = 1000/20;
+    public int max_frametime  = 1000/20;
     public int audio_line        = -1;
     public int min_tree_depth    = 9;
     public int max_tree_depth    = 6;
@@ -146,6 +148,7 @@ public final class Perceptron extends javax.swing.JFrame {
     public boolean draw_dino          = false;
     public boolean do_color_transform = true;
     public boolean hide_mouse         = false;
+    public boolean capture_screen     = false;
     public int     hue_rate           = 0;
     public int     sat_rate           = 0;
     public int     lum_rate           = 0;
@@ -281,6 +284,7 @@ public final class Perceptron extends javax.swing.JFrame {
         fractal         = new Map(buf,maps,this);
         moths           = new Moths(screen_width,screen_height);
         mic             = new Microphone(buf, 0); 
+        cap             = new ScreenCap();
         //mic.start();
         
         tree = new Tree3D(min_tree_depth, max_tree_depth,
@@ -353,8 +357,13 @@ public final class Perceptron extends javax.swing.JFrame {
         fractal.cache.map_stale.set(true);
         while (true) 
             if (running.get()) try {
-                long frame_started_at = currentTimeMillis();
-
+                long frame_start = currentTimeMillis();
+                
+                if (capture_screen) {
+                    buf.set(cap.getScreenshot());
+                    fractal.cache.map_stale.set(true);
+                }
+                
                 synchronized (is_fullscreen) {
                     Future<Long> runner = executor.submit(()->{
                         long start = currentTimeMillis();
@@ -380,9 +389,8 @@ public final class Perceptron extends javax.swing.JFrame {
                     frame           = 0;
                 }
                 if (cap_frame_rate) {
-                    long delta = frame_started_at + max_frame_length 
-                               - currentTimeMillis();
-                    if (delta>0) Thread.sleep(delta);
+                    long d = frame_start + max_frametime - currentTimeMillis();
+                    if (d>0) Thread.sleep(d);
                 }
 
             } catch (Exception e) {
@@ -440,7 +448,6 @@ public final class Perceptron extends javax.swing.JFrame {
         fractal.buf = buf.buf.buf;
         fractal.updateColorRegisters();
         
-        // 
         // This must be done before the copy in objects on top? 
         if (do_color_transform) colorTransform(buf.out.buf);
         drawBars();
@@ -495,11 +502,8 @@ public final class Perceptron extends javax.swing.JFrame {
         if (isFullscreenWindow(this)) {
             r = getGraphicsConfiguration().getBounds();
             r.setLocation(0,0);
-            //serr("getPerceptBounds getGraphicsConfiguration getBounds "+r);
-        } else {
+        } else 
             r = getRootPane().getBounds();
-            //serr("getPerceptBounds getRootPane getBounds "+r);
-        }
         int factor = (r.width>=2*screen_width && r.height>=2*screen_height)
                 ? min(r.width /  screen_width,   r.height /  screen_height)
                 : 1;
@@ -541,9 +545,7 @@ public final class Perceptron extends javax.swing.JFrame {
                 is_fullscreen.set(true);
                 this.repaint();
                 if (null!=control.current) control.current.catchup(false);
-            } else {
-                serr("System doesn't support full-screen");
-            }
+            } else serr("System doesn't support full-screen");
         }
         running.set(was_running);
     }
@@ -581,16 +583,14 @@ public final class Perceptron extends javax.swing.JFrame {
         float br = (1+bri_rate/256f)/2;
         
         int N = b.getSize();
-        Future t1 = executor.submit(()->{colorFilter(b,0,N/2,hr,sr,lr,cr,br); });
-        Future t2 = executor.submit(()->{colorFilter(b,N/2,N,hr,sr,lr,cr,br); });
+        Future t1 = executor.submit(()->{colorFilter(b,0,N/2,hr,sr,lr,cr,br);});
+        Future t2 = executor.submit(()->{colorFilter(b,N/2,N,hr,sr,lr,cr,br);});
         try {
             t1.get();
             t2.get();
         } catch (InterruptedException | ExecutionException ex) {
             colorFilter(b,0,b.getSize(),hr,sr,lr,cr,br); 
         }
-                    
-        
     }
     
     ////////////////////////////////////////////////////////////////////////////
@@ -641,12 +641,12 @@ public final class Perceptron extends javax.swing.JFrame {
                 write(buf.out.img,"png",new File(ap+".out.png"));
                 write(buf.buf.img,"png",new File(ap+".in.png" ));
             } catch (IOException ex) {
-                System.err.println("File write error while saving images.");
+                serr("File write error while saving images.");
             }
             try {
                 Settings.write(this,new File(ap+".state"));
             } catch (IOException ex) {
-                System.err.println("File write error while saving state.");
+                serr("File write error while saving state.");
             }
             sout("...saved.");
         } else sout("...did not save.");
@@ -660,13 +660,12 @@ public final class Perceptron extends javax.swing.JFrame {
     void drawBars() {
         final int BAR_WIDTH = 8;
         // Bars accentuate the frame edges for a nice effect
+        buf.out.g.setColor(new Color(fractal.bar_color));
         if (draw_top_bars) {
-            buf.out.g.setColor(new Color(fractal.bar_color));
             buf.out.g.fillRect(0,0,screen_width,BAR_WIDTH);
             buf.out.g.fillRect(0,screen_height - BAR_WIDTH,screen_width,BAR_WIDTH);
         }
         if (draw_side_bars) {
-            buf.out.g.setColor(new Color(fractal.bar_color));
             buf.out.g.fillRect(0,0,BAR_WIDTH,screen_height);
             buf.out.g.fillRect(screen_width-BAR_WIDTH,0,BAR_WIDTH,screen_height);
         }
@@ -802,7 +801,6 @@ public final class Perceptron extends javax.swing.JFrame {
         int max_notify = (screen_height-monitor_height-2)/LINEHEIGHT;    
         while (notifications.size()>max_notify) notifications.pop();
     }
-    
     
     public void textToMap() {
         fractal.setMap(text.get());

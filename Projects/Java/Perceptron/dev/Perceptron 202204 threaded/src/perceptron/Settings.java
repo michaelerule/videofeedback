@@ -136,10 +136,10 @@ public class Settings {
      * @param P
      * @return  */
     public static String settings(Perceptron P) {
-        Map   F = P.fractal;
+        Map          F = P.fractal;
         DoubleBuffer B = P.buf;
         TextMatrix   T = P.text;
-        Control   C = P.control;
+        Control      C = P.control;
         String GAP = "      ";
         String out = "";
         out += GAP + "objects_on_top         " + P.objects_on_top + "\n";
@@ -330,7 +330,8 @@ public class Settings {
         + "\n ⌃↩ or ⇧↩ @@text → equation"
         + "\n"//+ + "\n─┤ WINDOW ├────────────────────"
         + "\n ?/  @show help        @" + P.show_state
-        + "\n n   @show notices     @" + P.show_notices
+        + "\n n   @toggle screencap @" + P.capture_screen
+        + "\n N   @show notices     @" + P.show_notices
         + "\n u   @show info        @" + P.show_monitor
         + "\n U   @limit speed      @" + P.cap_frame_rate
         + "\n l   @interpolate      @" + P.buf.interpolate

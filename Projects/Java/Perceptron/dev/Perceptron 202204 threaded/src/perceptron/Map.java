@@ -10,6 +10,7 @@ package perceptron;
  *
  */
 
+import color.ColorUtil;
 import image.DoubleBuffer;
 import math.MathToken;
 import math.complex;
@@ -302,18 +303,22 @@ public final class Map {
                        tint_color  != Map.this.tint_color  && tint_level>0;
             }
         }
+        
         /** 
          * Apply the current translation and rotation to the map.
          */
         public class MapCache {
+            
             final int     [] fxy    = new     int[MLEN*2];
             final int     [] rate   = new     int[MLEN];
             final boolean [] bounds = new boolean[MLEN];
             final int     [] image  = new     int[MLEN];
+            
             private int f1,mirror_mode;
             private int [] offset = new int[2];
             private complex oldr;
             private boolean did_image;
+            
             public boolean stale() {
                 if (mirror_mode !=Map.this.mirror_mode) return true;
                 if ((outi==3||outi==4)!=this.did_image) return true;
@@ -323,6 +328,7 @@ public final class Map {
                 complex r = getRotation();
                 return (this.oldr.minus(r).rSquared()>1e-5);
             }
+            
             public synchronized void cache() {
                 final int f1 = (int)(map_fade*256 + 0.5);
                 this.mirror_mode = Map.this.mirror_mode;
@@ -336,6 +342,7 @@ public final class Map {
                         CY = this.offset[1]+H7;
                 scanMirror((a,b)->{scanline(a,b,CX,CY,R,f1);});
             }
+            
             private int[] getOffset() {
                 return switch (offset_mode) {
                     case POSITION -> new int[]{(int)(.5f+256*normc[0]), (int)(.5f+256*normc[1])};
@@ -363,14 +370,14 @@ public final class Map {
                         imag = map_buf[j|1] + (map[j|1]*f1 >> 8);
                     } 
                     else {real = map[j]; imag = map[j|1]; } 
-                    float x4 = imag * RX;
-                    float x5 = real * RY;
-                    int fx = cx + (int)(x5 + x4 + 0.5f);
-                    int fy = cy + (int)(x5 - x4 + RC*(imag-real) + 0.5f);
+                    float x4  = imag * RX;
+                    float x5  = real * RY;
+                    int fx    = cx + (int)(x5 + x4 + 0.5f);
+                    int fy    = cy + (int)(x5 - x4 + RC*(imag-real) + 0.5f);
                     fxy [j  ] = fx;
                     fxy [j|1] = fy;
                     bounds[i] = bound_op.test(fx,fy,i);
-                    rate[i] = divergenceRate(fx,fy,i);
+                    rate[i]   = divergenceRate(fx,fy,i);
                     if (did_image) image[i] = B.img.get.it(fx,fy);
                 }
             }
@@ -660,6 +667,7 @@ public final class Map {
         new PixOp("Rate1"){int f(int x,int y,int i,int w){return rgb.blend(out_color, bar_color, w);}},
         new PixOp("Rate2"){int f(int x,int y,int i,int w){w=(256-w)*w;return rgb.blend(out_color, bar_color,(w*w)>>20);}},
         new PixOp("Rate3"){int f(int x,int y,int i,int w){w=((768-2*w)*w*w)>>16;return rgb.blend(rgb.blend(bar_color, out_color, w), B.buf.get.it(x,clip(y,0,H8-1)),w);}},
+        new PixOp("Blend") {int f(int x,int y,int i,int w){return ColorUtil.mean(cache.mapc.image[i], B.buf.get.it(x,y));}},
     };
     
     ////////////////////////////////////////////////////////////////////////////

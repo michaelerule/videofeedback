@@ -33,11 +33,11 @@ audio_line 0
 *screen_width  800
 *screen_height 450
 
-*screen_width  960
-*screen_height 540
+screen_width  960
+screen_height 540
 
-screen_width  1024
-screen_height 576
+*screen_width  1024
+*screen_height 576
 
 *screen_width  1280
 *screen_height 720

@@ -651,12 +651,10 @@ public final class Control extends MouseAdapter implements KeyListener {
             case 'J' -> F.toggleFeedbackInvert();
             case 'k' -> P.fore_tint=!P.fore_tint;
             case 'K' -> P.do_color_transform=!P.do_color_transform;
-            case 'l' -> {
-                P.buf.toggleInterpolation(); F.cache.map_stale.set(true);
-            }
+            case 'l' -> {P.buf.toggleInterpolation(); F.cache.map_stale.set(true);}
             case 'L' -> P.toggleAntialias();
             case ';' -> P.hue_rate = wrap(P.hue_rate-4,256);
-            case '\'' -> P.hue_rate = wrap(P.hue_rate+4,256);
+            case '\''-> P.hue_rate = wrap(P.hue_rate+4,256);
             case ':' -> P.sat_rate = clip(P.sat_rate-4,-256,256);
             case '"' -> P.sat_rate = clip(P.sat_rate+4,-256,256);
             case ',' -> P.con_rate = clip(P.con_rate-4,-256,256);
@@ -669,14 +667,11 @@ public final class Control extends MouseAdapter implements KeyListener {
             case 'X' -> F.nextTintLevel(-8);
             case 'c' -> draw_cursors = !draw_cursors;
             case 'C' -> draw_futures = !draw_futures;
-            case 'v' -> {
-                if (current!=null) current.toggleWander();
-            }
+            case 'v' -> {if (current!=null) current.toggleWander();}
             case 'V' -> toggleScreensaver();
             case 'b' -> P.text.toggle();
             case 'B' -> P.text.toggleCursor();
-            case 'n' -> {
-            }
+            case 'n' -> P.capture_screen=!P.capture_screen;
             case 'N' -> P.show_notices =!P.show_notices;
             case 'm' -> F.nexMirrorMode(1);
             case 'M' -> P.draw_moths = !P.draw_moths;
