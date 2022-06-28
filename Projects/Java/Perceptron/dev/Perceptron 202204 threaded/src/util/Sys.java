@@ -12,6 +12,7 @@ import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import static java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment;
 import java.awt.MouseInfo;
+import static java.awt.MouseInfo.getPointerInfo;
 import java.awt.Point;
 import java.awt.Rectangle;
 import static java.awt.Toolkit.getDefaultToolkit;
@@ -40,12 +41,14 @@ public class Sys {
      * @return
      */
     public static GraphicsConfiguration getDeviceGraphicsConfig() {
-        return ((getLocalGraphicsEnvironment()).getDefaultScreenDevice()).getDefaultConfiguration();
+        return getLocalGraphicsEnvironment().
+                getDefaultScreenDevice().
+                getDefaultConfiguration();
     }
 
 
     /** 
-     * Make windowed, "not fullscreen".
+     * Make windowed, "not full screen".
      * @param j
      */
     public static void makeNotFullscreen(JFrame j) {
@@ -87,6 +90,18 @@ public class Sys {
         } 
         //fakeFullscreen(j);
         return false;
+    }
+    
+    /**
+     *
+     * @param j
+     */
+    public static void centerWindow(JFrame j) {
+        // Move selection window to center of screen 0 and show
+        Rectangle bounds = getPointerInfo().getDevice().getDefaultConfiguration().getBounds();
+        j.setLocation(
+            bounds.x+(bounds.width -j.getWidth ())/2,
+            bounds.y+(bounds.height-j.getHeight())/2);
     }
     
     /**

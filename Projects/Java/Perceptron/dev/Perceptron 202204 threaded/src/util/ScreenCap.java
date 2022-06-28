@@ -4,16 +4,12 @@
  */
 package util;
 
-import color.ColorUtil;
 import java.awt.AWTException;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Robot;
-import java.awt.Toolkit;
 import static java.awt.Toolkit.getDefaultToolkit;
 import java.awt.image.BufferedImage;
 import static java.lang.System.currentTimeMillis;
@@ -22,20 +18,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import static javax.swing.SwingUtilities.invokeAndWait;
-import static javax.swing.SwingUtilities.invokeLater;
-import perceptron.Perceptron;
-import static util.Fullscreen.printScreenInfo;
-import static util.Fullscreen.setNiceLAF;
-import static util.Sys.sout;
 
 /**
  *
@@ -48,9 +33,9 @@ public class ScreenCap {
             STALE_MS   = 1000,
             TIMEOUT_MS = 200;
     
-    private Robot robot = null;         // Robot does the capture
-    private final Rectangle screenRect; // Region to capture
-    private final ExecutorService ex;   // Executer makes capture async
+    private Robot robot = null;       // Robot does the capture
+    public  Rectangle screenRect;     // Region to capture
+    private final ExecutorService ex; // Executer makes capture async
             
     public ScreenCap() {
         ex         = newFixedThreadPool(1);

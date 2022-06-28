@@ -17,7 +17,7 @@ public class Main {
         invokeLater(()->{
             sout("Starting GUI.");
             printScreenInfo();
-            setNiceLAF();
+            //setNiceLAF();
             final Perceptron P = new Perceptron(
                 "resource/Settings.txt",
                 "resource/CrashReport.txt",

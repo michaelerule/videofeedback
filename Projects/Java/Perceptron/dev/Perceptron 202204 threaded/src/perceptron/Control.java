@@ -53,10 +53,9 @@ public final class Control extends MouseAdapter implements KeyListener {
     // Can range from -32 (1/16th) to 32 (16x)
     public static final int INITIAL_CURSOR_NDOTS = 10;
     public static final int INITIAL_SPEED        = 12;
- 
     
     final Perceptron P;
-    final Settings[]   presets;
+    final Settings[] presets;
     final Robot      robot;
     
     /**
@@ -73,6 +72,7 @@ public final class Control extends MouseAdapter implements KeyListener {
     public boolean draw_futures = true;
     public boolean draw_cursors = true;
     public boolean screensaver  = false;
+    public boolean parked       = false;
     public void    toggleScreensaver() {screensaver = !screensaver;}
     
     Cursor 
@@ -181,8 +181,8 @@ public final class Control extends MouseAdapter implements KeyListener {
     /**
      * Those little eyeball cursors.
      * Things you should know:
-     *      - The point `to` is always within (0,0,screen_width,screen_height)
-     *      - Cursor locations are saved in fractional coordinates (0,0,1,1)
+     * - The point `to` is always within (0,0,screen_width,screen_height)
+     * - Cursor locations are saved in fractional coordinates (0,0,1,1)
      */
     public abstract class Cursor implements Comparable<Cursor> {
         public final String  name;
@@ -511,7 +511,7 @@ public final class Control extends MouseAdapter implements KeyListener {
                 (int)((e.getX()-b.x)*P.screen_width /(float)b.width +.5),
                 (int)((e.getY()-b.y)*P.screen_height/(float)b.height+.5));
         }
-        current.mouseMoved(e);
+        if (!parked) current.mouseMoved(e);
     }
     
     /**
@@ -733,7 +733,9 @@ public final class Control extends MouseAdapter implements KeyListener {
         // ABCDEFGHIJKLMNOPQRSTUVWXYZ0987654321 are safe
         // pqrstuvwxyz( are f1-f12; support may vary
         // support may vary for -=[];,./\ 
+        
         // Commands not affected by additional modifiers
+        // These execute for any modifier combo that includes ctrl
         switch (c) {
             case 'Q': System.exit(0);
         }
@@ -773,6 +775,7 @@ public final class Control extends MouseAdapter implements KeyListener {
                 case 'F': P.toggleFullscreen(); return;
                 case 'E': P.toggleFrame(); return;
                 case 'S': P.save(); return;
+                case 'P': parked = !parked; return;
             } break;
             case "ctrl+alt+"      : switch (c) {
                 case 'S': P.toggleAnimation(); return;

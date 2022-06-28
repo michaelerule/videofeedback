@@ -37,7 +37,7 @@ import static util.Sys.sout;
 public class Fullscreen {
     
     /**
-     * 
+     * Try to set a nice (system) look-and-feel.
      */
     public static void setNiceLAF() {
         sout("Current LAF is"+UIManager.getLookAndFeel());
@@ -63,7 +63,7 @@ public class Fullscreen {
     }
     
     /**
-     * 
+     * Check if current look-and-feel is java-like. 
      * @param laf
      * @return 
      */
@@ -72,7 +72,7 @@ public class Fullscreen {
     }
     
     /**
-     * 
+     * Print information about the current screen.
      */
     public static void printScreenInfo() {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -100,8 +100,7 @@ public class Fullscreen {
         Rectangle window = j.getBounds();
         float x = window.x + .5f*window.width;
         float y = window.y + .5f*window.height;
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        for (var gd : ge.getScreenDevices()) {
+        for (var gd : getLocalGraphicsEnvironment().getScreenDevices()) {
             Rectangle screen = gd.getDefaultConfiguration().getBounds();
             if (screen.contains(x, y)) return gd;
         }
@@ -116,12 +115,10 @@ public class Fullscreen {
      * @param h 
      */
     public static void changeDisplayMode(JFrame j, int w, int h) {
-        GraphicsEnvironment v = getLocalGraphicsEnvironment();
-        GraphicsDevice      g = v.getDefaultScreenDevice();
-        DisplayMode         d = g.getDisplayMode();
+        var g = getLocalGraphicsEnvironment().getDefaultScreenDevice();
         if (g.isDisplayChangeSupported()) {
             // Locate the best display mode
-            int depth = min(32,d.getBitDepth());
+            int depth = min(32,g.getDisplayMode().getBitDepth());
             DisplayMode best = null;
             int size = 0;
             for (DisplayMode m : g.getDisplayModes()) {

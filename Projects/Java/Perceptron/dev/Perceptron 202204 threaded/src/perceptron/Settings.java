@@ -313,6 +313,7 @@ public class Settings {
         + "\n"//+ + "\n─┤ CURSOR ├────────────────────"
         + "\n ⌃m  @hide mouse       @" + P.hide_mouse
         + "\n c   @show cursors     @" + C.draw_cursors
+        + "\n c   @park cursors     @" + C.parked
         + "\n v   @wander           @" + (C.current==null?"(no cursor)":C.current.name+": "+C.current.wander)
         + "\n V   @autopilot        @" + C.screensaver
         + "\n +-  @±speed           @" + (C.current==null? "(no cursor)" : C.current.speed)

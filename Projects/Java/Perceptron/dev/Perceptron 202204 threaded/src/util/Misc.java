@@ -32,6 +32,9 @@ public class Misc {
     public static float clip(float x,float low, float hi) {
         return x<low? low : x>hi? hi : x;
     }
+    public static double clip(double x,double low, double hi) {
+        return x<low? low : x>hi? hi : x;
+    }
     
     /** Periodically wrap to range
      * 

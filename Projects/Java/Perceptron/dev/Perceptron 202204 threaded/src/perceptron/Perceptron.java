@@ -68,6 +68,7 @@ import static perceptron.Map.Mapping;
 import static perceptron.Parse.parseSettings;
 import static color.ColorUtil.colorFilter;
 import static color.ColorUtil.fast;
+import util.BigShot;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import static java.util.concurrent.Executors.newFixedThreadPool;
@@ -86,6 +87,7 @@ import static util.Sys.NONE;
 import static util.Sys.makeNotFullscreen;
 import static util.Fullscreen.isFullscreenWindow;
 import util.ScreenCap;
+import static util.Sys.centerWindow;
 import static util.Sys.serr;
 import static util.Sys.sout;
 
@@ -114,6 +116,7 @@ public final class Perceptron extends javax.swing.JFrame {
     final Moths               moths;
     final Microphone          mic;
     final ScreenCap           cap;
+    final BigShot             big;
     
     int image_i = 0;
     public String image_directory = "resource/images/";
@@ -285,6 +288,7 @@ public final class Perceptron extends javax.swing.JFrame {
         moths           = new Moths(screen_width,screen_height);
         mic             = new Microphone(buf, 0); 
         cap             = new ScreenCap();
+        big             = new BigShot();
         //mic.start();
         
         tree = new Tree3D(min_tree_depth, max_tree_depth,
@@ -298,18 +302,18 @@ public final class Perceptron extends javax.swing.JFrame {
         addKeyListener(control);
         setFocusTraversalKeysEnabled(false); // don't consume VK_TAB
         setHideMouse(false);
-        
-        // For sanity, we now start in windowed mode (NOT full screen)
-        setIconImage(new ImageIcon("resource/data/icon2.png").getImage());
-        pack();
-        setVisible(true);
-        
-        setMinimumSize(new Dimension(screen_width, getHeight()));
-        setResizable(true);
 
         // Make the saver window and remember its size
         saver = new JFileChooser("Save State");
         saver.setPreferredSize(new Dimension(800,600));
+        
+        // For sanity, we now start in windowed mode (NOT full screen)
+        setIconImage(new ImageIcon("resource/data/icon2.png").getImage());
+        setMinimumSize(new Dimension(screen_width, getHeight()));
+        setResizable(true);
+        pack();
+        centerWindow(this);
+        setVisible(true);
         
         // Set up Double Buffering
         createBufferStrategy(2);
@@ -360,6 +364,7 @@ public final class Perceptron extends javax.swing.JFrame {
                 long frame_start = currentTimeMillis();
                 
                 if (capture_screen) {
+                    cap.screenRect.setRect(big.getBounds());
                     buf.set(cap.getScreenshot());
                     fractal.cache.map_stale.set(true);
                 }
@@ -521,7 +526,7 @@ public final class Perceptron extends javax.swing.JFrame {
     // Fullscreen control //////////////////////////////////////////////////////
     
     /**
-     * Enter/exit full-screen mode.
+     * Enter or exit full-screen mode.
      */
     public void toggleFullscreen() {
         boolean was_running = isRunning();
