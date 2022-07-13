@@ -34,6 +34,7 @@ import static javax.swing.SwingUtilities.isEventDispatchThread;
 
 import math.complex;
 import color.ColorUtil;
+import static java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment;
 import static util.Fullscreen.isFullscreenWindow;
 import static util.Misc.clip;
 import static util.Misc.wrap;
@@ -671,8 +672,18 @@ public final class Control extends MouseAdapter implements KeyListener {
             case 'V' -> toggleScreensaver();
             case 'b' -> P.text.toggle();
             case 'B' -> P.text.toggleCursor();
-            case 'n' -> P.capture_screen=!P.capture_screen;
-            case 'N' -> P.show_notices =!P.show_notices;
+            case 'n' -> {
+                P.capture_screen =! P.capture_screen;
+                if (P.capture_screen) {
+                    if (!P.isFullscreen()||getLocalGraphicsEnvironment().getScreenDevices().length>1) {
+                        P.big.watcher.setVisible(true);
+                    }
+                } else {
+                    P.big.watcher.setVisible(false);
+                    P.big.selector.setVisible(false);
+                }
+            }
+            case 'N' -> P.show_notices =! P.show_notices;
             case 'm' -> F.nexMirrorMode(1);
             case 'M' -> P.draw_moths = !P.draw_moths;
             case '/', '?' -> P.toggleShowHelp();

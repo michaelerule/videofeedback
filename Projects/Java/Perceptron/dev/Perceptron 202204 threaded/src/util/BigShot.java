@@ -47,7 +47,6 @@ import javax.swing.ImageIcon;
 import static javax.swing.SwingUtilities.invokeLater;
 import static util.Misc.clip;
 import static util.Sys.sout;
-import static util.Sys.centerWindow;
 
 /**
  *
@@ -272,38 +271,38 @@ public class BigShot {
     }
     
         
-    JFrame s = null;
-    JFrame z = null;
-    BufferedImage img = null;
+    public JFrame selector = null;
+    public JFrame watcher  = null;
+    public BufferedImage img = null;
                 
     public BigShot() {
         System.setProperty("sun.awt.noerasebackground", "true");
         prepareWatcher();
         prepareSelector();
-        s.pack();
-        z.pack();        
+        selector.pack();
+        watcher.pack();        
         // Move selection window to center of screen 0 and show
         Rectangle b = getPointerInfo().getDevice().getDefaultConfiguration().getBounds();
-        z.setLocation(b.x,b.y);
-        Rectangle zb = z.getBounds();
-        s.setLocation(b.x,b.y+zb.height+5);
-        s.setVisible(false);
-        z.setVisible(true);
+        watcher.setLocation(b.x,b.y);
+        Rectangle zb = watcher.getBounds();
+        selector.setLocation(b.x,b.y+zb.height+5);
+        selector.setVisible(false);
+        watcher.setVisible(true);
     }
     
     private void prepareWatcher() {
         ////////////////////////////////////////////////////////////////////////
         // Prepare a button-window to re-select capture region
-        z = new JFrame("watcher");
-        z.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        z.setUndecorated(true);
-        z.setAlwaysOnTop(true);
-        z.setIconImage(new ImageIcon("resource/data/icon2.png").getImage());
+        watcher = new JFrame("watcher");
+        watcher.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        watcher.setUndecorated(true);
+        watcher.setAlwaysOnTop(true);
+        watcher.setIconImage(new ImageIcon("resource/data/icon2.png").getImage());
         // Button to change capture region
         JButton b = new JButton(new AbstractAction("Click to change capture region") {
             public void actionPerformed(ActionEvent e) {
-                z.setVisible(false);
-                try {locate();} catch (AWTException ex) {z.setVisible(true);}
+                watcher.setVisible(false);
+                try {locate();} catch (AWTException ex) {watcher.setVisible(true);}
             }
         });
         b.setBackground(Color.black);
@@ -311,7 +310,7 @@ public class BigShot {
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         b.setPreferredSize(new Dimension(320,SPACE));
         // Move panel
-        MovePanel m = new MovePanel(z);
+        MovePanel m = new MovePanel(watcher);
         // Message to user
         var l = new JLabel("Screen view: set w←{3,4} and press n",JLabel.CENTER);
         l.setBackground(Color.black);
@@ -319,7 +318,7 @@ public class BigShot {
         l.addMouseListener(m);
         l.addMouseMotionListener(m);
         // Put it all together
-        Container cp = z.getContentPane();
+        Container cp = watcher.getContentPane();
         cp.setBackground(Color.black);
         cp.setForeground(Color.white);        
         cp.setLayout(new BorderLayout());
@@ -331,21 +330,21 @@ public class BigShot {
     private void prepareSelector() {
         ////////////////////////////////////////////////////////////////////////
         // Make a selection window
-        s = new JFrame("selector");
-        s.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        s.setUndecorated(true);
-        s.setAlwaysOnTop(true);
-        s.setResizable(false);
-        s.setMinimumSize(new Dimension(MINSIZE,MINSIZE));
-        s.setBackground(FILL_COLOR);
-        s.setIconImage(new ImageIcon("resource/data/icon2.png").getImage());
+        selector = new JFrame("selector");
+        selector.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        selector.setUndecorated(true);
+        selector.setAlwaysOnTop(true);
+        selector.setResizable(false);
+        selector.setMinimumSize(new Dimension(MINSIZE,MINSIZE));
+        selector.setBackground(FILL_COLOR);
+        selector.setIconImage(new ImageIcon("resource/data/icon2.png").getImage());
         // Make JPanel that shines through without using transparency
         JPanel c = new JPanel(new BorderLayout()) {
             public void paintComponent(Graphics g) {
                 // Draw see-through image
                 int w = this.getWidth(), h = this.getHeight();
-                Point pwin = s.getLocationOnScreen();
-                Point ppan = s.getRootPane().getLocation();
+                Point pwin = selector.getLocationOnScreen();
+                Point ppan = selector.getRootPane().getLocation();
                 int x0 = pwin.x+ppan.x, y0 = pwin.y+ppan.y;
                 g.drawImage(img,0,0,w,h,x0,y0,x0+w,y0+h,null);
                 // Draw instructions to user
@@ -369,7 +368,7 @@ public class BigShot {
         c.setBackground(FILL_COLOR);
         c.setPreferredSize(size);
         c.setOpaque(false);
-        s.setContentPane(c);
+        selector.setContentPane(c);
         addSelectorListeners(c);
         addSelectorHandles(c);
     }
@@ -378,20 +377,20 @@ public class BigShot {
         // Redraw window for anything that could change transparency
         // The system won't redraw when we move the window
         // We need to do it ourselves
-        s.addComponentListener(new ComponentListener() {
+        selector.addComponentListener(new ComponentListener() {
             public void componentResized(ComponentEvent e) {}//invokeLater(c::repaint);}
             public void componentMoved  (ComponentEvent e) {invokeLater(c::repaint);}
             public void componentShown  (ComponentEvent e) {invokeLater(c::repaint);}
             public void componentHidden (ComponentEvent e) {invokeLater(c::repaint);}
         });
-        s.addMouseListener(new MouseAdapter(){
+        selector.addMouseListener(new MouseAdapter(){
             public void mouseClicked(MouseEvent e) {
                 sout("click "+e);
                 float x = (float)e.getX()/c.getWidth();
                 float y = (float)e.getY()/c.getHeight();
                 if (x>.25f&&x<.75f&&y>.25f&&y<.75f) {
-                    s.setVisible(false);
-                    z.setVisible(true);
+                    selector.setVisible(false);
+                    watcher.setVisible(true);
                 }
             }
         });
@@ -402,16 +401,16 @@ public class BigShot {
         JPanel centr = new JPanel(new BorderLayout());
         c.add(centr,BorderLayout.CENTER);
         JPanel north = new JPanel(new BorderLayout());
-        north.add(new MovePanel(s),BorderLayout.WEST);
+        north.add(new MovePanel(selector),BorderLayout.WEST);
         centr.add(north,BorderLayout.NORTH);
         // Button to resize the window south east
         JPanel south = new JPanel(new BorderLayout());
-        south.add(new ResizeSEPanel(s),BorderLayout.EAST);
+        south.add(new ResizeSEPanel(selector),BorderLayout.EAST);
         // Button to resize the window south
-        south.add(new ResizeSPanel(s),BorderLayout.CENTER);
+        south.add(new ResizeSPanel(selector),BorderLayout.CENTER);
         c.add(south,BorderLayout.SOUTH);
         // Button to resize the window south east
-        c.add(new ResizeEPanel(s),BorderLayout.EAST);
+        c.add(new ResizeEPanel(selector),BorderLayout.EAST);
         centr.setOpaque(false);
         north.setOpaque(false);
         south.setOpaque(false);
@@ -423,11 +422,11 @@ public class BigShot {
         var g = img.createGraphics();
         g.setColor(TINT_COLOR);
         g.fillRect(0,0,img.getWidth(),img.getHeight());
-        s.setVisible(true);
+        selector.setVisible(true);
     }
     
     public Rectangle getBounds() {
-        return s.getBounds();
+        return selector.getBounds();
     }
     
     public static void main(String [] args) throws AWTException {

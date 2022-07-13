@@ -68,6 +68,7 @@ import static perceptron.Map.Mapping;
 import static perceptron.Parse.parseSettings;
 import static color.ColorUtil.colorFilter;
 import static color.ColorUtil.fast;
+import static java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment;
 import util.BigShot;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -362,6 +363,24 @@ public final class Perceptron extends javax.swing.JFrame {
         while (true) 
             if (running.get()) try {
                 long frame_start = currentTimeMillis();
+                
+                if (isFullscreen()) {
+                    // Dirty hack here: if full screen and not multiple monitors
+                    // hide the screen capture tools even if capture is on
+                    int nscreens = getLocalGraphicsEnvironment().getScreenDevices().length;
+                    if (nscreens<=1) {
+                        big.watcher.setVisible(false);
+                        big.selector.setVisible(false);
+                    }
+                } else {
+                    if (capture_screen) {
+                        // We'll show these only on toggle using the Control class
+                    } else {
+                        // Capture off, hide the capture tools
+                        big.watcher.setVisible(false);
+                        big.selector.setVisible(false);
+                    }
+                }
                 
                 if (capture_screen) {
                     cap.screenRect.setRect(big.getBounds());
