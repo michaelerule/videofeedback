@@ -15,7 +15,7 @@ preset likeblack.state {
       offset_mode            0
       rotate_mode            1
       mirror_mode            0
-      motionblurp            112
+      motion_blur            112
       gradcolor1_i           4
       gradcolor2_i           0
       barcolor_i             4

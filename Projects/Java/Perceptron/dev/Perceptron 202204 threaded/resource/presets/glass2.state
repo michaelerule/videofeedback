@@ -15,7 +15,7 @@ preset glass2.state {
       offset_mode            2
       rotate_mode            1
       mirror_mode            0
-      motionblurp            144
+      motion_blur            144
       gradcolor1_i           4
       gradcolor2_i           0
       barcolor_i             5

@@ -162,7 +162,7 @@ public class Settings {
         out += GAP + "offset_mode            " + F.offset_mode + "\n";
         out += GAP + "rotate_mode            " + F.rotate_mode + "\n";
         out += GAP + "mirror_mode            " + F.mirror_mode + "\n";
-        out += GAP + "motionblurp            " + F.motion_blur + "\n";
+        out += GAP + "motion_blur            " + F.motion_blur + "\n";
         out += GAP + "gradcolor1_i           " + F.gcolor1_i + "\n";
         out += GAP + "gradcolor2_i           " + F.gcolor2_i + "\n";
         out += GAP + "barcolor_i             " + F.barcolor_i + "\n";
@@ -254,7 +254,7 @@ public class Settings {
         "─┤ PERCEPTRON ├────────────────"
         + "\n Left  Click   next cursor"
         + "\n Right Click   previous cursor"
-        + "\n ⌃q  or Esc    quit"
+        + "\n ⌃q            quit"
         + "\n ⌃s  or S      save"
         + "\n ` or Space    play/pause"
         + "\n alt+s         write video (" + P.write_animation + ")"

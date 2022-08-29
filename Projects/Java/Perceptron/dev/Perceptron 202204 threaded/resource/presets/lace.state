@@ -15,7 +15,7 @@ preset lace.state {
       offset_mode            0
       rotate_mode            0
       mirror_mode            0
-      motionblurp            96
+      motion_blur            210
       gradcolor1_i           0
       gradcolor2_i           0
       barcolor_i             1

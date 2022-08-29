@@ -16,7 +16,7 @@ preset w1.state {
       offset_type            0
       rotate_type            2
       mirror_type            2
-      motionblurp            144
+      motion_blur            144
       gradcolor1_i           0
       gradcolor2_i           0
       barcolor_i             2
