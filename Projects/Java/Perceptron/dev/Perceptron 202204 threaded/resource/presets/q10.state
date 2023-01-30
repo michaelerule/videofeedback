@@ -16,7 +16,7 @@ preset q10.state {
       offset_mode            1
       rotate_mode            1
       mirror_mode            1
-      motionblurp            16
+      motion_blur            144
       gradcolor1_i           4
       gradcolor2_i           0
       barcolor_i             0

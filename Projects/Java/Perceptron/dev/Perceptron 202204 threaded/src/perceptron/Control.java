@@ -825,7 +825,8 @@ public final class Control extends MouseAdapter implements KeyListener {
     public void keyPressed(KeyEvent e) {
         Map F = P.fractal;
         int code = e.getKeyCode();
-        if (code==VK_ESCAPE||code==VK_STOP) System.exit(0); 
+        //if (code==VK_ESCAPE||code==VK_STOP) System.exit(0);
+        if (code==VK_STOP) System.exit(0); 
         /*
         // For debugging
         P.notify("-------------");

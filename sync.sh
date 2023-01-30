@@ -10,6 +10,7 @@
 # Run this script from it's local directory
 #
 
+git pull
 git submodule update --recursive --remote
 
 ./maketree.py
@@ -21,5 +22,5 @@ cat .gitignore | awk "/^[.\*]/" | sed 's/"/"\\""/g;s/.*/"&"/' |  xargs -E '' -I{
 git rm -rf --cached *.pyc
 git add . 
 git add -u :/
-git commit -m "_$1"
+git commit -m "${1:-...}"
 git push origin master

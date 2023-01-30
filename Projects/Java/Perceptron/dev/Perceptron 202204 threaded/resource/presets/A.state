@@ -15,7 +15,7 @@ preset A.state {
       blursharp_rate         0
       translate_type         0
       rotate_mode            2
-      motion_blur            32
+      motion_blur            132
       gradcolor1_i           3
       gradcolor2_i           0
       barcolor_i             1

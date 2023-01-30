@@ -78,12 +78,26 @@ public class TextMatrix {
         if (cursor_on) {
             int x = (int) ((double) W * (I % COLUMNS) / COLUMNS);
             int y = (int) ((double) H * (I / COLUMNS) / ROWS);
-            g.setXORMode(new Color(0xffffff));
-            if (insert) g.fillRect((int) (x + XOFF), (int) (y), W / COLUMNS / 4, H / ROWS);
-            else        g.fillRect((int) (x + XOFF), (int) (y), W / COLUMNS, H / ROWS);
-            g.setPaintMode();
+            if (insert) {
+                g.setXORMode(new Color(0xffffff));
+                g.fillRect((int) (x + XOFF), (int) (y), W / COLUMNS / 4, H / ROWS);
+                g.setPaintMode();
+                g.setColor(Color.WHITE);
+                g.fillRect((int) (x + XOFF), (int) (y), W / COLUMNS / 16, H / ROWS);
+                g.setColor(Color.BLACK);
+                g.fillRect((int) (x + XOFF), (int) (y), W / COLUMNS / 32, H / ROWS);
+            }
+            else {
+                g.setXORMode(new Color(0xffffff));
+                g.fillRect((int) (x + XOFF), (int) (y), W / COLUMNS, H / ROWS);
+                g.setPaintMode();
+                g.setColor(Color.WHITE);
+                g.drawRect((int) (x + XOFF)+4, (int) (y)+4, W / COLUMNS-8, H / ROWS-8);
+                g.setColor(Color.BLACK);
+                g.drawRect((int) (x + XOFF)+2, (int) (y)+2, W / COLUMNS-4, H / ROWS-4);
+            }
+            
         }
-        /** Consciousness is evolution on infinitely faster time scales */
     }
 
     public void loadString(String string) {
