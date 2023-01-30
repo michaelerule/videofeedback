@@ -113,7 +113,7 @@ function sprite_renderer(gl,npoint,ndots,canvas,alpha) {
             // Do something fancy? 
             if (rr>0.2 && rr<0.48 && v.y>1.5) {
                 alpha=1.0;
-                frgnd=vec4(cos(rr*70.0)*0.5+0.5);
+                frgnd=vec4(sign(cos(rr*35.0))*0.5+0.5);
             }
             
             // Use a soft threshold to fade out the sprite at the edge
