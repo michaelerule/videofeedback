@@ -89,27 +89,38 @@ function sprite_renderer(gl,npoint,ndots,canvas,alpha) {
         #define ALPHA_CUTOFF (0.1)
         #define W (512.0)
         #define EDGE_TAPER_START_PIXELS (1.0)
-        #define EDGE_RADIUS (0.5)
+        #define EDGE_
+        RADIUS (0.5)
         void main() {
             // This will be a point in [0,1]x[0,1] denoting the location on the sprite
             vec2 q = gl_PointCoord;
+            
             // sprite sheet is 4x4 32x32 sprites
             vec2 v = v_offset;
             v.y = (SPRITE_ATLASS_WIDTH_SPRITES-1.0)-v.y;
+            
             // v_offset should be a row-column index
             vec2 p=(q+v)*SPRITE_WIDTH/SPRITE_ATLASS_WIDTH;
+            
             // get sprite pixel data
             vec4  frgnd = texture2D(sprites,p);
             float alpha = frgnd.w;
+            
+            // Get radius
             float rr = length(q-0.5+1.0/p_size*vec2(.5,-.5));
+            
+            // If radius is outside the sprite
+            // Do something fancy? 
             if (rr>0.2 && rr<0.48 && v.y>1.5) {
                 alpha=1.0;
                 frgnd=vec4(cos(rr*70.0)*0.5+0.5);
             }
+            
             // Use a soft threshold to fade out the sprite at the edge
             // for smoother blending with the background (less visible pixelation)
             alpha *= 1.0/(1.0+exp(EDGE_SHARPNESS*p_size*(rr-(EDGE_RADIUS+EDGE_TAPER_START_PIXELS/p_size))));
             if (alpha<ALPHA_CUTOFF) discard;
+            
             // Manual alpha blending with background
             vec2 p4    = (p_offset+1.0)*0.5+(p_size/W)*(vec2(q.x,1.0-q.y)-0.5);
             vec4 bkgnd = texture2D(background,p4);
