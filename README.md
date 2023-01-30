@@ -1,6 +1,6 @@
 # Video Feedback
 
-Video-feedback fractal hobby code. Everything slightly broken. Some things beautiful.
+Video-feedback fractal hobby code. Most things slightly broken. Some things beautiful.
 
 [Browsing links here](https://michaelerule.github.io/videofeedback/)
 
@@ -14,7 +14,6 @@ Some outputs
  - [Java implementation](https://michaelerule.github.io/videofeedback/Projects/Java/Perceptron/dev/Perceptron%20202204%20threaded/resource/thumbnails.html)
  - [Jython reimplementation](https://michaelerule.github.io/videofeedback/Outputs/Jython%20perceptron%20implementation,%20animated%20GIFs/index.html)
  
-### Historical note
 
 This is loosely descended from a feedback project in Java, termed "Perceptron", that began circa 2005. Since then, several implementations of video feedback have emerged elsewhere. This project contains more recent attempts to "reboot" the video-feedback rendering techniques, or to demonstrate it in other languages.
 
