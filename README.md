@@ -1,13 +1,18 @@
 # Video Feedback
 
-Video-feedback fractal hobby code.
+Video-feedback fractal hobby code. Everything slightly broken. Some things beautiful.
 
 [Browsing links here](https://michaelerule.github.io/videofeedback/)
 
  - [Javascript explorations](https://michaelerule.github.io/videofeedback/Projects/Javascript/cpu/Perceptron%20(Javascript,%20no%20hardware%20acceleration,%20incomplete)/index.html)
  - [Jython explorations](https://michaelerule.github.io/videofeedback/Projects/Jython/index.html)
- - [Java Perceptron](https://michaelerule.github.io/videofeedback/Projects/Java/index.html) (obsolete legacy code; unresolved instability issues)
+ - [Java Perceptron](https://michaelerule.github.io/videofeedback/Projects/Java/index.html)
  - [Perceptron webgl](https://michaelerule.github.io/videofeedback/Projects/Javascript/webgl/index.html)
+
+Some outputs
+
+ - [things produced by the Jython reimplementation](https://michaelerule.github.io/videofeedback/Outputs/Jython%20perceptron%20implementation,%20animated%20GIFs/index.html)
+ - 
  
 ### Historical note
 
