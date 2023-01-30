@@ -4,10 +4,6 @@ Video-feedback fractal hobby code.
 
 [Browsing links here](https://michaelerule.github.io/videofeedback/)
 
-### Project contents
-
-This repository contains the following projects:
-
 #### Working
  - Javascript CPU examples
  - Jython examples

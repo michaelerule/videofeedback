@@ -89,8 +89,7 @@ function sprite_renderer(gl,npoint,ndots,canvas,alpha) {
         #define ALPHA_CUTOFF (0.1)
         #define W (512.0)
         #define EDGE_TAPER_START_PIXELS (1.0)
-        #define EDGE_
-        RADIUS (0.5)
+        #define EDGE_RADIUS (0.5)
         void main() {
             // This will be a point in [0,1]x[0,1] denoting the location on the sprite
             vec2 q = gl_PointCoord;
@@ -111,9 +110,13 @@ function sprite_renderer(gl,npoint,ndots,canvas,alpha) {
             
             // If radius is outside the sprite
             // Do something fancy? 
-            if (rr>0.2 && rr<0.48 && v.y>1.5) {
-                alpha=1.0;
-                frgnd=vec4(sign(cos(rr*35.0))*0.5+0.5);
+            if (rr>0.19 && rr<0.4 && v.y>1.5) 
+            {
+                vec4 fill = vec4((-sin(6.283185307179586*(rr-.19)/.21))*.5+.5);
+                
+                frgnd = frgnd*alpha + (1.0-alpha)*fill;
+                alpha = 1.0;
+                
             }
             
             // Use a soft threshold to fade out the sprite at the edge

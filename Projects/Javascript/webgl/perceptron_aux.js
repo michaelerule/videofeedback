@@ -62,8 +62,8 @@ function get_map_affine_transform(perceptron_model,render_cursors) {
     */
     translate = render_cursors.get(0);
     rotate    = render_cursors.get(1);
-    console.log('translate:',translate);
-    console.log('rotate:',rotate);
+    //console.log('translate:',translate);
+    //console.log('rotate:',rotate);
     // translation+rotation/scaling
     return [translate.x,translate.y,rotate.x,rotate.y];
 }

@@ -1,4 +1,8 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+</head>
 <script src="./webgpgpu/lib/colormaps.js"></script>
 <script src="./webgpgpu/lib/gpgpu.js"></script>
 <script src="./webgpgpu/lib/gpurand.js"></script>
@@ -17,6 +21,9 @@
 
 
 <script id="conformal-perceptron-parameters" type="x-fragment-parameters">
+///
+// python3 -m http.server 1972
+
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 // main conformal mapping shader: parameters / header
@@ -247,6 +254,8 @@ function load_images() {
     }
     console.log('waiting for loading to finish');
 }
+
+$ = function(id) { return document.getElementById(id); }
 
 // This is the main script that will run when the website loads
 function main()
