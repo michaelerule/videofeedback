@@ -1,13 +1,8 @@
 # Video Feedback
 
-Simulated video feedback is a simple ways to generate responsive real-time fractals and other visual effects. This repository collects small examples constructed over the years.
+Video-feedback fractal hobby code.
 
 [Browsing links here](https://michaelerule.github.io/videofeedback/)
-
-
-### Disclaimer
-
-This is all poorly maintained and incomplete hobby code.
 
 ### Project contents
 
