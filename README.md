@@ -11,8 +11,8 @@ Video-feedback fractal hobby code. Everything slightly broken. Some things beaut
 
 Some outputs
 
- - [things produced by the Jython reimplementation](https://michaelerule.github.io/videofeedback/Outputs/Jython%20perceptron%20implementation,%20animated%20GIFs/index.html)
- - 
+ - [Java implementation](https://michaelerule.github.io/videofeedback/Projects/Java/Perceptron/dev/Perceptron%20202204%20threaded/resource/thumbnails.html)
+ - [Jython reimplementation](https://michaelerule.github.io/videofeedback/Outputs/Jython%20perceptron%20implementation,%20animated%20GIFs/index.html)
  
 ### Historical note
 
