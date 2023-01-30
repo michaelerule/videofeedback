@@ -116,7 +116,6 @@ function sprite_renderer(gl,npoint,ndots,canvas,alpha) {
                 
                 frgnd = frgnd*alpha + (1.0-alpha)*fill;
                 alpha = 1.0;
-                
             }
             
             // Use a soft threshold to fade out the sprite at the edge
