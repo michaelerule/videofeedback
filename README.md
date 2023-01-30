@@ -4,24 +4,14 @@ Video-feedback fractal hobby code.
 
 [Browsing links here](https://michaelerule.github.io/videofeedback/)
 
-#### Working
- - Javascript CPU examples
- - Jython examples
- - Jython video perceptron reimplementation (buggy, but surprisingly performant)
- 
-#### Incomplete
- - Javascript CPU rewrite (serious user interface bugs)
- - Java Perceptron (obsolete legacy code; unresolved instability issues)
- - Javascript webgl: coming soon, see webgpgpu project examples
- 
-#### Future
- - Documentation
- - Feedback tutorial
- - Collected renderings
+ - [Javascript explorations](https://michaelerule.github.io/videofeedback/Projects/Javascript/cpu/Perceptron%20(Javascript,%20no%20hardware%20acceleration,%20incomplete)/index.html)
+ - [Jython explorations](https://michaelerule.github.io/videofeedback/Projects/Jython/index.html)
+ - [Java Perceptron](https://michaelerule.github.io/videofeedback/Projects/Java/index.html) (obsolete legacy code; unresolved instability issues)
+ - [Perceptron webgl](https://michaelerule.github.io/videofeedback/Projects/Javascript/webgl/index.html)
  
 ### Historical note
 
-This is loosely descended from a feedback project in Java, termed "Perceptron", that began circa 2007. Since then, several implementations of video feedback have emerged elsewhere. This project contains more recent attempts to "reboot" the video-feedback rendering techniques, or to demonstrate it in other languages.
+This is loosely descended from a feedback project in Java, termed "Perceptron", that began circa 2005. Since then, several implementations of video feedback have emerged elsewhere. This project contains more recent attempts to "reboot" the video-feedback rendering techniques, or to demonstrate it in other languages.
 
 ### Video feedback fractals
 
