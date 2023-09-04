@@ -121,12 +121,12 @@ public final class Map {
         B   = b;
         W   = b.out.img.getWidth();
         H   = b.out.img.getHeight();
-        oW2 = 2f/W;  oH2 = 2f/H;
-        W7  = W<<7;  H7  = H<<7;
-        oW7 = 1f/W7; oH7 = 1f/H7;
+        oW2 = 2f/W;     oH2 = 2f/H;
+        W7  = W<<7;     H7  = H<<7;
+        oW7 = 1f/W7;    oH7 = 1f/H7;
         cW  = oW7*oW7;  cH  = oH7*oH7;
-        W8  = W<<8;  H8  = H<<8;
-        MLEN= W*H;   M2  = MLEN<<1;
+        W8  = W<<8;     H8  = H<<8;
+        MLEN= W*H;      M2  = MLEN<<1;
         if (W >= H) {size.real=ZSCALE*W/H; size.imag=ZSCALE;    }
         else        {size.real=ZSCALE;     size.imag=ZSCALE*H/W;}
         vars.set('s'-'a',new complex(size));
@@ -147,17 +147,18 @@ public final class Map {
         grads = new char[9][MLEN];
         int i = 0;
         for (int y=-hH; y<hH; y++) for (int x=-hW;x<hW; x++) {
-            grads[0][i]=dither(2*(x*x/(float)(W*W)+y*y/(float)(H*H)));
-            grads[1][i]=dither((x+hW)/(float)W);
-            grads[2][i]=dither((y+hH)/(float)H);
-            grads[3][i]=dither((y+hH)*(x+hW)/(float)(W*H));
-            grads[4][i]=dither((abs(x)+abs(y))/(float)(hW+hH));
-            grads[5][i]=dither((abs(x)*abs(y))/(float)(hW*hH));
-            grads[6][i]=dither(min(1,sqrt(x*x+y*y)/min(hH,hW)));
-            grads[7][i]=dither(pow(min(1,sqrt(x*x+y*y)/min(hH,hW)),9));
-            grads[8][i]=dither(pow(max(0,min(1,1.3-(sqrt(x*x+y*y))/(min(hH,hW)))),9));
+            grads[0][i]=dither(2*(x*x/(float)(W*W)+y*y/(float)(H*H)));//circle
+            grads[1][i]=dither((x+hW)/(float)W);//horizontal
+            grads[2][i]=dither((y+hH)/(float)H);//vertical
+            grads[3][i]=dither((y+hH)*(x+hW)/(float)(W*H));//diagonal
+            grads[4][i]=dither((abs(x)+abs(y))/(float)(hW+hH));//diamond
+            grads[5][i]=dither((abs(x)*abs(y))/(float)(hW*hH));//cross
+            grads[6][i]=dither(min(1,sqrt(x*x+y*y)/min(hH,hW)));//ring
+            grads[7][i]=dither(pow(min(1,sqrt(x*x+y*y)/min(hH,hW)),9));//sharp ring
+            grads[8][i]=dither(pow(max(0,min(1,1.3-(sqrt(x*x+y*y))/(min(hH,hW)))),9));//eye
             i++;
         }
+        
         grad_i = 0;
         grad   = grads[grad_i];
         // Prepare the buffers for the mapping f(z). 
@@ -197,9 +198,9 @@ public final class Map {
     }
 
     public void syncOps() {
-        bound_op   = bounds[bounds_i];
-        outop = outops[outi];
-        grad_op    = grad_modes[grad_mode];
+        bound_op = bounds[bounds_i];
+        outop    = outops[outi];
+        grad_op  = grad_modes[grad_mode];
     }
 
     
@@ -215,8 +216,6 @@ public final class Map {
      * Compute values in preparation for the next frame in parallel. 
      *  - Compose the gradient and tint into a single translucent layer
      *  - If needed, update the recurrent map as well as the exterior image. 
-     * 
-     * 
      * 
      */
     public class Cache {
@@ -256,9 +255,9 @@ public final class Map {
          * Merge translucent effects into a single layer.
          */
         public class TranslucentLayer {
-            final int []  C   = new  int[MLEN]; // premultiplied intRGB
-            final char[]  A   = new char[MLEN]; // alpha values in [0..256]
-            boolean off = true;           // whether layer is enabled
+            final int [] C = new  int[MLEN]; // premultiplied intRGB
+            final char[] A = new char[MLEN]; // alpha values in [0..256]
+            boolean off = true;              // whether layer is enabled
             // Track these so we can tell if they change
             private int grad_mode, gc1, gc2, tint_color, tint_level, grad_i, mirror_mode;
             private float gslope, gbias;
@@ -306,22 +305,28 @@ public final class Map {
         
         /** 
          * Apply the current translation and rotation to the map.
+         * 
+         * `image`: Lookup for warped image input. This is updated if
+         * `did_image=True` in the `scanline()` function, which is called
+         * (possibly in parallel) by the `cache()` function.
          */
         public class MapCache {
             
             final int     [] fxy    = new     int[MLEN*2];
             final int     [] rate   = new     int[MLEN];
             final boolean [] bounds = new boolean[MLEN];
-            final int     [] image  = new     int[MLEN];
+            final int     [] image  = new     int[MLEN]; 
             
             private int f1,mirror_mode;
             private int [] offset = new int[2];
             private complex oldr;
             private boolean did_image;
             
+            // Check if cache is stale (if current parameters don't match 
+            // the parameters of last cache update).
             public boolean stale() {
-                if (mirror_mode !=Map.this.mirror_mode) return true;
-                if ((outi==3||outi==4)!=this.did_image) return true;
+                if (mirror_mode!=Map.this.mirror_mode) return true;
+                if ((outi==3||outi==4||outi==8)!=this.did_image) return true;
                 if (f1!=this.f1) return true;
                 int [] c = getOffset();
                 if (c[0]!=this.offset[0] || c[1]!=this.offset[1]) return true;
@@ -335,7 +340,7 @@ public final class Map {
                 this.f1          = f1;
                 this.offset      = getOffset();
                 this.oldr        = getRotation();
-                this.did_image   = outi==3||outi==4;
+                this.did_image   = outi==3||outi==4||outi==8;
                 final complex R  = oldr;
                 final int 
                         CX = this.offset[0]+W7, 
@@ -352,6 +357,7 @@ public final class Map {
                     default -> new int[]{0,0};
                 };
             }
+            
             private complex getRotation() {
                 switch (rotate_mode) {
                     case POSITION -> {return new complex(rotation);}
@@ -360,6 +366,7 @@ public final class Map {
                 }
                 return null;
             }            
+            
             private void scanline(int a, int b,int cx,int cy,complex r, int f1) {
                 float RX = r.real, RY = r.imag, RC = r.real+r.imag;
                 for (int i=a; i<b; i++) {
@@ -381,6 +388,7 @@ public final class Map {
                     if (did_image) image[i] = B.img.get.it(fx,fy);
                 }
             }
+            
             int divergenceRate(int fx,int fy,int i) {
                 float pr,qr;
                 switch (Map.this.bounds_i) {
@@ -535,14 +543,13 @@ public final class Map {
             if (in[i]== invert_bound) {
                 // out of bounds (unless boundary test is inverted)
                 c = outop.f(fx,fy,i,rate[i]);
-                c^= color_mask;  
-                c = rgb.blendPremultiplied(c, C[i], A[i]);
+                c^= color_mask;
+                if (translucentActive()) c = rgb.blendPremultiplied(c, C[i], A[i]);
             } else {
                 // in bounds (unless boundary test is inverted)
                 c = B.out.get.it(fx, fy);
                 c^= feedback_mask;
-                if (P.fore_tint) 
-                    c = rgb.blendPremultiplied(c, C[i], A[i]);
+                if (translucentActive() && P.fore_tint) c = rgb.blendPremultiplied(c, C[i], A[i]);
             }
             if (noise_level>0) c = rgb.blend(c, (rn=rn*rA+rC)>>8, noise_level);
             if (motion_blur>0) c = rgb.blend(c, B.buf.buf.getElem(i), motion_blur);
@@ -559,6 +566,9 @@ public final class Map {
      */
     void applyGradientAndTint() {
         // TODO
+    }
+    boolean translucentActive() {
+        return (grad_mode!=0)||(tint_level>0);
     }
     
     ////////////////////////////////////////////////////////////////////////////
@@ -586,13 +596,13 @@ public final class Map {
     public int tint_level   = 0;
     public int color_dampen = 128;
     //public void setGColor1(int i) {fade_op = fade_colors[gradcolor1_i = wrap(i, N_COLOR_REGISTERS)];}
-    public void setGColor1   (int i) {gcolor1_i   =wrap(i,N_COLOR_REGISTERS);}
-    public void setGColor2   (int i) {gcolor2_i   =wrap(i,N_COLOR_REGISTERS);}
-    public void setBarColor  (int i) {barcolor_i  =wrap(i,N_COLOR_REGISTERS);}
-    public void setTintColor (int i) {tintcolor_i =wrap(i,N_COLOR_REGISTERS);}
-    public void setOutColor  (int i) {outcolor_i  =wrap(i,N_COLOR_REGISTERS);}
-    public void setTintLevel (int i) {tint_level  =clip(i,0,255);}
-    public void setColorDamp (int i) {color_dampen=clip(i,0,255);}
+    public void setGColor1   (int i) {gcolor1_i    = wrap(i,N_COLOR_REGISTERS);}
+    public void setGColor2   (int i) {gcolor2_i    = wrap(i,N_COLOR_REGISTERS);}
+    public void setBarColor  (int i) {barcolor_i   = wrap(i,N_COLOR_REGISTERS);}
+    public void setTintColor (int i) {tintcolor_i  = wrap(i,N_COLOR_REGISTERS);}
+    public void setOutColor  (int i) {outcolor_i   = wrap(i,N_COLOR_REGISTERS);}
+    public void setTintLevel (int i) {tint_level   = clip(i,0,255);}
+    public void setColorDamp (int i) {color_dampen = clip(i,0,255);}
     public void nextGColor1  (int n) {setGColor1  (gcolor1_i   +n);}    
     public void nextGColor2  (int n) {setGColor2  (gcolor2_i   +n);}    
     public void nextBarColor (int n) {setBarColor (barcolor_i  +n);}    
@@ -650,7 +660,7 @@ public final class Map {
     ////////////////////////////////////////////////////////////////////////////
     // Describe what to do when a pixel is out of bounds ///////////////////////
     public PixOp outop;
-    public int   outi = 4; // 0:color 1:edge  2:repeat  3:image  4:fade 5:special
+    public int   outi = 4; // See `outops` array for definitions
     public void nextOutside(int n) {setOutside(outi + n);}
     public void setOutside(int index) {outop = outops[outi = wrap(index, outops.length)];}
     public abstract class PixOp {
@@ -663,11 +673,11 @@ public final class Map {
         new PixOp("Edge" ){int f(int x,int y,int i,int w){return B.buf.get.it(clip(x,0,W8),clip(y,0,H8));}},
         new PixOp("Tile" ){int f(int x,int y,int i,int w){return B.buf.get.it(x,y);}},
         new PixOp("Image"){int f(int x,int y,int i,int w){return cache.mapc.image[i];}},
-        new PixOp("Fade") {int f(int x,int y,int i,int w){return rgb.blend(cache.mapc.image[i], B.buf.get.it(x,y), w);}},
+        new PixOp("Fade" ){int f(int x,int y,int i,int w){return rgb.blend(cache.mapc.image[i], B.buf.get.it(x,y), w);}},
         new PixOp("Rate1"){int f(int x,int y,int i,int w){return rgb.blend(out_color, bar_color, w);}},
         new PixOp("Rate2"){int f(int x,int y,int i,int w){w=(256-w)*w;return rgb.blend(out_color, bar_color,(w*w)>>20);}},
         new PixOp("Rate3"){int f(int x,int y,int i,int w){w=((768-2*w)*w*w)>>16;return rgb.blend(rgb.blend(bar_color, out_color, w), B.buf.get.it(x,clip(y,0,H8-1)),w);}},
-        new PixOp("Blend") {int f(int x,int y,int i,int w){return ColorUtil.mean(cache.mapc.image[i], B.buf.get.it(x,y));}},
+        new PixOp("Blend"){int f(int x,int y,int i,int w){return ColorUtil.mean(cache.mapc.image[i], B.buf.get.it(x,y));}},
     };
     
     ////////////////////////////////////////////////////////////////////////////
@@ -758,7 +768,7 @@ public final class Map {
                 map[i] -= (map_buf[i] = ((int)(0x100*(z2H*(Z.imag-y0)))-H7));
                 i++;
                 // Precomputed convergence test (prdrag's addition)
-                // TODO: this needs to be moved to the cache so it can adapt to 
+                // TODO: this needs to be moved to the cache so it can adapt too
                 zconv[k++] = (Z.real-z.real)*(Z.real-z.real)+(Z.imag-z.imag)*(Z.imag-z.imag)>0.1f;
             }
         }
@@ -807,8 +817,8 @@ public final class Map {
     public void setGradient      (int i) {grad_op=grad_modes[grad_mode=wrap(i,grad_modes.length)];}
     public void nextGradientShape(int n) {setGradientShape(grad_i+n);}
     public void nextGradient     (int n) {setGradient(grad_mode+n);  }
-    public void toggleInversion()      {color_mask    ^= 0xffffff;}
-    public void toggleFeedbackInvert() {feedback_mask ^= 0xffffff;}
+    public void toggleInversion()        {color_mask    ^= 0xffffff;}
+    public void toggleFeedbackInvert()   {feedback_mask ^= 0xffffff;}
     public abstract class GradOp {
         public final String name; 
         public GradOp(String s) {name=s;}
@@ -818,6 +828,6 @@ public final class Map {
         new GradOp("None")   {int go(int i,int c){return c;}},
         new GradOp("1-Color"){int go(int i,int c){return rgb.blend(gc1, c,w(i));}},
         new GradOp("2-Color"){int go(int i,int c){int g=w(i); return rgb.blend(rgb.blend(gc1, gc2, g), c,g);}}};
-
+    
     
 }

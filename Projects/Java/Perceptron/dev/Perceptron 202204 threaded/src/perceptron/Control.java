@@ -101,7 +101,9 @@ public final class Control extends MouseAdapter implements KeyListener {
         try {rb = new Robot();} catch (AWTException e) {}
         robot = rb;
 
-        branching = new Cursor("branchangle.png") {public void step(float rate) {
+        branching = new Cursor("branchangle.png") {
+        @Override
+        public void step(float rate) {
             // Controls tree's branching angles
             super.step(rate);
             float px=x/P.screen_width-.5f, py=y/P.screen_height-.5f;
@@ -111,13 +113,17 @@ public final class Control extends MouseAdapter implements KeyListener {
             P.tree.form[0].setBeta(a1 + a2 / 2);
             P.tree.form[1].setBeta(a1 - a2 / 2);
         }};
-        map_rotation = new Cursor("rotation.jpg") {public void step(float rate) {
+        map_rotation = new Cursor("rotation.jpg") {
+        @Override
+        public void step(float rate) {
             super.step(rate);
             P.fractal.setNormalizedRotation(x, y);
         }};
         map_rotation.to.x = (int) (P.fractal.W - P.fractal.z2W - Map.UL.real);
         map_rotation.to.y = P.halfScreenHeight();
-        map_offset = new Cursor("offset.png") {public void step(float rate) {
+        map_offset = new Cursor("offset.png") {
+        @Override
+        public void step(float rate) {
             super.step(rate);
             P.fractal.setNormalizedConstant(x, y);
         }};
@@ -126,7 +132,9 @@ public final class Control extends MouseAdapter implements KeyListener {
             P.tree.location.x = (int) (.5 + x);
             P.tree.location.y = (int) (.5 + y);
         }};
-        alpha_cursor = new Cursor("axial.png") {public void step(float rate) {
+        alpha_cursor = new Cursor("axial.png") {
+        @Override
+        public void step(float rate) {
             super.step(rate);
             // DISABLED FOR AUTOSPIN SEE Perceptron.tree_spinner;
             /*var xo = x - P.halfScreenWidth();
@@ -143,18 +151,21 @@ public final class Control extends MouseAdapter implements KeyListener {
             */
         }};
         branch_length = new Cursor("branchlength.png") {
+        @Override
         public void step(float rate) {
             super.step(rate);
             P.tree.form[0].d_r = (x / P.screenWidth() - .5f) * .5f + .7f;
             P.tree.form[1].d_r = (y / P.screenHeight() - .5f) * .5f + .7f;
         }};
         tree_orientation = new Cursor("treeorientation.jpg") {
+        @Override
         public void step(float rate) {
             super.step(rate);
             P.tree.Y = rotation(3, 0, 2, (float)(x/P.halfScreenWidth ()-1)* complex.pi);
             P.tree.X = rotation(3, 1, 2, (float)(y/P.halfScreenHeight()-1)* complex.pi);
         }};
         gradient = new Cursor("gradient.jpg") {
+        @Override
         public void step(float rate) {
             super.step(rate);
             P.fractal.setGradientParam(
@@ -634,7 +645,7 @@ public final class Control extends MouseAdapter implements KeyListener {
             case ']' -> F.nextBarColor(-1);
             case '{' -> current.removeDot();
             case '}' -> current.addDot();
-            case '\\' -> P.rotate_images=!P.rotate_images;
+            case '\\'-> P.rotate_images=!P.rotate_images;
             case '|' -> P.draw_side_bars=!P.draw_side_bars;
             case 'a' -> P.mic.nextVis(1);
             case 'A' -> P.mic.setActive(!P.mic.isActive());
@@ -693,27 +704,26 @@ public final class Control extends MouseAdapter implements KeyListener {
     }
     
     /**
-     * Handle control + [KEYS] commands.Only "control" is truly reliable.
+     * Handle control + [KEYS] commands.
+     * Only "control" is truly reliable.
      * 
-     * Shift is already incorporated into the 
- keyChar; Alt/altGr/meta are used to enter foreign letters and special 
- symbols. Macs have a "command" key, but OSX hasn't supported Java in 
- years, and macs always have control as well. There isn't a reliable 
- equivalent on Linux/Windows. 
- 
- The e.getModifiersEx returns a bitmask of ALL modifiers, and is a bit 
- exciting. Ex stands for extended. Mouse buttons are included in the 
- modifiers. There really isn't any new info here that you can't get 
- from e.isControlDown, etc. 
- 
- Detecting key using e.getKeyCode():
- 
-   - A-Z 0-9, []-=,.;\/ behave as expected
-   - (`¬)('@)(#~) show up as special Latin characters À, Þ, Ï
-      - Placement varies with language, don't use! 
-   - Fn keys show up as pqrstuvwxyz{, 
-   - home and end show up as $ and #, respectively
-   - pgup, up, pgdn, left, down, right show up as !&"%('
+     * Shift is already incorporated into the keyChar;
+     * Alt/altGr/meta are used to enter foreign letters and special symbols. 
+     * Macs have a "command" key, but OSX hasn't supported Java in years,
+     * and macs always have control as well.
+     * There isn't a reliable equivalent on Linux/Windows. 
+     *  The e.getModifiersEx returns a bitmask of ALL modifiers, and is a bit 
+     * exciting. Ex stands for extended. Mouse buttons are included in the 
+     * modifiers. There really isn't any new info here that you can't get 
+     * from e.isControlDown, etc. 
+     * 
+     * Detecting key using e.getKeyCode():
+     * - A-Z 0-9, []-=,.;\/ behave as expected
+     * - (`¬)('@)(#~) show up as special Latin characters À, Þ, Ï
+     * - Placement varies with language, don't use! 
+     * - Fn keys show up as pqrstuvwxyz{, 
+     * - home and end show up as $ and #, respectively
+     * - pgup, up, pgdn, left, down, right show up as !&"%('
      * 
      * The correct way to do this is to check modifiers separately
      * and refer to keys entirely by their VK_ codes. This is awkward
@@ -782,11 +792,11 @@ public final class Control extends MouseAdapter implements KeyListener {
         // commands that are the same everywhere
         switch (modifiers) {
             case "ctrl+": switch (c) {
-                case 'M': P.toggleHideMouse(); return;
+                case 'M': P.toggleHideMouse();  return;
                 case 'F': P.toggleFullscreen(); return;
-                case 'E': P.toggleFrame(); return;
-                case 'S': P.save(); return;
-                case 'P': parked = !parked; return;
+                case 'E': P.toggleFrame();      return; // toggle window frame 
+                case 'S': P.save();             return;
+                case 'P': parked = !parked;     return;
             } break;
             case "ctrl+alt+"      : switch (c) {
                 case 'S': P.toggleAnimation(); return;
@@ -845,17 +855,17 @@ public final class Control extends MouseAdapter implements KeyListener {
             // keyTyped handles backspace and delete
             // Some other commands handled if isControlDown()
             switch (code) {
-                case VK_TAB -> text_mode=P.text.cursor_on=false;
-                case VK_LEFT -> P.text.left();
-                case VK_RIGHT -> P.text.right();
-                case VK_UP -> P.text.up();
-                case VK_DOWN -> P.text.down();
-                case VK_ENTER -> {if (e.isShiftDown()||e.isControlDown()) P.textToMap();}
-                case VK_PAGE_UP -> P.text.pageUp();
+                case VK_TAB       -> text_mode=P.text.cursor_on=false;
+                case VK_LEFT      -> P.text.left();
+                case VK_RIGHT     -> P.text.right();
+                case VK_UP        -> P.text.up();
+                case VK_DOWN      -> P.text.down();
+                case VK_ENTER     -> {if (e.isShiftDown()||e.isControlDown()) P.textToMap();}
+                case VK_PAGE_UP   -> P.text.pageUp();
                 case VK_PAGE_DOWN -> P.text.pageDown();
-                case VK_HOME -> P.text.home();
-                case VK_END -> P.text.end();
-                case VK_INSERT -> P.text.toggleInsert();
+                case VK_HOME      -> P.text.home();
+                case VK_END       -> P.text.end();
+                case VK_INSERT    -> P.text.toggleInsert();
             }
             return;
         } 
@@ -866,27 +876,27 @@ public final class Control extends MouseAdapter implements KeyListener {
         }
         // Neither text-entry or presets mode
         switch (code) {
-            case VK_TAB -> text_mode=P.text.on=P.text.cursor_on=true;
-            case VK_ENTER -> presets_mode = true;
-            case VK_UP -> F.setMotionBlur(F.motion_blur + 16);
-            case VK_DOWN -> F.setMotionBlur(F.motion_blur - 16);
-            case VK_LEFT -> P.setBlurWeight(P.blursharp_rate-16);
-            case VK_RIGHT -> P.setBlurWeight(P.blursharp_rate+16);
-            case VK_PAGE_UP -> P.mic.adjustVolume(0.2f);
+            case VK_TAB       -> text_mode=P.text.on=P.text.cursor_on=true;
+            case VK_ENTER     -> presets_mode = true;
+            case VK_UP        -> F.setMotionBlur(F.motion_blur + 16);
+            case VK_DOWN      -> F.setMotionBlur(F.motion_blur - 16);
+            case VK_LEFT      -> P.setBlurWeight(P.blursharp_rate-16);
+            case VK_RIGHT     -> P.setBlurWeight(P.blursharp_rate+16);
+            case VK_PAGE_UP   -> P.mic.adjustVolume(0.2f);
             case VK_PAGE_DOWN -> P.mic.adjustVolume(-0.2f);
-            case VK_HOME -> P.mic.adjustSpeed(0.2f);
-            case VK_END -> P.mic.adjustSpeed(-0.2f);
-            case VK_INSERT -> {}
-            case VK_DELETE -> P.toggleAnimation();
-            case VK_F1 -> F.setMap("z*z");
-            case VK_F2 -> F.setMap("z*abs(z)");
-            case VK_F3 -> F.setMap("f/z+i*z");
-            case VK_F4 -> F.setMap("z");
-            case VK_F5 -> F.setMap("1/z");
-            case VK_F6 -> F.setMap("e^z+e^(iz)");
-            case VK_F7 -> F.setMap("conj(e^z+e^(z*e^(i*p/4)))");
-            case VK_F8 -> F.setMap("z*z*e^(i*abs(z))");
-            case VK_F9 -> F.setMap("abs(z)*e^(i*arg(z)*2)*2");
+            case VK_HOME      -> P.mic.adjustSpeed(0.2f);
+            case VK_END       -> P.mic.adjustSpeed(-0.2f);
+            case VK_INSERT    -> {}
+            case VK_DELETE    -> P.toggleAnimation();
+            case VK_F1  -> F.setMap("z*z");
+            case VK_F2  -> F.setMap("z*abs(z)");
+            case VK_F3  -> F.setMap("f/z+i*z");
+            case VK_F4  -> F.setMap("z");
+            case VK_F5  -> F.setMap("1/z");
+            case VK_F6  -> F.setMap("e^z+e^(iz)");
+            case VK_F7  -> F.setMap("conj(e^z+e^(z*e^(i*p/4)))");
+            case VK_F8  -> F.setMap("z*z*e^(i*abs(z))");
+            case VK_F9  -> F.setMap("abs(z)*e^(i*arg(z)*2)*2");
             case VK_F10 -> F.setMap("z*e^(i*abs(z))*abs(z)/f");
             case VK_F11 -> F.setMap("(real(z)+i*ln(abs(imag(z))))*.3/(abs(imag(z)))*"+F.W+"/"+F.H);
             case VK_F12 -> F.setMap("(imag(z)*i+ln(abs(real(z))))*.3/(abs(real(z)))*"+F.W+"/"+F.H);

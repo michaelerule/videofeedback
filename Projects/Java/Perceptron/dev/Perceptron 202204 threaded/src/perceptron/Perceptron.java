@@ -130,7 +130,7 @@ public final class Perceptron extends javax.swing.JFrame {
     public int boredome_ms       = 100000;
     public int preset_rotate_ms  = 500000;
     public int screen_timeout_ms = 60000;
-    public int max_frametime  = 1000/20;
+    public int max_frametime     = 1000/20;
     public int audio_line        = -1;
     public int min_tree_depth    = 9;
     public int max_tree_depth    = 6;

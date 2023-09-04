@@ -385,11 +385,11 @@ public class Settings {
         F.invert_bound          = bounds_invert;
         F.outi                  = outside_i;
         F.gslope                = grad_slope;
-        F.gbias               = grad_offset;
+        F.gbias                 = grad_offset;
         F.color_mask            = color_mask;
         F.feedback_mask         = feedback_mask;
-        F.gc2               = grad_accent;
-        F.grad_i                = grad_i;
+        F.gc2                   = grad_accent;
+        //F.grad_i                = grad_i;
         F.grad_mode             = grad_mode;
         F.gcolor1_i             = gradcolor1_i;
         F.gcolor2_i             = gradcolor2_i;
@@ -399,6 +399,7 @@ public class Settings {
         F.outcolor_i            = outcolor_i;
         F.noise_level           = noise_level;
         F.color_dampen          = color_dampen;
+        F.setGradientShape(grad_i);
         F.syncOps();
 
         B.reflect       = reflect;

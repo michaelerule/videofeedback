@@ -65,11 +65,18 @@ public class ScreenCap {
     private Screenshot done = null;
     private Future<Screenshot> pending = null;
     public synchronized BufferedImage getScreenshot() {
+        // If there is no pending screenshot, or if the last queued screenshot
+        // has completed (or failed), we need to start another one. 
+        // Try to save the screenshot result in "done", if possible.
         if (null==pending || pending.isCancelled() || pending.isDone()) {
-            if (null!=pending) try { done = pending.get();
+            if (null!=pending) try { 
+                done = pending.get();
             } catch (InterruptedException | ExecutionException e) {}
             pending = ex.submit(()->{return new Screenshot();});
         }
+        // If there is no completed screenshot (done is null), or if the
+        // saved screenshot is too old (based on time stamps), take a new
+        // screenshot now (synchronously). 
         if (null==done || currentTimeMillis()-done.time>STALE_MS) 
             done = new Screenshot();
         return done.image;
