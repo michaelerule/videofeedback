@@ -605,7 +605,6 @@ public final class Perceptron extends javax.swing.JFrame {
         float lr = (float)(pow(2.0,lum_rate/256f));
         float cr = (float)(pow(2.0,con_rate/256f));
         float br = (1+bri_rate/256f)/2;
-        
         int N = b.getSize();
         Future t1 = executor.submit(()->{colorFilter(b,0,N/2,hr,sr,lr,cr,br);});
         Future t2 = executor.submit(()->{colorFilter(b,N/2,N,hr,sr,lr,cr,br);});
@@ -697,12 +696,20 @@ public final class Perceptron extends javax.swing.JFrame {
     
     ////////////////////////////////////////////////////////////////////////////
     // Text drawing routines
-    public final Font  TEXTFONT = new Font(Font.MONOSPACED,Font.PLAIN,14);
-    public final FontMetrics fm = getFontMetrics(TEXTFONT);
-    public final int   LINEHEIGHT = 16;
-    public final int   STATE_COLWIDTH = 275;
-    public final int[] STATE_TABS = {0, 30, 150};
     
+    // (rainbow equation editor, not help menu!)
+    //public final Font  TEXTFONT = new Font(Font.MONOSPACED,Font.PLAIN,14);
+    //public final FontMetrics fm = getFontMetrics(TEXTFONT);
+    //public final int   LINEHEIGHT = 16;
+    //public final int   STATE_COLWIDTH = 275;
+    //public final int[] STATE_TABS = {0, 30, 150};
+    public final Font  TEXTFONT = new Font(Font.MONOSPACED,Font.PLAIN,10);
+    public final FontMetrics fm = getFontMetrics(TEXTFONT);
+    public final int   LINEHEIGHT = 11;
+    public final int   STATE_COLWIDTH = 210;
+    public final int[] STATE_TABS = {0, 20, 115};
+    
+    // Generic text drawing routine, used for help, status, and notifications.
     private void text(Graphics2D g,String s,int x,int y,int a) {
         g.setFont(TEXTFONT);
         // Fill outline sides
@@ -730,6 +737,7 @@ public final class Perceptron extends javax.swing.JFrame {
         text(g,s,x-w,y,a);
     }
 
+    // Draws status information on lower-right of screen (if active)
     private void drawInfo() {
         Graphics2D g = buf.out.g;
         int dy = LINEHEIGHT;
@@ -764,6 +772,7 @@ public final class Perceptron extends javax.swing.JFrame {
         }
     }
     
+    // Draws system state in the form of a help menu overlay. 
     private void drawState() {
         Graphics2D g = buf.out.g;
         String info = helpString(this);

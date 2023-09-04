@@ -250,6 +250,8 @@ public class Settings {
         ↖ Home U+2196
         ↘ End U+2198
         */
+        String s = C.current.name;
+        
         return
         "─┤ PERCEPTRON ├────────────────"
         + "\n Left  Click   next cursor"
@@ -310,11 +312,11 @@ public class Settings {
         + "\n ()  @±noise           @" + F.noise_level
         + "\n ↑↓  @±motionblur      @" + F.motion_blur
         + "\n ←→  @sharp/blur       @" + P.blursharp_rate
-        + "\n"//+ + "\n─┤ CURSOR ├────────────────────"
+        + "\n"//+ + "\n─┤ CURSOR ├────────────────────" 🭼_
         + "\n ⌃m  @hide mouse       @" + P.hide_mouse
         + "\n c   @show cursors     @" + C.draw_cursors
         + "\n c   @park cursors     @" + C.parked
-        + "\n v   @wander           @" + (C.current==null?"(no cursor)":C.current.name+": "+C.current.wander)
+        + "\n v   @wander           @" + (C.current==null?"(no cursor)":s.substring(0,s.length()-4)+": "+C.current.wander)
         + "\n V   @autopilot        @" + C.screensaver
         + "\n +-  @±speed           @" + (C.current==null? "(no cursor)" : C.current.speed)
         + "\n C   @dots             @" + C.draw_futures
