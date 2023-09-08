@@ -33,6 +33,7 @@ public class Settings {
     public boolean tree_active     = false;
     public boolean on              = true;
     public boolean cursor_on       = true;
+    public boolean capture_text    = true;
     public boolean tree_leaves     = false;
     public boolean tree_symmetry   = true;
     public boolean draw_dino       = false;
@@ -151,6 +152,7 @@ public class Settings {
         out += GAP + "draw_top_bars          " + P.draw_top_bars + "\n";
         out += GAP + "draw_side_bars         " + P.draw_side_bars + "\n";
         out += GAP + "do_hue_rotation        " + P.do_color_transform + "\n";
+        out += GAP + "capture_text           " + P.capture_text + "\n";
         
         out += GAP + "hue_rate               " + P.hue_rate + "\n";
         out += GAP + "sat_rate               " + P.sat_rate + "\n";
@@ -250,7 +252,7 @@ public class Settings {
         ↖ Home U+2196
         ↘ End U+2198
         */
-        String s = C.current.name;
+        String s = C.current==null? "":C.current.name;
         
         return
         "─┤ PERCEPTRON ├────────────────"
@@ -315,6 +317,7 @@ public class Settings {
         + "\n"//+ + "\n─┤ CURSOR ├────────────────────" 🭼_
         + "\n ⌃m  @hide mouse       @" + P.hide_mouse
         + "\n c   @show cursors     @" + C.draw_cursors
+        + "\n ^⇧C @feedback cursors @" + P.capture_cursors
         + "\n c   @park cursors     @" + C.parked
         + "\n v   @wander           @" + (C.current==null?"(no cursor)":s.substring(0,s.length()-4)+": "+C.current.wander)
         + "\n V   @autopilot        @" + C.screensaver
@@ -330,6 +333,7 @@ public class Settings {
         + "\n ⇥   @type equation    @" + C.text_mode
         + "\n b   @show text        @" + P.text.on
         + "\n B   @text cursor      @" + P.text.cursor_on
+        + "\n ^⇧T @feedback text    @" + P.capture_text
         + "\n ⌃↩ or ⇧↩ @@text → equation"
         + "\n"//+ + "\n─┤ WINDOW ├────────────────────"
         + "\n ?/  @show help        @" + P.show_state
@@ -357,6 +361,7 @@ public class Settings {
         F.setMap(fractal_map);
         
         P.objects_on_top        = objects_on_top;
+        P.capture_text          = capture_text;
         P.rotate_images         = rotate_images;
         P.fore_tint             = fore_grad;
         P.draw_moths            = draw_moths;
@@ -468,6 +473,7 @@ public class Settings {
         out += GAP + "interpolate            = " + interpolate + "\n";
         out += GAP + "anti_alias             = " + anti_alias + "\n";
         out += GAP + "tree_active            = " + tree_active + "\n";
+        out += GAP + "capture_text           = " + capture_text + "\n";
         out += GAP + "on                     = " + on + "\n";
         out += GAP + "cursor_on              = " + cursor_on + "\n";
         out += GAP + "draw_futures           = " + draw_futures + "\n";

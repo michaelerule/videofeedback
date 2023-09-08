@@ -691,6 +691,13 @@ public final class Map {
     public boolean[] zconv;    // "converged" points LUT for Newton fractals
     public int[]     map_buf;  // Additional map LUT to use when transitioning
     public float     map_fade; // Frame counter used to transition maps smoothly
+    final static ComplexContex vars = ComplexContex.standard();
+    public static abstract class Mapping {
+        public final String s;
+        public Mapping(String S){s=S;}
+        public String toString() {return s;}
+        public abstract complex f(complex z);
+    }
     public void setMap(Mapping map) {mapping = map; computeLookup();}
     public void setMap(int index) {setMap(maps.get(map_i=wrap(index,maps.size())));}
     public void setMap(final String s) {setMap(makeMap(s));}
@@ -709,13 +716,6 @@ public final class Map {
         inverse_radius = rotation.length();
         radius = 1 / inverse_radius;
         rotation = complex.polar(.5f / rotation.length() , rotation.angle());   
-    }
-    final static ComplexContex vars = ComplexContex.standard();
-    public static abstract class Mapping {
-        public final String s;
-        public Mapping(String S){s=S;}
-        public String toString() {return s;}
-        public abstract complex f(complex z);
     }
     public static Mapping makeMapStatic(final String s) {
         try {

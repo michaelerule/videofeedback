@@ -801,7 +801,10 @@ public final class Control extends MouseAdapter implements KeyListener {
             case "ctrl+alt+"      : switch (c) {
                 case 'S': P.toggleAnimation(); return;
             } break;
-            case "ctrl+shift+"    : switch (c) {} break;
+            case "ctrl+shift+"    : switch (c) {
+                case 'T': P.toggleCaptureText(); return;
+                case 'C': P.toggleCaptureCursors(); return;
+            } break;
             case "ctrl+alt+shift+": switch (c) {} break;
         }
         P.notify("not mapped");

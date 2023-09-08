@@ -30,8 +30,8 @@ public class ScreenCap {
     
     // Screenshots are stale after...
     public static final int 
-            STALE_MS   = 1000,
-            TIMEOUT_MS = 200;
+        STALE_MS   = 1000,
+        TIMEOUT_MS = 200;
     
     private Robot robot = null;       // Robot does the capture
     public  Rectangle screenRect;     // Region to capture
@@ -62,7 +62,7 @@ public class ScreenCap {
     /**
      * Return last screenshot if not stale and async call for next one.
      */
-    private Screenshot done = null;
+    private Screenshot         done    = null;
     private Future<Screenshot> pending = null;
     public synchronized BufferedImage getScreenshot() {
         // If there is no pending screenshot, or if the last queued screenshot

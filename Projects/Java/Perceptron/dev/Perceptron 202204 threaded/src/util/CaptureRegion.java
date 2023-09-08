@@ -49,16 +49,25 @@ import static util.Misc.clip;
 import static util.Sys.sout;
 
 /**
- *
+ * GUI window used to select the screen capture region. 
  * @author mer49
  */
-public class BigShot {
+public class CaptureRegion {
     
-    private static final int   SPACE   = 45;
-    private static final int   MINSIZE = 5*SPACE;
+    // Minimize width and height of capture region, in pixels
+    private static final int   SPACE      = 45;
+    private static final int   MINSIZE    = 5*SPACE;
     private static final Color TINT_COLOR = new Color(48,0,255,80);
     private static final Color FILL_COLOR = new Color(103,88,168);
     
+    /**
+     * We simulate translucency by hiding the window, capturing the screen,
+     * and then displaying a blurred and tinted version of this capture in 
+     * the background. Some JREs do support real transparency, but not JDK as
+     * of 2023.
+     * @param img
+     * @return 
+     */
     public static BufferedImage blur(BufferedImage img) {
         float sigma = 4f;
         int K = (int)(sigma*3+.5f);
@@ -78,6 +87,11 @@ public class BigShot {
         return img;
     }
     
+    /**
+     * Infer the screen capture rectangle required to capture everything,
+     * even across a multi-monitor setup. 
+     * @return 
+     */
     private static Rectangle getBigScreen() {
         // Determine total area of all screens
         double minx,miny,maxx,maxy;
@@ -97,47 +111,67 @@ public class BigShot {
         return new Rectangle(x,y,w,h);
     }
     
+    /** A JPanel acting as a button to drag and reposition a window.
+     */
     private static abstract class WPanel extends JPanel implements MouseListener, MouseMotionListener {
-        Point     mp=null;
+        JFrame    W; // Window this button acts upon
+        // State required to correctly process mouse dragging
+        Point     mp=null; // Location of last mouse down
         Point     lp=null;
-        Rectangle wb=null;
-        Rectangle lb=null;
+        Rectangle wb=null; 
+        Rectangle lb=null; // Bounds of window "W"
         Rectangle ll=null;
-        JFrame    W;
-        int ex,ey;
+        int       ex;
+        int       ey;
         public WPanel(JFrame toMove, int CURSOR) {
             super();
             this.W = toMove;
+            // Show parent component through background
             setOpaque(false);
+            // The mouse cursor will hint at the WPanel's action (move, resize, etc)
             setCursor(getPredefinedCursor(CURSOR));
+            // This is the minimum size of the WPanel as a button
             setMinimumSize(  new Dimension(SPACE,SPACE));
             setPreferredSize(new Dimension(SPACE,SPACE));
+            // Register event listeners
             invokeLater(()->{
                 addMouseListener(this);
                 addMouseMotionListener(this);
             });
         }
-        abstract void act(Point p);
-        abstract void draw(Graphics g, int w, int h);
+        abstract void act(Point p); // React to mouse-event location
+        abstract void draw(Graphics g, int w, int h); // Render button
+        // Clear the move/drag state memory
         private void clear() {mp=lp=null; wb=lb=ll=null; ex=ey=0;}
+        // When dragged, act upon moving mouse location
         public void mouseDragged (MouseEvent e) {act(e.getLocationOnScreen());}
+        // Detect all events signally mouse button release and stop tracking
         public void mouseClicked (MouseEvent e) {clear();}
         public void mouseReleased(MouseEvent e) {clear();}
         public void mouseMoved   (MouseEvent e) {clear();}
+        // It's common for the mouse to momentarily leave the window when 
+        // dragging or resizing, so we don't react to enter/exit events
         public void mouseEntered (MouseEvent e) {}
         public void mouseExited  (MouseEvent e) {}
+        // A mouse press indicates a drag action has started. 
+        // We store the mouse down location and current window bounds
         public void mousePressed (MouseEvent e) {
             mp = e.getLocationOnScreen();
             wb = W.getBounds();
         }
+        // Paint calls the draw routine, providing the component size.
         public void paintComponent(Graphics g) {
             draw(g,this.getWidth(),this.getHeight());
         }
+        // Explicitly set bounds of the window we control.
         void to(int x, int y, int w, int h) {    
             lb = new Rectangle(x,y,w,h);
             W.setBounds(lb);
         }
     }
+    
+    /** A button to drag/move/reposition a window (the diamond).
+     */
     private static class MovePanel extends WPanel {
         public MovePanel(JFrame toMove) {super(toMove,MOVE_CURSOR);}
         void act(Point p) {
@@ -158,6 +192,7 @@ public class BigShot {
             g.setColor(Color.white);
             g.drawRect(0,0,w-1,h-1);
             int w2=w/2, h2=h/2, d=min(w,h)/4;
+            // Draw a diamond shape
             g.drawLine(w2-d,h2,w2+d,h2);
             g.drawLine(w2,h2-d,w2,h2+d);
             g.drawLine(w2-d,h2,w2,h2-d);
@@ -166,6 +201,8 @@ public class BigShot {
             g.drawLine(w2+d,h2,w2,h2+d);
         }
     }
+    
+    /** Button to resize window, south-east corner. */
     private static class ResizeSEPanel extends WPanel {
         public ResizeSEPanel(JFrame toMove) {super(toMove,SE_RESIZE_CURSOR);}
         public void act(Point p) {
@@ -188,9 +225,7 @@ public class BigShot {
             (x,y) position of the window should change is if we've made the
             window too large and the window manager has moved it to bring it
             back in-screen. We don't want this. Interpret x and y discrepency
-            as an error that we need to accomodate. Problem: once we fix this
-            error, it won't appear on the next move. The error will need to be
-            persistent and integrate over time. Yes, this works!
+            as an error that we need to accomodate.
             */
             Rectangle cb = W.getBounds();
             ex += wb.x - cb.x;
@@ -209,6 +244,8 @@ public class BigShot {
             g.drawLine(w2+d,h2+d,w2+d-D,h2+d);
         }
     }
+    
+    /** Button to resize window, east edge. */
     private static class ResizeEPanel extends WPanel {
         public ResizeEPanel(JFrame toMove) {super(toMove,E_RESIZE_CURSOR);}
         public void act(Point p) {
@@ -239,6 +276,8 @@ public class BigShot {
             g.drawLine(w2+d,h2,w2+d-D,h2-D);
         }
     }
+    
+    /** Button to resize window, south edge. */
     private static class ResizeSPanel extends WPanel {
         public ResizeSPanel(JFrame toMove) {super(toMove,S_RESIZE_CURSOR);}
         public void act(Point p) {
@@ -274,22 +313,35 @@ public class BigShot {
     public JFrame selector = null;
     public JFrame watcher  = null;
     public BufferedImage img = null;
+    public int width  = MINSIZE;
+    public int height = MINSIZE;
                 
-    public BigShot() {
+    public CaptureRegion(int width, int height) {
+        this.width  = width;
+        this.height = height;
         System.setProperty("sun.awt.noerasebackground", "true");
+        // Watcher: small window indicating active screen acpture
+        // Selector: adjustable faux-translucent window to set capture region
         prepareWatcher();
         prepareSelector();
         selector.pack();
         watcher.pack();        
-        // Move selection window to center of screen 0 and show
+        // Discover which screen we're on and get its bounding box
         Rectangle b = getPointerInfo().getDevice().getDefaultConfiguration().getBounds();
+        // Put the "watcher" window in the top left
         watcher.setLocation(b.x,b.y);
+        // Intially, place the selector window immediately below the watcher
         Rectangle zb = watcher.getBounds();
         selector.setLocation(b.x,b.y+zb.height+5);
         selector.setVisible(false);
         watcher.setVisible(true);
     }
+    public CaptureRegion() {this(MINSIZE,MINSIZE);}
     
+    /**
+     * Create a smaller floating window, indicating that screen capture is
+     * active, and providing buttons to change the screen capture region.
+     */
     private void prepareWatcher() {
         ////////////////////////////////////////////////////////////////////////
         // Prepare a button-window to re-select capture region
@@ -364,7 +416,7 @@ public class BigShot {
             }
         };
         // Prepare screen capture region selection window
-        Dimension size = new Dimension(320,240);
+        Dimension size = new Dimension(width,height);
         c.setBackground(FILL_COLOR);
         c.setPreferredSize(size);
         c.setOpaque(false);
@@ -396,24 +448,41 @@ public class BigShot {
         });
     }
     
+    /** Add the buttons that move/resize to the selector window
+     * @param c 
+     */
     private void addSelectorHandles(JPanel c) {
-        // Button to drag the window
-        JPanel centr = new JPanel(new BorderLayout());
-        c.add(centr,BorderLayout.CENTER);
-        JPanel north = new JPanel(new BorderLayout());
+        JPanel centr = new JPanel(new BorderLayout()); centr.setOpaque(false);
+        JPanel north = new JPanel(new BorderLayout()); north.setOpaque(false);
+        JPanel south = new JPanel(new BorderLayout()); south.setOpaque(false);
+        
+        // Making the north (top) buttons par of the center panel
+        // ensures that the east panel will extend to the top of the window.
         north.add(new MovePanel(selector),BorderLayout.WEST);
+        
+        // Button to match perceptron pixel size
+        JButton matchSize = new JButton(
+            new AbstractAction("Click to match Perceptron size") {
+            public void actionPerformed(ActionEvent e) {
+                selector.setBounds(selector.getX(), selector.getY(), width, height);
+            }});
+        matchSize.setOpaque(false);
+        matchSize.setContentAreaFilled(false);
+        
+        //b.setBackground(Color.black);
+        matchSize.setForeground(Color.white);
+        
+        north.add(matchSize);            
+        
+        
         centr.add(north,BorderLayout.NORTH);
-        // Button to resize the window south east
-        JPanel south = new JPanel(new BorderLayout());
-        south.add(new ResizeSEPanel(selector),BorderLayout.EAST);
-        // Button to resize the window south
+        
         south.add(new ResizeSPanel(selector),BorderLayout.CENTER);
+        south.add(new ResizeSEPanel(selector),BorderLayout.EAST);
+
+        c.add(centr,BorderLayout.CENTER);
         c.add(south,BorderLayout.SOUTH);
-        // Button to resize the window south east
         c.add(new ResizeEPanel(selector),BorderLayout.EAST);
-        centr.setOpaque(false);
-        north.setOpaque(false);
-        south.setOpaque(false);
     }
     
     public void locate() throws AWTException {
@@ -430,7 +499,7 @@ public class BigShot {
     }
     
     public static void main(String [] args) throws AWTException {
-        BigShot b = new BigShot();//.locate();
+        CaptureRegion b = new CaptureRegion();//.locate();
     }
     
 }

@@ -12,7 +12,7 @@ public class DoubleBuffer {
         out, // Feedback output; Same as display if no post-processing.
         buf, // Temporary buffer for rendering
         img, // Buffer to store the current input image
-        fde, // Used to fade between two inpiut images
+        fde, // Used to fade between two input images
         dsp; // On-screen display; Contains post-processing effects.
     
     public int     reflect     = 0;

@@ -3,16 +3,6 @@ package perceptron;
  * Created on December 21,2006,5:27 PM
  */
 
-/*
-TODO
-- Could we use ROBOT to grab the screen and pull it in to the fractal? 
-https://stackoverflow.com/questions/18301429/java-print-screen-two-monitors
-        Robot robot = new Robot();    
-        Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
-        BufferedImage capture = new Robot().createScreenCapture(screenRect);
-        ImageIO.write(capture, "bmp", new File("printscreen.bmp"));
-*/
-
 import rendered.TextMatrix;
 import image.BlurSharpen;
 import image.DoubleBuffer;
@@ -69,7 +59,7 @@ import static perceptron.Parse.parseSettings;
 import static color.ColorUtil.colorFilter;
 import static color.ColorUtil.fast;
 import static java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment;
-import util.BigShot;
+import util.CaptureRegion;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import static java.util.concurrent.Executors.newFixedThreadPool;
@@ -101,14 +91,12 @@ public final class Perceptron extends javax.swing.JFrame {
     // Create two threads for running two things at once
     ExecutorService executor = newFixedThreadPool(2);
     
-    
     ////////////////////////////////////////////////////////////////////////////
     public final DoubleBuffer buf;
-    Graphics2D                graph2D;
     ArrayList<Mapping>        maps;
     Settings[]                presets;
     ImageCache                images = null;
-    JFileChooser              savers;
+    final JFileChooser        saver;
     final Control             control;
     final Map                 fractal;
     final Tree3D              tree;
@@ -117,10 +105,10 @@ public final class Perceptron extends javax.swing.JFrame {
     final Moths               moths;
     final Microphone          mic;
     final ScreenCap           cap;
-    final BigShot             big;
+    final CaptureRegion       big;
     
     int image_i = 0;
-    public String image_directory = "resource/images/";
+    public String imdir = "resource/images/";
         
     ////////////////////////////////////////////////////////////////////////////
     // modifying these after initialization may cause undefined behavior.
@@ -141,6 +129,8 @@ public final class Perceptron extends javax.swing.JFrame {
     // Render control flags: all public, on the honor system. 
     public boolean objects_on_top     = true;
     public boolean text_on_top        = true;
+    public boolean capture_text       = true;
+    public boolean capture_cursors    = true;
     public boolean cap_frame_rate     = true;
     public boolean write_animation    = false;
     public boolean rotate_images      = false;
@@ -164,12 +154,9 @@ public final class Perceptron extends javax.swing.JFrame {
     public boolean show_state   = false;
     public boolean show_monitor = false;
     public boolean show_notices = true;
-    int state_α = 255;
-    int info_α  = 255;
-    int note_α  = 255;
-    
-    JFileChooser saver;
-    
+    private int state_α = 255;
+    private int info_α  = 255;
+    private int note_α  = 255;
     
     ////////////////////////////////////////////////////////////////////////////
     // Try to pull in the object data from disk (static)
@@ -187,10 +174,10 @@ public final class Perceptron extends javax.swing.JFrame {
     
     ////////////////////////////////////////////////////////////////////////////
     // Getters and Setters (boilerplate!) //////////////////////////////////////
-    public int     screenWidth()             {return screen_width; }
-    public int     screenHeight()            {return screen_height; }
-    public int     halfScreenWidth()         {return half_screen_w; }
-    public int     halfScreenHeight()        {return half_screen_h; }
+    public int     screenWidth()             {return screen_width;    }
+    public int     screenHeight()            {return screen_height;   }
+    public int     halfScreenWidth()         {return half_screen_w;   }
+    public int     halfScreenHeight()        {return half_screen_h;   }
     public boolean isAntialiased()           {return buf.antialiased; }
     public void    setObjectsOnTop(boolean b){objects_on_top = b; }
     public void    setTextOnTop(boolean b)   {text_on_top = b; }
@@ -198,9 +185,11 @@ public final class Perceptron extends javax.swing.JFrame {
     public void    setHideMouse(boolean b)   {hide_mouse=b;setCursor(b?NONE:CROSS);}
     public void    setBlurWeight(int k)      {blursharp_rate = clip(k,-256,256);}
     public void    toggleAntialias()         {buf.toggleAntialias(); }
-    public void    toggleObjectsOnTop()      {objects_on_top = !objects_on_top; }
-    public void    toggleTextOnTop()         {text_on_top = !text_on_top; }
-    public void    toggleCapFramerate()      {cap_frame_rate = !cap_frame_rate; }
+    public void    toggleObjectsOnTop()      {objects_on_top  = !objects_on_top;  }
+    public void    toggleTextOnTop()         {text_on_top     = !text_on_top;     }
+    public void    toggleCaptureText()       {capture_text    = !capture_text;    }
+    public void    toggleCaptureCursors()    {capture_cursors = !capture_cursors; }
+    public void    toggleCapFramerate()      {cap_frame_rate  = !cap_frame_rate;  }
     public void    toggleAnimation()         {write_animation = !write_animation; }
     public void    toggleTree()              {draw_tree    = !draw_tree; }
     public void    toggleShowNotices()       {show_state   = !show_state;}
@@ -249,6 +238,7 @@ public final class Perceptron extends javax.swing.JFrame {
             String crash_log_filename,
             String presets_filename) {
         
+        // Tidy up parent container and parent window
         super("Perceptron (threaded)"); 
         Component root = getRootPane();
         Component cont = getContentPane();
@@ -256,15 +246,15 @@ public final class Perceptron extends javax.swing.JFrame {
         root.setBackground(BLACK);
         cont.setBackground(BLACK);
 
-        // We must parse the settings file before going to full-screen,
-        // because we need to know the desired canvas size to choose a
-        // screen resolution.
+        // Parse the settings to retrieve the window size
+        // parseSettings modifies the screen_width and _height variables
         maps = new ArrayList<>();
         parseSettings(this,settings_filename,presets_filename); // apply config
-        
         sout("Parsed screen_width="+screen_width+"; screen_height="+screen_height);
+        half_screen_w = (short)(screen_width /2);
+        half_screen_h = (short)(screen_height/2);
         
-        // parseSettings may change the screen_width and _height variables
+        // Force component and window to match specified resolution
         setDefaultCloseOperation(EXIT_ON_CLOSE); // Exit on window close
         setIgnoreRepaint(true); // ignore OS prompts for redrawing
         setResizable(false); // we turn this on again later
@@ -273,24 +263,22 @@ public final class Perceptron extends javax.swing.JFrame {
         root.setPreferredSize(dims);
         cont.setMinimumSize(dims);
         root.setMinimumSize(dims);
-        half_screen_w = (short)(screen_width /2);
-        half_screen_h = (short)(screen_height/2);
         
-        // screen_height and screen_width are only initialized AFTER parsing
-        // the settings file. 
-        // Initialise the frame rendering,background,and display buffers
-        buf             = new DoubleBuffer(screen_width,screen_height);
-        blursharp       = new BlurSharpen(buf);
-        text            = new TextMatrix(screen_width,screen_height);  
+        // Note that parseSettings() must have been called in order for
+        // screen_height and screen_width to be available.
+        // buf: multi-buffer object for rendering
+        // blursharp: convolution operators attached to our buffers
+        buf       = new DoubleBuffer(screen_width,screen_height);
+        blursharp = new BlurSharpen(buf);
+        imdir     = requireNonNull(imdir);
+        images    = new ImageCache(imdir);
+        fractal   = new Map(buf,maps,this);
+        moths     = new Moths(screen_width,screen_height);
+        mic       = new Microphone(buf, 0);  //mic.start();
+        cap       = new ScreenCap();
+        big       = new CaptureRegion(screen_width,screen_height);
+        text      = new TextMatrix(screen_width,screen_height);  
         text.loadString(crash_log_filename);  
-        image_directory = requireNonNull(image_directory);
-        images          = new ImageCache(image_directory);
-        fractal         = new Map(buf,maps,this);
-        moths           = new Moths(screen_width,screen_height);
-        mic             = new Microphone(buf, 0); 
-        cap             = new ScreenCap();
-        big             = new BigShot();
-        //mic.start();
         
         tree = new Tree3D(min_tree_depth, max_tree_depth,
             new float[][]{{0,0,0},{0,(float) (-(screen_height/12)),0}},0,
@@ -308,10 +296,10 @@ public final class Perceptron extends javax.swing.JFrame {
         saver = new JFileChooser("Save State");
         saver.setPreferredSize(new Dimension(800,600));
         
-        // For sanity, we now start in windowed mode (NOT full screen)
+        // To avoid alarming the user, start in windowed mode (NOT full screen)
         setIconImage(new ImageIcon("resource/data/icon2.png").getImage());
         setMinimumSize(new Dimension(screen_width, getHeight()));
-        setResizable(true);
+        setResizable(false);
         pack();
         centerWindow(this);
         setVisible(true);
@@ -338,18 +326,18 @@ public final class Perceptron extends javax.swing.JFrame {
     long animation_frame = 0;
     
     ////////////////////////////////////////////////////////////////////////////
-    // Locks: these are important but I haven't got them quite right yet!
+    // Locks
     final AtomicBoolean is_fullscreen = new AtomicBoolean(false);
     final AtomicBoolean running       = new AtomicBoolean(false);
-    public final boolean isFullscreen() {return is_fullscreen.get();}
-    public final boolean isRunning()    {return running.get();}
-    public final void    toggleRunning(){running.set(!running.get());}
+    public final boolean isFullscreen()  {return is_fullscreen.get();}
+    public final boolean isRunning()     {return running.get();}
+    public final void    toggleRunning() {running.set(!running.get());}
     
     long cache_time = 0, render_time = 0;
     public void go() {
         sout("Starting...");
         
-        // Start all timers
+        // Start timers
         long time = currentTimeMillis();
         frame           = 0;
         last_frame_time = time;
@@ -360,13 +348,17 @@ public final class Perceptron extends javax.swing.JFrame {
         sout("Entering Kernel...");
         running.set(true);
         fractal.cache.map_stale.set(true);
-        while (true) 
-            if (running.get()) try {
+        while (true) {
+            if (!running.get()) {
+                try {Thread.sleep(50);} catch (InterruptedException ex) {}
+                continue;
+            }
+            try {
                 long frame_start = currentTimeMillis();
-                
+
+                // Handle screen capture if active
                 if (isFullscreen()) {
-                    // Dirty hack here: if full screen and not multiple monitors
-                    // hide the screen capture tools even if capture is on
+                    // hide screencap tools if full screen and not multi-monitor
                     int nscreens = getLocalGraphicsEnvironment().getScreenDevices().length;
                     if (nscreens<=1) {
                         big.watcher.setVisible(false);
@@ -381,17 +373,20 @@ public final class Perceptron extends javax.swing.JFrame {
                         big.selector.setVisible(false);
                     }
                 }
-                
                 if (capture_screen) {
                     cap.screenRect.setRect(big.getBounds());
                     buf.set(cap.getScreenshot());
                     fractal.cache.map_stale.set(true);
                 }
-                
+
+                // Run the (possibly multi-threaded) rendering loop
+                // and caching loop in parallel. The caching loop monitors
+                // for state changes and recomputes auxilary buffers as needed,
+                // like the mapping lookup table or translucent gradient. 
                 synchronized (is_fullscreen) {
                     Future<Long> runner = executor.submit(()->{
                         long start = currentTimeMillis();
-                        doFrame();
+                        doFrame(); // Rendering business in here
                         return currentTimeMillis()-start;
                     });
                     Future<Long> cacher = executor.submit(()->{
@@ -416,37 +411,37 @@ public final class Perceptron extends javax.swing.JFrame {
                     long d = frame_start + max_frametime - currentTimeMillis();
                     if (d>0) Thread.sleep(d);
                 }
-
             } catch (Exception e) {
                 serr("Error in go!"); e.printStackTrace();
             }
-            else try {
-                Thread.sleep(50);
-            } catch (InterruptedException ex) {}
+        }
     }
         
-    /**
-     * Render a single frame.
+    /** Render a single frame.
+     * This code expects the "output" buffer to be ready for the next frame.
+     * It touches both the `output` and `buffer` buffers. 
      */
     private void doFrame() {
-        // This code expects the "output" buffer to be ready for the next frame
-        // It touches both the output and buffer buffers. s
         // Apply the fractal mapping. This draws into the "buf" buffer
-        // Exchange "out" and "buf" data buffers
         fractal.operate();
+        // Exchange "out" and "buf" data buffers
         buf.flip();
+        
+        // Draw tree, moths, dinosaur, audio visualizer in `buf.out`.
+        // and text overlay. These functions/objects have their own mutable
+        // state which determines whether they actually draw anything. 
         if (objects_on_top) drawObjects();
-        if (text_on_top) text.renderTextBuffer(buf.out.g2D);
+        if (capture_text && text_on_top) text.renderTextBuffer(buf.out.g2D);
+        
+        // Advance the cursor states then render cursors to output
         control.advance((int)framerate);
-        control.drawAll(buf.out.g);
-        // Fade to visible if on,otherwise fade away
-        state_α = fadeout(state_α,show_state  );
-        info_α  = fadeout(info_α ,show_monitor);
-        note_α  = fadeout(note_α ,show_notices);
-        if (state_α>0) drawState();
-        if (info_α >0) drawInfo();
-        if (note_α >0) noticeChanges();
-        // Save frame to disk
+        if (capture_cursors) control.drawAll(buf.out.g);
+        
+        // Update state machine for changing the translucency of the text
+        // overlays (fading in/out); Renders to `buf.out`.
+        if (capture_text) drawTextInfoOverlays(buf.out.g2D);
+        
+        // Save frame to disk; This captures the `buf.out` buffer. 
         if (write_animation) try {
             String filename = "animate/frame "+animation_frame+".png";
             animation_frame++;
@@ -456,55 +451,49 @@ public final class Perceptron extends javax.swing.JFrame {
             System.err.println("File write error in animation.");
             ex.printStackTrace();
         }
-        // Motion blur averages the next color with the previous 
-        // output buffer,if `objects_on_top`; or with the previous
-        // buffer buffer if the objects are in the background. 
-        // But,some objects and transforms,like borders and hue
-        // rotation,we want to behave as if they are always in 
-        // the background. I think this means I always need to
-        // save a copy in buf.buf,and switch motion blur to only
-        // use this copy.
+        // Store rendered frame in `buf.buf`;
+        // Motion blur will use this in the next frame.
         buf.buf.img.getRaster().setDataElements(0,0,buf.out.img.getRaster());
-        // Copy to physical screen with double buffering.
-        showOnScreen();
         
-        // Update fractal's color registers
-        fractal.buf = buf.buf.buf;
+        // Render any post-processing effects that are overlay-only
+        // and not fed back into the video feedback. 
+        buf.dsp.img.getRaster().setDataElements(0,0,buf.out.img.getRaster());
+        if (!capture_text) {
+            text.renderTextBuffer(buf.dsp.g2D);
+            drawTextInfoOverlays(buf.dsp.g2D);
+        }
+        if (!capture_cursors) {
+            control.drawAll(buf.dsp.g);
+        }
+        
+        // Blit `buf.dsp.img` to screen with double buffering.
+        BufferStrategy bs = getBufferStrategy();
+        Graphics screen   = bs.getDrawGraphics();
+        paint(screen); screen.dispose();
+        bs.show();
+        
+        // Update fractal's color state registers
         fractal.updateColorRegisters();
         
-        // This must be done before the copy in objects on top? 
-        if (do_color_transform) colorTransform(buf.out.buf);
+        // Apply background-only effects and drawing.
+        // All of these operate on `buf.out`.
+        // You can see these objects through the map in the next frame, 
+        // but won't see them drawn in screen coordinates on the current frame.
+        if (do_color_transform) colorTransform(buf.out.buf); // in-place on `buf.out` 
         drawBars();
-        // Background objects: the .output buffer must not be used
-        // to draw these,since this will cause motion blur to 
-        // reveal the drawn objects in the foreground. Neverthelss,
-        // the .output buffer must contain these objects by the time
-        // that the fractal map is applied. 
-        // If we didn't draw objects,draw them now. They will 
-        // show up behind the map in the next frame. 
-        // So,we need to save a copy of the untainted output for
-        // the motion blur code (FractalMap) to use later.
-        if (!objects_on_top) drawObjects();
-        if (!text_on_top) text.renderTextBuffer(buf.out.g2D);
-        // Applies the blur or sharpen convolution operation.
-        // This acts in-place on the output buffer.
+        if (!objects_on_top) drawObjects(); // to `buf.out`
+        if (capture_text && !text_on_top) text.renderTextBuffer(buf.out.g2D);
+        // Apply blur/sharpen convolution in-place on the output buffer.
         blursharp.operate(blursharp_rate);
     }
     
-    ////////////////////////////////////////////////////////////////////////////
-    // Double-buffered component painting //////////////////////////////////////
-    
-    /**
-     * Draw using double buffering and render strategy. 
-     */
-    private void showOnScreen() {
-        BufferStrategy bs = getBufferStrategy();
-        Graphics screen = bs.getDrawGraphics();
-        paint(screen);
-        screen.dispose();
-        bs.show();
+    private void drawTextInfoOverlays(final Graphics2D g) {
+        if ((state_α = fadeout(state_α,show_state  ))>0) drawState(g);
+        if ((info_α  = fadeout(info_α ,show_monitor))>0) drawInfo(g);
+        if ((note_α  = fadeout(note_α ,show_notices))>0) noticeChanges(g);
     }
     
+    ////////////////////////////////////////////////////////////////////////////
     /**
      * Send the rendering image in buf.out to the screen.
      * @param g 
@@ -512,8 +501,8 @@ public final class Perceptron extends javax.swing.JFrame {
     public void paint(Graphics g) {
         if (g instanceof Graphics2D graphics2D) g=fast(graphics2D);
         Rectangle b = getPerceptBounds();
-        if (null!=buf && null!=buf.out && null!=buf.out.img && null!=g)
-            g.drawImage(buf.buf.img,b.x,b.y,b.width,b.height,null);
+        if (null!=buf && null!=buf.dsp && null!=buf.dsp.img && null!=g)
+            g.drawImage(buf.dsp.img,b.x,b.y,b.width,b.height,null);
     }
     
     /**
@@ -616,7 +605,8 @@ public final class Perceptron extends javax.swing.JFrame {
         }
     }
     
-    ////////////////////////////////////////////////////////////////////////////
+    /** Draw tree, moths, dinosaur, audio visualizer.
+     */
     private float tree_spinner = 0f;
     private void drawObjects() {
         if (draw_tree) {
@@ -638,13 +628,14 @@ public final class Perceptron extends javax.swing.JFrame {
         mic.render();
     }
     
-    ////////////////////////////////////////////////////////////////////////////
+    /** Register that the user has interacted and defer boredome timeout.
+     */
     public void poke() {
         boredom_time = currentTimeMillis()+boredome_ms;
     }
 
-    ////////////////////////////////////////////////////////////////////////////
-    // Save state and the screenshot,"save frame".
+    /** Save state and the screenshot, "save frame".
+     */
     public void save() {
         boolean was_running = running.get();
         running.set(false);
@@ -697,12 +688,13 @@ public final class Perceptron extends javax.swing.JFrame {
     ////////////////////////////////////////////////////////////////////////////
     // Text drawing routines
     
-    // (rainbow equation editor, not help menu!)
+    // Larger font
     //public final Font  TEXTFONT = new Font(Font.MONOSPACED,Font.PLAIN,14);
     //public final FontMetrics fm = getFontMetrics(TEXTFONT);
     //public final int   LINEHEIGHT = 16;
     //public final int   STATE_COLWIDTH = 275;
     //public final int[] STATE_TABS = {0, 30, 150};
+    // Smaller font
     public final Font  TEXTFONT = new Font(Font.MONOSPACED,Font.PLAIN,10);
     public final FontMetrics fm = getFontMetrics(TEXTFONT);
     public final int   LINEHEIGHT = 11;
@@ -736,10 +728,26 @@ public final class Perceptron extends javax.swing.JFrame {
         int w = (int)round(fm.getStringBounds(s,g).getWidth());
         text(g,s,x-w,y,a);
     }
-
-    // Draws status information on lower-right of screen (if active)
-    private void drawInfo() {
-        Graphics2D g = buf.out.g;
+    
+    // Draws system state in the form of a help menu overlay. 
+    private void drawState(final Graphics2D g) {
+        String info = helpString(this);
+        int y   = -2;
+        int col = 0;
+        for (var l : info.split("\n")) {
+            l = l.strip();
+            y += LINEHEIGHT;
+            if (y>screen_height-1) {y = LINEHEIGHT-2; col += STATE_COLWIDTH;}
+            int tab = 0;
+            for (var s:l.split("@")) 
+                text(g,s,2+col+STATE_TABS[tab++],y,state_α);
+        }
+    }
+    
+    /**
+     * Draws status information on lower-right of screen (if active)
+     */
+    private void drawInfo(final Graphics2D g) {
         int dy = LINEHEIGHT;
         int  y = screen_height-4+dy;
         int  x = screen_width -4;
@@ -772,22 +780,6 @@ public final class Perceptron extends javax.swing.JFrame {
         }
     }
     
-    // Draws system state in the form of a help menu overlay. 
-    private void drawState() {
-        Graphics2D g = buf.out.g;
-        String info = helpString(this);
-        int y   = -2;
-        int col = 0;
-        for (var l : info.split("\n")) {
-            l = l.strip();
-            y += LINEHEIGHT;
-            if (y>screen_height-1) {y = LINEHEIGHT-2; col += STATE_COLWIDTH;}
-            int tab = 0;
-            for (var s:l.split("@")) 
-                text(g,s,2+col+STATE_TABS[tab++],y,state_α);
-        }
-    }
-    
     ////////////////////////////////////////////////////////////////////////////
     final long SHOW_MS = 6000; // How long to show each notification in ms
     final long FADE_MS = 2000; // Fade in/out time in ms
@@ -798,14 +790,14 @@ public final class Perceptron extends javax.swing.JFrame {
     Deque<Note>  notifications = new ArrayDeque<>();
     public void notify(String s) {notifications.add(new Note(s));}
     Collection<String> past = null;
-    void noticeChanges() {
+    void noticeChanges(final Graphics2D g) {
         Collection<String> st = Arrays.asList(helpString(this).split("\n"));
         if (past!=null) zip(past,st,(s,S)->{if (!s.equals(S)) {
             String[] columns = S.split("@");
             notify(columns[1].replace('±',' ').strip()+" ⯇ "+columns[2].strip());
         }});
         past = st; 
-        drawNotifications(buf.out.g);
+        drawNotifications(g);
     }
     void drawNotifications(final Graphics2D G) {
         G.setFont(TEXTFONT);
