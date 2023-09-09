@@ -160,42 +160,45 @@ public final class Perceptron extends javax.swing.JFrame {
     
     ////////////////////////////////////////////////////////////////////////////
     // Try to pull in the object data from disk (static)
-    final Object3D o = load3DModel("resource/data/tetrahedron.txt");
-    static Object3D load3DModel(String filename) {
+    final String OBJFILE = "resource/data/tetrahedron.txt";
+    public Object3D o = null;
+    public void reload3DModel() {
+        //Object3D load3DModel(String filename) {
         try {
-            Object3D o = new Object3D(new BufferedReader(new FileReader(new File(filename))));
-            o.recenter(200);
-            return o;
+            Object3D o2 = new Object3D(new BufferedReader(
+                    new FileReader(new File(OBJFILE))));
+            o2.recenter(100);
+            this.o = o2;
         } catch (FileNotFoundException E) {
-            sout("Could not load file "+filename);
+            sout("Could not load file "+OBJFILE);
+            this.o = null;
         }
-        return null;
     }
     
     ////////////////////////////////////////////////////////////////////////////
     // Getters and Setters (boilerplate!) //////////////////////////////////////
-    public int     screenWidth()             {return screen_width;    }
-    public int     screenHeight()            {return screen_height;   }
-    public int     halfScreenWidth()         {return half_screen_w;   }
-    public int     halfScreenHeight()        {return half_screen_h;   }
-    public boolean isAntialiased()           {return buf.antialiased; }
-    public void    setObjectsOnTop(boolean b){objects_on_top = b; }
-    public void    setTextOnTop(boolean b)   {text_on_top = b; }
-    public void    setAntialias(boolean s)   {if (s!=isAntialiased()) toggleAntialias();}
-    public void    setHideMouse(boolean b)   {hide_mouse=b;setCursor(b?NONE:CROSS);}
-    public void    setBlurWeight(int k)      {blursharp_rate = clip(k,-256,256);}
-    public void    toggleAntialias()         {buf.toggleAntialias(); }
-    public void    toggleObjectsOnTop()      {objects_on_top  = !objects_on_top;  }
-    public void    toggleTextOnTop()         {text_on_top     = !text_on_top;     }
-    public void    toggleCaptureText()       {capture_text    = !capture_text;    }
-    public void    toggleCaptureCursors()    {capture_cursors = !capture_cursors; }
-    public void    toggleCapFramerate()      {cap_frame_rate  = !cap_frame_rate;  }
-    public void    toggleAnimation()         {write_animation = !write_animation; }
-    public void    toggleTree()              {draw_tree    = !draw_tree; }
-    public void    toggleShowNotices()       {show_state   = !show_state;}
-    public void    toggleShowHelp()          {show_state   = !show_state;}
-    public void    toggleShowFramerate()     {show_monitor = !show_monitor; }
-    public void    toggleHideMouse()         {setHideMouse(!hide_mouse);}
+    public boolean isAntialiased()        {return buf.antialiased; }
+    public void setAntialias(boolean s)   {if (s!=isAntialiased()) toggleAntialias();}
+    public void setObjectsOnTop(boolean b){objects_on_top = b; }
+    public void setTextOnTop(boolean b)   {text_on_top = b; }
+    public void setHideMouse(boolean b)   {hide_mouse=b;setCursor(b?NONE:CROSS);}
+    public void setBlurWeight(int k)      {blursharp_rate = clip(k,-256,256);}
+    public void toggleAntialias()         {buf.toggleAntialias(); }
+    public void toggleObjectsOnTop()      {objects_on_top  = !objects_on_top;  }
+    public void toggleTextOnTop()         {text_on_top     = !text_on_top;     }
+    public void toggleCaptureText()       {capture_text    = !capture_text;    }
+    public void toggleCaptureCursors()    {capture_cursors = !capture_cursors; }
+    public void toggleCapFramerate()      {cap_frame_rate  = !cap_frame_rate;  }
+    public void toggleAnimation()         {write_animation = !write_animation; }
+    public void toggleTree()              {draw_tree       = !draw_tree;       }
+    public void toggleShowNotices()       {show_state      = !show_state;      }
+    public void toggleShowHelp()          {show_state      = !show_state;      }
+    public void toggleShowFramerate()     {show_monitor    = !show_monitor;    }
+    public void toggleHideMouse()         {setHideMouse(!hide_mouse);}
+    public int  screenWidth()             {return screen_width;    }
+    public int  screenHeight()            {return screen_height;   }
+    public int  halfScreenWidth()         {return half_screen_w;   }
+    public int  halfScreenHeight()        {return half_screen_h;   }
 
     public void setImage(int n) {
         try {
@@ -225,26 +228,17 @@ public final class Perceptron extends javax.swing.JFrame {
     
     ////////////////////////////////////////////////////////////////////////////
     /**
-     * This entire constructor and most of the class design is one giant bug. 
-     * Initialization must be done carefully,the order of operations matter.
-     * 
      * @param settings_filename
      * @param crash_log_filename
      * @param presets_filename 
      */
-    @SuppressWarnings("LeakingThisInConstructor")
+    @SuppressWarnings("LeakingThisInConstructor") // LOL
     public Perceptron(
             String settings_filename,
             String crash_log_filename,
             String presets_filename) {
         
-        // Tidy up parent container and parent window
         super("Perceptron (threaded)"); 
-        Component root = getRootPane();
-        Component cont = getContentPane();
-        this.setBackground(BLACK);
-        root.setBackground(BLACK);
-        cont.setBackground(BLACK);
 
         // Parse the settings to retrieve the window size
         // parseSettings modifies the screen_width and _height variables
@@ -253,6 +247,13 @@ public final class Perceptron extends javax.swing.JFrame {
         sout("Parsed screen_width="+screen_width+"; screen_height="+screen_height);
         half_screen_w = (short)(screen_width /2);
         half_screen_h = (short)(screen_height/2);
+        
+        // Tidy up parent container and parent window
+        Component root = getRootPane();
+        Component cont = getContentPane();
+        this.setBackground(BLACK);
+        root.setBackground(BLACK);
+        cont.setBackground(BLACK);
         
         // Force component and window to match specified resolution
         setDefaultCloseOperation(EXIT_ON_CLOSE); // Exit on window close
@@ -279,6 +280,9 @@ public final class Perceptron extends javax.swing.JFrame {
         big       = new CaptureRegion(screen_width,screen_height);
         text      = new TextMatrix(screen_width,screen_height);  
         text.loadString(crash_log_filename);  
+        
+        // Load model file
+        reload3DModel();
         
         tree = new Tree3D(min_tree_depth, max_tree_depth,
             new float[][]{{0,0,0},{0,(float) (-(screen_height/12)),0}},0,
@@ -338,6 +342,9 @@ public final class Perceptron extends javax.swing.JFrame {
         sout("Starting...");
         
         // Start timers
+        // NB: `boredom_time` is not currently used, but it was previouly 
+        // confifgured to activate an automated screensaver mode if users
+        // had not interacted in a while. 
         long time = currentTimeMillis();
         frame           = 0;
         last_frame_time = time;
@@ -695,11 +702,11 @@ public final class Perceptron extends javax.swing.JFrame {
     //public final int   STATE_COLWIDTH = 275;
     //public final int[] STATE_TABS = {0, 30, 150};
     // Smaller font
-    public final Font  TEXTFONT = new Font(Font.MONOSPACED,Font.PLAIN,10);
-    public final FontMetrics fm = getFontMetrics(TEXTFONT);
-    public final int   LINEHEIGHT = 11;
-    public final int   STATE_COLWIDTH = 210;
-    public final int[] STATE_TABS = {0, 20, 115};
+    public Font  TEXTFONT = new Font(Font.MONOSPACED,Font.PLAIN,10);
+    public FontMetrics fm = getFontMetrics(TEXTFONT);
+    public int   LINEHEIGHT = 11;
+    public int   STATE_COLWIDTH = 210;
+    public int[] STATE_TABS = {0, 25, 125};
     
     // Generic text drawing routine, used for help, status, and notifications.
     private void text(Graphics2D g,String s,int x,int y,int a) {
@@ -801,24 +808,21 @@ public final class Perceptron extends javax.swing.JFrame {
     }
     void drawNotifications(final Graphics2D G) {
         G.setFont(TEXTFONT);
-        long t = currentTimeMillis();
+        long  t = currentTimeMillis();
         final Set<Note> remove = new HashSet<>();
-        int y = 4;
-        final Deque<Note> notes = new ArrayDeque<>(notifications);
-        for (var n : notes) {
-            try{
-                long since = t-n.t;
-                if (since>SHOW_MS) {remove.add(n); continue;}
-                int α = 
-                    (since<=255)? (int)(since) :
-                    (since>SHOW_MS-FADE_MS)? (int)((SHOW_MS-since)*255.0/FADE_MS+0.5) :
-                    255;
-                trtext(G,n.s,screen_width-4,y,α*note_α+127>>8);
-                y+= LINEHEIGHT;
-            } catch (Exception e) {
-                System.err.println("Error in drawNotifications "+n.s);
-                e.printStackTrace();
-            }
+        int   y = 4;
+        for (var n : notifications) try {
+            long since = t-n.t;
+            if (since>SHOW_MS) {remove.add(n); continue;} //remove
+            int α = 
+                (since<=255)? (int)(since) :
+                (since>SHOW_MS-FADE_MS)? (int)((SHOW_MS-since)*255.0/FADE_MS+0.5) :
+                255;
+            trtext(G,n.s,screen_width-4,y,α*note_α+127>>8); // draw
+            y+= LINEHEIGHT;
+        } catch (Exception e) {
+            System.err.println("Error in drawNotifications "+n.s);
+            e.printStackTrace();
         }
         notifications.removeAll(remove);
         // Make room for the montior information, which has up to 11 lines

@@ -64,8 +64,7 @@ public final class Control extends MouseAdapter implements KeyListener {
      * It contains the location on the perceptron screen to draw the mouse.
      * This will be in (0,0,screen_width,screen_height) coordinates. 
      */
-    final Point      mouse = new Point(0, 0);
-    
+    final Point   mouse = new Point(0, 0);
     private float rate = 4f;
     
     // Control flags
@@ -805,7 +804,9 @@ public final class Control extends MouseAdapter implements KeyListener {
                 case 'T': P.toggleCaptureText(); return;
                 case 'C': P.toggleCaptureCursors(); return;
             } break;
-            case "ctrl+alt+shift+": switch (c) {} break;
+            case "ctrl+alt+shift+": switch (c) {
+                case 'S': P.reload3DModel();return;
+            } break;
         }
         P.notify("not mapped");
         syncCursors();

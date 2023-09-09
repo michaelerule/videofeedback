@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.StringTokenizer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import static util.Sys.serr;
 public class Object3D {
     public static interface Shape3D {
         public int setDepth(int i);
@@ -106,38 +107,14 @@ public class Object3D {
             //Sxystem.out.println(x+" "+y+" "+z);
         }
         
-        /**
-         * @return
-         */
-        @Override
-        public double getx() {
-            return x;
-        }
-
-        /**
-         * @return
-         */
-        @Override
-        public double gety() {
-            return y;
-        }
-
-        /**
-         * @return
-         */
-        @Override
-        public double getz() {
-            return z;
-        }
+        public double getx() {return x;}
+        public double gety() {return y;}
+        public double getz() {return z;}
         
-        /**
-         * @return
-         */
         @Override
         public String toString() {
             String s = "I: <"+super.toString().substring(29);
-            for (Point3D point1 : points) 
-                s += " " + point1.toString();
+            for (Point3D point1 : points) s += " " + point1.toString();
             return s+">";
         }
     }
@@ -393,7 +370,6 @@ public class Object3D {
      */
     public class PointSphere3D extends ColoredPoint3D implements Shape3D {
         Point3D [] surfacePoint;
-        
         /**
          * @param k
          * @param a
@@ -402,17 +378,16 @@ public class Object3D {
         @SuppressWarnings("unchecked")
         public PointSphere3D(StringTokenizer k, ArrayList a, ArrayList s) {
             super(k,a);
-            
             double pi2 = Math.PI/2;
             double phi;// = -pi2;
             double theta;// = 0;
             double R = Double.parseDouble(k.nextToken());
             //double f  = (Math.sqrt(5)-1)/2;
-            double surface = Math.PI*R*R/40;
+            double surface = Math.PI*R*R;///40;
             for (int x = 0; x < surface; x++)
             {
                 theta = 2*Math.PI*Math.random();
-                phi = Math.acos(2*Math.random()-1)-pi2;
+                phi   = Math.acos(2*Math.random()-1)-pi2;
                 Point3D temp = new RotateablePoint3D(
                     p.getx()+R*Math.cos(theta)*Math.cos(phi),
                     p.gety()+R*Math.sin(phi),
@@ -624,10 +599,6 @@ public class Object3D {
                 m1x = x*m1, 
                 m2x = x*m2, 
                 m3x = x*m3;
-            //double m0p1x = p1.getx()*m0;
-            //double m1p1x = p1.getx()*m1;
-            //double m2p1x = p1.getx()*m2;
-            //var m3p1x = p1.getx()*m3;
             
             if (dy1<dy2) {
                 for (; x < p1.getx()-1; x++) {
@@ -866,7 +837,6 @@ public class Object3D {
          */
         @Override
         public void draw(Graphics g, BufferedImage image_buffer)  {
-            //Sxystem.out.println("line "+(int)a.getx()+" "+(int)a.gety()+" "+(int)B.getx()+" "+(int)B.gety());
             applyColor(g);
             g.drawLine((int)A.getx(),(int)A.gety(),(int)B.getx(),(int)B.gety());
         }
@@ -1043,11 +1013,7 @@ public class Object3D {
             while (k.hasMoreTokens()) 
             {    
                 String s = k.nextToken();
-                if (s.charAt(0)=='c')
-                {
-                    super.setColor(parseColor(k));
-                    break;
-                }
+                if (s.charAt(0)=='c'){super.setColor(parseColor(k));break;}
                 A.add(Integer.valueOf(s));
             }    
             p = new Point3D [A.size()];
@@ -1613,7 +1579,6 @@ public class Object3D {
     Shape3D[] shape;
     static int max_d, min_d;
         
-    Object3D() {}
     
     public Object3D(BufferedReader b) {
         ArrayList<Point3D>             p   = new ArrayList<>();
@@ -1668,106 +1633,105 @@ public class Object3D {
     
     int point_counter = 0;
     final boolean parse(
-        String t, 
-        StringTokenizer k, 
-        ArrayList<Shape3D> shape_dest, 
-        ArrayList<Point3D>  point_dest, 
-        ArrayList<RotateablePoint3D> master_rotateable_point_dest,
-        ArrayList<RotateablePoint3D> rotate_point_dest,
-        ArrayList<InterpolatedPoint3D> interpoint_dest) {
+        String                         t, 
+        StringTokenizer                k, 
+        ArrayList<Shape3D>             shapes, 
+        ArrayList<Point3D>             points, 
+        ArrayList<RotateablePoint3D>   master_rotateable_points,
+        ArrayList<RotateablePoint3D>   rotate_points,
+        ArrayList<InterpolatedPoint3D> interpoints) {
         switch (t) {
             case "p", "v", "point" -> {
                 RotateablePoint3D p = new RotateablePoint3D(k);
-                point_dest.add(point_counter,p);
-                rotate_point_dest.add(p);
-                master_rotateable_point_dest.add(p.clone2());
+                points.add(point_counter,p);
+                rotate_points.add(p);
+                master_rotateable_points.add(p.clone2());
                 point_counter++;
             }
             case "i", "vr", "interpolatedpoint", "intepoint" -> {
-                InterpolatedPoint3D p = new InterpolatedPoint3D(k,point_dest);
-                point_dest.add(point_counter, p);
-                interpoint_dest.add(p);
+                InterpolatedPoint3D p = new InterpolatedPoint3D(k,points);
+                points.add(point_counter, p);
+                interpoints.add(p);
                 point_counter++;
             }
-            case "c", "circle" -> shape_dest.add(new Circle3D(k,point_dest));
-            case "s", "sphere" -> shape_dest.add(new Sphere3D(k,point_dest));
-            case "l", "line" -> shape_dest.add(new Line3D(k,point_dest));
-            case "t", "thickline" -> shape_dest.add(new ThickLine3D(k,point_dest));
-            case "h", "shadedline" -> shape_dest.add(new ShadedLine3D(k,point_dest));
-            case "j", "shadedcylinder" -> shape_dest.add(new ShadedCylinder3D(k,point_dest));
-            case "m", "image" -> shape_dest.add(new Image3D(k,point_dest));
-            case "a", "stationaryimage" -> shape_dest.add(new StationaryImage3D(k,point_dest));
-            case "y", "cylinder" -> shape_dest.add(new Cylinder3D(k,point_dest));
-            case "n", "cone" -> shape_dest.add(new Cone3D(k,point_dest));
-            case "o", "outline" -> shape_dest.add(new Outline3D(k,point_dest));
-            case "x", "text" -> shape_dest.add(new RotateableText3D(k,point_dest));
-            case "r", "pointsphere" -> shape_dest.add(new PointSphere3D(k,point_dest,shape_dest));
-            case "f", "fo", "form" -> shape_dest.add(new Form3D(k,point_dest));
-            case "e", "color", "coloredpoint" -> shape_dest.add(new ColoredPoint3D(k,point_dest));
+            case "c", "circle"                -> shapes.add(new Circle3D         (k,points));
+            case "s", "sphere"                -> shapes.add(new Sphere3D         (k,points));
+            case "l", "line"                  -> shapes.add(new Line3D           (k,points));
+            case "t", "thickline"             -> shapes.add(new ThickLine3D      (k,points));
+            case "h", "shadedline"            -> shapes.add(new ShadedLine3D     (k,points));
+            case "j", "shadedcylinder"        -> shapes.add(new ShadedCylinder3D (k,points));
+            case "m", "image"                 -> shapes.add(new Image3D          (k,points));
+            case "a", "stationaryimage"       -> shapes.add(new StationaryImage3D(k,points));
+            case "y", "cylinder"              -> shapes.add(new Cylinder3D       (k,points));
+            case "n", "cone"                  -> shapes.add(new Cone3D           (k,points));
+            case "o", "outline"               -> shapes.add(new Outline3D        (k,points));
+            case "x", "text"                  -> shapes.add(new RotateableText3D (k,points));
+            case "r", "pointsphere"           -> shapes.add(new PointSphere3D    (k,points,shapes));
+            case "f", "fo", "form"            -> shapes.add(new Form3D           (k,points));
+            case "e", "color", "coloredpoint" -> shapes.add(new ColoredPoint3D   (k,points));
             default -> {
-                    try {
-                            RotateablePoint3D p = new RotateablePoint3D(
-                    Double.parseDouble(t),
-                    Double.parseDouble(k.nextToken()),
-                    Double.parseDouble(k.nextToken()));
-                            point_dest.add(point_counter,p);
-                            rotate_point_dest.add(p);
-                            master_rotateable_point_dest.add(p.clone2());
-                            point_counter++;
-                            }
-                            catch ( NumberFormatException e ) { return false; }
+                try {
+                    RotateablePoint3D p = new RotateablePoint3D(
+                        Double.parseDouble(t),
+                        Double.parseDouble(k.nextToken()),
+                        Double.parseDouble(k.nextToken()));
+                    points.add(point_counter,p);
+                    rotate_points.add(p);
+                    master_rotateable_points.add(p.clone2());
+                    point_counter++;
+                }
+                catch ( NumberFormatException e ) { return false; }
             }
+
+
+
         }
         
         return true;            
     }
     
     public void draw(Graphics g, BufferedImage img, int xo, int yo, int zo)  {
-        if (shape.length > 0) {
-            for (int i = 0; i < p_rotateable.length; i++) {
-                p_rotateable[i].setx(2*mp_rotateable[i].getx()+xo);
-                p_rotateable[i].sety(-2*mp_rotateable[i].gety()+yo);
-                p_rotateable[i].setz(2*mp_rotateable[i].getz()+zo);
-            }        
-            for (InterpolatedPoint3D p_interpolated1 : p_interpolated) 
-                p_interpolated1.update();
+        if (shape.length <= 0) { serr("object is empty"); return; }
+        for (int i = 0; i < p_rotateable.length; i++) {
+            p_rotateable[i].setx( 2*mp_rotateable[i].getx()+xo);
+            p_rotateable[i].sety(-2*mp_rotateable[i].gety()+yo);
+            p_rotateable[i].setz( 2*mp_rotateable[i].getz()+zo);
+        }        
+        for (InterpolatedPoint3D p_interpolated1 : p_interpolated) 
+            p_interpolated1.update();
 
-            max_d = shape[0].setDepth();
-            min_d = max_d;
-                
-            for (int i = 1; i < shape.length; i++) {
-                int depth = shape[i].setDepth();
-                max_d = Math.max(max_d,depth);
-                min_d = Math.min(min_d,depth);
-            }
-            
-            Shape3D [][] s1,s2 = new Shape3D [10][shape.length];
-            int     []   w1,w2 = new int [10];
-            
-            w2[0] = shape.length;
-            for (int i = 0; i < shape.length; i++) 
-                (s2[0][i] = shape[i]).setDepth(shape[i].depth() - min_d);
-            max_d -= min_d;
-            int maximum_radix = (int)(Math.pow(10,(int)(Math.log(max_d)/Math.log(10))))*10;
-            int q;
-            for (int r=10; r<=maximum_radix; r*=10) {    
-                w1 = w2; 
-                w2 = new int [10];
-                s1 = s2; 
-                s2 = new Shape3D [10][shape.length];
-                for (int i = 9; i >= 0; i--)
-                    while (w1[i]-- > 0) {
-                        q = s1[i][w1[i]].depth()%r*10/r;
-                        try {
-                            s2[q][w2[q]] = s1[i][w1[i]];
-                            w2[q]++;
-                        } catch (Exception e) {}
-                    }
-            }
-            
-            for (int i=0; i<10; i++) while (w2[i]-->0) s2[i][w2[i]].draw(g,img);
+        max_d = shape[0].setDepth();
+        min_d = max_d;
+
+        for (int i = 1; i < shape.length; i++) {
+            int depth = shape[i].setDepth();
+            max_d = Math.max(max_d,depth);
+            min_d = Math.min(min_d,depth);
         }
-        else System.out.println("object is empty");
+
+        Shape3D [][] s1,s2 = new Shape3D [10][shape.length];
+        int     []   w1,w2 = new int [10];
+
+        w2[0] = shape.length;
+        for (int i = 0; i < shape.length; i++) 
+            (s2[0][i] = shape[i]).setDepth(shape[i].depth() - min_d);
+        max_d -= min_d;
+        int maximum_radix = (int)(Math.pow(10,(int)(Math.log(max_d)/Math.log(10))))*10;
+        int q;
+        for (int r=10; r<=maximum_radix; r*=10) {    
+            w1 = w2; 
+            w2 = new int [10];
+            s1 = s2; 
+            s2 = new Shape3D [10][shape.length];
+            for (int i = 9; i >= 0; i--) while (w1[i]-- > 0) {
+                q = s1[i][w1[i]].depth()%r*10/r;
+                try {
+                    s2[q][w2[q]] = s1[i][w1[i]];
+                    w2[q]++;
+                } catch (Exception e) {}
+            }
+        }
+        for (int i=0; i<10; i++) while (w2[i]-->0) s2[i][w2[i]].draw(g,img);
     }
     
     public void rotatex(double t) {

@@ -240,16 +240,8 @@ public final class Map {
             }
         }
         public synchronized void flip() {
-            if (trn_ready.getAndSet(false)) {
-                TranslucentLayer tempt = trnc;
-                trnc = trnb;
-                trnb = tempt;
-            }
-            if (map_ready.getAndSet(false)) {
-                MapCache tempm = mapc;
-                mapc = mapb;
-                mapb = tempm;
-            }
+            if (trn_ready.getAndSet(false)) {TranslucentLayer t = trnc; trnc = trnb; trnb = t; }
+            if (map_ready.getAndSet(false)) {MapCache t = mapc; mapc = mapb; mapb = t; }
         }
         /**
          * Merge translucent effects into a single layer.
@@ -707,6 +699,7 @@ public final class Map {
         if (offset == null) offset = new complex(0, 0);
         offset.real = (W - x) / z2W + UL.real;
         offset.imag = (H - y) / z2H + UL.imag;
+        //offset.imag = y / z2H + UL.imag;
         normc[0] = (float)(offset.real * z2W);
         normc[1] = (float)(offset.imag * z2H);
     }
@@ -761,8 +754,9 @@ public final class Map {
         for (int y = 0; y < H; y++) {
             for (int x = 0; x < W; x++) {
                 z.real = x*z2mapW + x0;
-                z.imag = y*z2mapH + y0;
+                z.imag = -(y*z2mapH + y0); // Flipped to cartesian, not image, coordinates
                 complex Z = mapping.f(z); 
+                Z = complex.conj(Z); // Flip back, cartesian <-> image coordinates
                 map[i] -= (map_buf[i] = ((int)(0x100*(z2W*(Z.real-x0)))-W7)); // FROM-TO
                 i++;
                 map[i] -= (map_buf[i] = ((int)(0x100*(z2H*(Z.imag-y0)))-H7));

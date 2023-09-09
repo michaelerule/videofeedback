@@ -563,1048 +563,1048 @@ o db
   
   s 1
   
-  fo   3   2   1
-  fo   6   5   4
-  fo   7   6   4
-  fo   8   7   4
-  fo   9   8   4
-  fo  10   9   4
-  fo  11  10   4
-  fo  12  11   4
-  fo  13  12   4
-  fo  14  13   4
-  fo   5  14   4
-  fo   5   5   4
-  fo  11  12  15
-  fo  10  11  15
-  fo  16  10  15
-  fo  17  16  15
-  fo  18  17  15
-  fo  19  18  15
-  fo  20  19  15
-  fo  12  20  15
-  fo  22   9  21
-  fo  23  22  21
-  fo  16  23  21
-  fo  10  16  21
-  fo   9  10  21
-  fo  23  16  24
-  fo  25  23  24
-  fo  26  25  24
-  fo  27  26  24
-  fo  28  27  24
-  fo  29  28  24
-  fo  16  29  24
-  fo  31  26  30
-  fo  32  31  30
-  fo  33  32  30
-  fo  34  33  30
-  fo  27  34  30
-  fo  26  27  30
-  fo  34  28  35
-  fo  36  34  35
-  fo  37  36  35
-  fo  38  37  35
-  fo  39  38  35
-  fo  40  39  35
-  fo  41  40  35
-  fo  28  41  35
-  fo  41  17  42
-  fo  43  41  42
-  fo  44  43  42
-  fo  45  44  42
-  fo  46  45  42
-  fo  18  46  42
-  fo  17  18  42
-  fo  19  48  47
-  fo  46  19  47
-  fo  49  46  47
-  fo  50  49  47
-  fo  51  50  47
-  fo  52  51  47
-  fo  48  52  47
-  fo  48  48  47
-  fo  48  19  20
-  fo  52  48  20
-  fo  12  54  53
-  fo  20  12  53
-  fo  52  20  53
-  fo  55  52  53
-  fo  55  55  53
-  fo  56  55  53
-  fo  54  56  53
-  fo  59  58  57
-  fo  54  59  57
-  fo  60  54  57
-  fo  61  60  57
-  fo  62  61  57
-  fo  58  62  57
-  fo  54  12  13
-  fo  14  54  13
-  fo  59  54  14
-  fo   5  64  63
-  fo  14   5  63
-  fo  59  14  63
-  fo  67  66  65
-  fo  68  67  65
-  fo  69  68  65
-  fo  70  69  65
-  fo  71  70  65
-  fo  72  71  65
-  fo  73  72  65
-  fo  66  73  65
-  fo  75  68  74
-  fo  76  75  74
-  fo  77  76  74
-  fo  70  77  74
-  fo  69  70  74
-  fo  68  69  74
-  fo  80  79  78
-  fo  81  80  78
-  fo  82  81  78
-  fo  76  82  78
-  fo  79  76  78
-  fo  81  84  83
-  fo  81  83  80
-  fo  58  81  82
-  fo  59  81  58
-  fo  84  81  59
-  fo  59  64  84
-  fo  75  76  79
-  fo  86  82  85
-  fo  62  88  87
-  fo  61  62  87
-  fo  89  61  87
-  fo  90  89  87
-  fo  91  90  87
-  fo  88  91  87
-  fo  61  89  92
-  fo  93  61  92
-  fo  94  93  92
-  fo  95  94  92
-  fo  96  95  92
-  fo  97  96  92
-  fo  98  97  92
-  fo  90  98  92
-  fo  89  90  92
-  fo  94  95  99
-  fo 100  94  99
-  fo 101 100  99
-  fo 102 101  99
-  fo 103 102  99
-  fo  96 103  99
-  fo  95  96  99
-  fo  50 105 104
-  fo 106  50 104
-  fo 107 106 104
-  fo 108 107 104
-  fo 109 108 104
-  fo 110 109 104
-  fo 105 110 104
-  fo  44 112 111
-  fo 113  44 111
-  fo 114 113 111
-  fo 115 114 111
-  fo 116 115 111
-  fo 117 116 111
-  fo 112 117 111
-  fo  39 119 118
-  fo  38  39 118
-  fo 120  38 118
-  fo 121 120 118
-  fo 122 121 118
-  fo 114 122 118
-  fo 123 114 118
-  fo 119 123 118
-  fo 120 121 124
-  fo 125 120 124
-  fo 126 125 124
-  fo 127 126 124
-  fo 128 127 124
-  fo 129 128 124
-  fo 121 129 124
-  fo 132 131 130
-  fo 133 132 130
-  fo 134 133 130
-  fo 135 134 130
-  fo 136 135 130
-  fo 137 136 130
-  fo 138 137 130
-  fo 131 138 130
-  fo 131 131 130
-  fo 140 135 139
-  fo 141 140 139
-  fo 142 141 139
-  fo 144 143 139
-  fo 145 144 139
-  fo 146 145 139
-  fo 135 146 139
-  fo 149 148 147
-  fo 150 149 147
-  fo 151 150 147
-  fo 152 151 147
-  fo 153 152 147
-  fo 154 153 147
-  fo 155 154 147
-  fo 158 157 156
-  fo 159 158 156
-  fo 140 159 156
-  fo 135 140 156
-  fo 134 135 156
-  fo 133 134 156
-  fo 160 133 156
-  fo 157 160 156
-  fo 162  34 161
-  fo 163 162 161
-  fo 164 163 161
-  fo 165 164 161
-  fo 160 165 161
-  fo 166 160 161
-  fo 126 166 161
-  fo 125 126 161
-  fo  37 125 161
-  fo  36  37 161
-  fo  34  36 161
-  fo 127 166 126
-  fo 133 166 127
-  fo 133 160 166
-  fo 157 165 160
-  fo 162  33  34
-  fo  41  28  29
-  fo  29  17  41
-  fo  17  29  16
-  fo 119  39  40
-  fo  43  40  41
-  fo  58  82  88
-  fo  88  62  58
-  fo  82  86  88
-  fo 169 168 167
-  fo 170 169 167
-  fo 171 170 167
-  fo  72 171 167
-  fo  77  70 167
-  fo 172  77 167
-  fo  85 172 167
-  fo  86  85 167
-  fo 173  86 167
-  fo 168 173 167
-  fo  77 172  76
-  fo 172  82  76
-  fo 172  85  82
-  fo 176 175 174
-  fo 177 176 174
-  fo 178 177 174
-  fo 179 178 174
-  fo 180 179 174
-  fo 181 180 174
-  fo 175 181 174
-  fo 184 183 182
-  fo 185 184 182
-  fo 186 185 182
-  fo 187 186 182
-  fo 175 187 182
-  fo  25 175 182
-  fo  23  25 182
-  fo  22  23 182
-  fo 183  22 182
-  fo 184 185 188
-  fo 191 190 189
-  fo 192 191 189
-  fo 193 192 189
-  fo 194 193 189
-  fo 163 194 189
-  fo 162 163 189
-  fo  33 162 189
-  fo 190  33 189
-  fo 197 196 195
-  fo 198 197 195
-  fo 199 198 195
-  fo 200 199 195
-  fo 201 200 195
-  fo 202 201 195
-  fo 196 202 195
-  fo 165 196 194
-  fo 202 196 165
-  fo 165 201 202
-  fo 157 201 165
-  fo  26 181 175
-  fo 175  25  26
-  fo  31 181  26
-  fo 180 181  31
-  fo  31 179 180
-  fo  32 179  31
-  fo 190 179  32
-  fo 179 204 203
-  fo 179 190 204
-  fo 179 203 178
-  fo 204 190 191
-  fo 175 176 187
-  fo  32  33 190
-  fo 164 165 194
-  fo  28  34  27
-  fo 194 163 164
-  fo 207 206 205
-  fo 208 207 205
-  fo 153 208 205
-  fo 143 153 205
-  fo 139 143 205
-  fo 142 139 205
-  fo 206 142 205
-  fo 155 210 209
-  fo 211 210 155
-  fo 155 212 211
-  fo 212 148 211
-  fo 208 213 207
-  fo 154 213 208
-  fo 208 153 154
-  fo 155 209 213
-  fo 213 154 155
-  fo 147 212 155
-  fo 147 148 212
-  fo 152 153 143
-  fo 143 144 152
-  fo 214 152 144
-  fo 151 152 214
-  fo 214 150 151
-  fo 150 214 215
-  fo 214 217 216
-  fo 144 217 214
-  fo 220 219 218
-  fo 221 220 218
-  fo 222 221 218
-  fo 223 222 218
-  fo 159 223 218
-  fo 224 159 218
-  fo 219 224 218
-  fo 219 225 201
-  fo 225 219 220
-  fo 157 219 201
-  fo 224 219 157
-  fo 158 159 224
-  fo 158 158 224 224 224 157 157 157
-  fo 228 227 226
-  fo 109 228 226
-  fo 229 109 226
-  fo 231 230 226
-  fo 232 231 226
-  fo 227 232 226
-  fo 227 227 226
-  fo 234 230 233
-  fo 235 230 234
-  fo 117 235 236
-  fo 237 117 236
-  fo 238 237 236
-  fo 239 238 236
-  fo 240 239 236
-  fo 234 240 236
-  fo 235 234 236
-  fo 242 238 241
-  fo 243 242 241
-  fo 244 243 241
-  fo 245 244 241
-  fo 246 245 241
-  fo 238 246 241
-  fo 247 246 238
-  fo 238 239 247
-  fo 237 238 116
-  fo 116 117 237
-  fo 243 115 116
-  fo 238 242 116
-  fo 242 243 116
-  fo  49  50 248
-  fo  46  49 248
-  fo  45  46 248
-  fo 249  45 248
-  fo 250 249 248
-  fo 107 250 248
-  fo 106 107 248
-  fo  50 106 248
-  fo 249  44  45
-  fo 112  44 249
-  fo 250 107 251
-  fo 249 250 251
-  fo 112 249 251
-  fo 117 112 251
-  fo 108 117 251
-  fo 107 108 251
-  fo 229 226 252
-  fo 108 229 252
-  fo 117 108 252
-  fo 235 117 252
-  fo 230 235 252
-  fo 226 226 252
-  fo 254  52 253
-  fo  50 254 253
-  fo 105  50 253
-  fo 110 105 253
-  fo 255 110 253
-  fo 256 255 253
-  fo 257 256 253
-  fo  52 257 253
-  fo 255 256  56
-  fo  56  94 255
-  fo  93  94  56
-  fo  56  61  93
-  fo  60  61  56
-  fo  56  54  60
-  fo 125  37  38
-  fo  38 120 125
-  fo  39  40  43
-  fo  43 119  39
-  fo 123 119  43
-  fo  44 113 123
-  fo 123  43  44
-  fo 114 115 258
-  fo 259 114 258
-  fo 260 259 258
-  fo 261 260 258
-  fo 115 261 258
-  fo 129 121 262
-  fo 260 129 262
-  fo 259 260 262
-  fo 121 259 262
-  fo 131 264 263
-  fo 265 131 263
-  fo 266 265 263
-  fo 267 266 263
-  fo 260 267 263
-  fo 264 260 263
-  fo 131 128 264
-  fo 132 128 131
-  fo 133 127 132
-  fo 128 132 132 127
-  fo  19  46  18
-  fo 109 229 108
-  fo 196 269 268
-  fo 268 194 196
-  fo 197 269 196
-  fo 193 194 268
-  fo 268 270 193
-  fo 193 270 192
-  fo 191 192 271
-  fo 204 191 271
-  fo 183 184 188
-  fo 272  22 183
-  fo 188 273 272
-  fo   9  22 272
-  fo 276 275 274
-  fo 277 276 274
-  fo   9 277 274
-  fo   8   9 274
-  fo   7   8 274
-  fo 278   7 274
-  fo 279 278 274
-  fo 275 279 274
-  fo 278 279 280
-  fo 278 280 281
-  fo   7 278 281
-  fo   7 281 282
-  fo   6   7 282
-  fo   5   6 282
-  fo 283   5 282
-  fo 284 283 282
-  fo 281 284 282
-  fo 283 284 285
-  fo  59  63  64
-  fo  64  59  64
-  fo  63  64  64
-  fo 286  84  64
-  fo 287 286  64
-  fo 288 287  64
-  fo   5 288  64
-  fo  59  63  64
-  fo 287 283 285
-  fo 288 283 287
-  fo 288   5 283
-  fo 214 216 215
-  fo 146 136 289
-  fo 145 146 289
-  fo 216 145 289
-  fo 290 216 289
-  fo 291 290 289
-  fo 292 291 289
-  fo 137 292 289
-  fo 136 137 289
-  fo 146 135 136
-  fo 217 144 145
-  fo 217 145 216
-  fo 294 138 293
-  fo 295 294 293
-  fo 296 295 293
-  fo 245 296 293
-  fo 297 245 293
-  fo 265 297 293
-  fo 138 265 293
-  fo 265 138 131
-  fo 266 297 265
-  fo 245 297 244
-  fo 244 297 266
-  fo 243 261 115
-  fo 243 266 261
-  fo 266 267 261
-  fo 267 260 261
-  fo 113 114 123
-  fo 244 266 243
-  fo 114 259 122
-  fo 122 259 121
-  fo 264 128 129
-  fo 129 260 264
-  fo 294 299 298
-  fo 294 137 138
-  fo 292 137 294
-  fo 291 292 294
-  fo 110 255  94
-  fo 300 100 110
-  fo 301 110 100
-  fo 109 110 301
-  fo 301 228 109
-  fo 100 228 301
-  fo 302 228 100
-  fo 100 101 302
-  fo 227 101 102
-  fo 272 183 188
-  fo 277 272 273
-  fo 303 276 277
-  fo 273 188 303
-  fo 303 277 273
-  fo 277   9 272
-  fo  73  66 170
-  fo 171  72  73
-  fo  73 170 171
-  fo  71 167  70
-  fo  72 167  71
-  fo 142 304 159
-  fo 141 142 159
-  fo 140 141 159
-  fo 159 304 223
-  fo 304 142 206
-  fo 231 233 230
-  fo 173  88  86
-  fo  91  88 173
-  fo 305  91 173
-  fo 305 173 168
-  fo 306  91 305
-  fo  90  91 306
-  fo 306 307  90
-  fo 305 307 306
-  fo 168 308 305
-  fo 308 307 305
-  fo 308 309 307
-  fo 310 309 308
-  fo   3 312 311
-  fo 206 314 313
-  fo 223 313 315
-  fo 315 317 316
-  fo 315 314 317
-  fo 315 313 314
-  fo 320 319 318
-  fo 321 319 320
-  fo 323 170 322
-  fo 322 318 323
-  fo 170  66 322
-  fo 326 325 324
-  fo 327 324 303
-  fo 303 188 327
-  fo 324 276 303
-  fo 327 326 324
-  fo 188 328 326
-  fo 331 330 329
-  fo 329 330 332
-  fo 332 333 329
-  fo 334 333 332
-  fo 335 333 334
-  fo 334 336 335
-  fo 332 336 334
-  fo 336 332 337
-  fo 337 338 336
-  fo 340 339 291
-  fo 340 341 339
-  fo 342 341 340
-  fo 344 343 340
-  fo 347 346 345
-  fo 345 348 347
-  fo 351 350 349
-  fo 349 350 352
-  fo 355 354 353
-  fo 357 352 356
-  fo 359 346 358
-  fo 359 358 354
-  fo 359 354 355
-  fo 360 359 355
-  fo 354 361 353
-  fo 353 361 362
-  fo 363 361 354
-  fo 364 342 363
-  fo 365 363 342
-  fo 365 361 363
-  fo 365 362 361
-  fo 365 366 362
-  fo 365 367 366
-  fo 365 340 367
-  fo 365 342 340
-  fo 216 369 368
-  fo 369 370 368
-  fo 373 372 371
-  fo 374 341 373
-  fo 374 339 341
-  fo 374 291 339
-  fo 374 290 291
-  fo 374 216 290
-  fo 374 369 216
-  fo 374 371 369
-  fo 374 373 371
-  fo 215 216 375
-  fo 378 377 376
-  fo 287 378 376
-  fo 285 378 287
-  fo 381 380 379
-  fo 381 376 377
-  fo 381 287 376
-  fo 381 286 287
-  fo 381  84 286
-  fo 381 381 380
-  fo 381 379 381
-  fo 381 380 379
-  fo 285 284 378
-  fo 382 284 281
-  fo 382 378 284
-  fo 382 377 378
-  fo 382 383 377
-  fo 382 384 383
-  fo 382 281 384
-  fo 281 385 384
-  fo 281 280 385
-  fo 280 279 385
-  fo 386 279 275
-  fo 386 385 279
-  fo 386 384 385
-  fo 386 387 384
-  fo 386 325 387
-  fo 386 324 325
-  fo 386 276 324
-  fo 386 275 276
-  fo 326 388 325
-  fo 326 327 188
-  fo 328 388 326
-  fo 188 389 328
-  fo 271 390 204
-  fo 271 391 390
-  fo 391 270 392
-  fo 392 270 393
-  fo 393 394 392
-  fo 397 396 395
-  fo 397 394 393
-  fo 393 396 397
-  fo 399 398 335
-  fo 402 401 400
-  fo 404 403 403 348
-  fo 403 404 405
-  fo 364 348 403
-  fo 347 348 364
-  fo 406 346 347
-  fo 406 358 346
-  fo 406 354 358
-  fo 406 363 354
-  fo 406 364 363
-  fo 406 347 364
-  fo 407 350 351
-  fo 407 346 350
-  fo 407 345 346
-  fo 407 351 345
-  fo 408 359 360
-  fo 408 346 359
-  fo 408 350 346
-  fo 408 352 350
-  fo 408 360 352
-  fo 410 409 357
-  fo 357 356 410
-  fo 409 411 357
-  fo 412 411 409
-  fo 409 413 412
-  fo 416 415 414
-  fo 414 417 416
-  fo 420 419 418
-  fo 418 421 420
-  fo 422 421 418
-  fo 418 337 422
-  fo 338 337 418
-  fo 418 423 338
-  fo 426 425 424
-  fo 426 423 425
-  fo 426 338 423
-  fo 426 336 338
-  fo 426 427 336
-  fo 426 428 427
-  fo 426 429 428
-  fo 426 424 429
-  fo   1   2   2
-  fo   1 430   3
-  fo   1 431 430
-  fo   1 399 431
-  fo   1 398 399
-  fo   1   2 398
-  fo 433 399 432
-  fo 433 431 399
-  fo 433 434 431
-  fo 433 435 434
-  fo 433 436 435
-  fo 433 432 436
-  fo 435 410 434
-  fo 437 410 435
-  fo 439 438 428
-  fo 439 432 438
-  fo 439 436 432
-  fo 439 435 436
-  fo 439 437 435
-  fo 439 401 437
-  fo 439 440 401
-  fo 439 428 440
-  fo 442 355 441
-  fo 442 441 443
-  fo 442 360 355
-  fo 444 431 442
-  fo 442 443 444
-  fo 446 445 443
-  fo 443 447 446
-  fo 448 447 443
-  fo 448 362 447
-  fo 448 353 362
-  fo 448 355 353
-  fo 448 441 355
-  fo 448 443 441
-  fo 450 449 430
-  fo 450 451 449
-  fo 450 445 451
-  fo 450 443 445
-  fo 450 444 443
-  fo 450 431 444
-  fo 450 430 431
-  fo 449   3 430
-  fo 312   3 449
-  fo   2 452 452
-  fo   2 453 329
-  fo   2 311 453
-  fo   2   3 311
-  fo   2 335 398
-  fo   2 333 335
-  fo   2 329 333
-  fo 456 456 456 455 455 455 454 454
-  fo 455 315 454
-  fo 456 457 455
-  fo 458 457 456
-  fo 459 457 225
-  fo 458 225 457
-  fo 460 455 457
-  fo 460 315 455
-  fo 460 223 315
-  fo 460 461 223
-  fo 460 462 461
-  fo 460 459 462
-  fo 460 457 459
-  fo 375 368 370
-  fo 216 368 375
-  fo 215 375 150
-  fo 463 150 375
-  fo 375 464 463
-  fo 370 464 375
-  fo 464 370 465
-  fo 465 466 464
-  fo 468 148 467
-  fo 469 468 467
-  fo 469 471 470
-  fo 470 209 469
-  fo 471 466 472
-  fo 472 470 471
-  fo 207 470 472
-  fo 211 148 468
-  fo 211 468 469
-  fo 469 210 211
-  fo 209 210 469
-  fo 473 314 206
-  fo 473 474 314
-  fo 473 465 474
-  fo 473 466 465
-  fo 473 472 466
-  fo 473 207 472
-  fo 473 206 207
-  fo 476 475 394
-  fo 479 478 477
-  fo 394 480 476
-  fo 483 482 481
-  fo 187 176 484
-  fo 390 483 204
-  fo 178 203 485
-  fo 204 483 485
-  fo 203 204 485
-  fo 481 485 483
-  fo 486 485 481
-  fo 487 485 486
-  fo 486 488 487
-  fo 489 488 486
-  fo 489 490 484
-  fo 484 488 489
-  fo 480 458 456
-  fo 491 458 480
-  fo 480 397 491
-  fo 394 397 480
-  fo 492 491 397
-  fo 492 458 491
-  fo 492 493 458
-  fo 492 494 493
-  fo 492 495 494
-  fo 492 395 495
-  fo 492 397 395
-  fo 496 482 483
-  fo 496 497 482
-  fo 496 475 497
-  fo 496 394 475
-  fo 496 392 394
-  fo 496 391 392
-  fo 496 390 391
-  fo 496 483 390
-  fo 188 185 389
-  fo 498 388 328
-  fo 498 499 388
-  fo 498 490 499
-  fo 498 484 490
-  fo 498 187 484
-  fo 498 186 187
-  fo 498 185 186
-  fo 498 389 185
-  fo 498 328 389
-  fo 500 488 484
-  fo 500 487 488
-  fo 500 485 487
-  fo 500 178 485
-  fo 500 177 178
-  fo 500 176 177
-  fo 500 484 176
-  fo 503 502 501
-  fo 504 503 501
-  fo 504 501 505
-  fo 319 308 168
-  fo 319 310 308
-  fo 319 502 310
-  fo 319 501 502
-  fo 319 505 501
-  fo 319 321 505
-  fo 319 323 318
-  fo 319 170 323
-  fo 319 169 170
-  fo 319 168 169
-  fo 309 310 503
-  fo 507 506 309
-  fo 309 503 507
-  fo 508 413 409
-  fo 413 412 411
-  fo 511 510 509
-  fo 508 509 510
-  fo 510 477 508
-  fo 478 482 497
-  fo 512 480 456
-  fo 513 512 405
-  fo 404 513 405
-  fo 514 513 404
-  fo 516 515 478
-  fo 516 417 515
-  fo 516 416 417
-  fo 516 514 416
-  fo 516 513 514
-  fo 516 512 513
-  fo 516 480 512
-  fo 516 476 480
-  fo 516 475 476
-  fo 516 497 475
-  fo 516 478 497
-  fo 517 512 456
-  fo 517 405 512
-  fo 517 518 405
-  fo 517 372 518
-  fo 517 316 372
-  fo 517 315 316
-  fo 517 454 315
-  fo 517 456 454
-  fo 467 471 469
-  fo 467 466 471
-  fo 467 464 466
-  fo 467 463 464
-  fo 467 150 463
-  fo 467 149 150
-  fo 467 148 149
-  fo 474 371 372
-  fo 474 369 371
-  fo 474 370 369
-  fo 474 465 370
-  fo 474 317 314
-  fo 474 316 317
-  fo 474 372 316
-  fo 519 364 364
-  fo 519 342 364
-  fo 519 341 342
-  fo 519 373 341
-  fo 519 372 373
-  fo 519 518 372
-  fo 519 405 518
-  fo 519 403 405
-  fo 519 364 403
-  fo 520 345 351
-  fo 520 348 345
-  fo 520 404 348
-  fo 520 514 404
-  fo 520 416 514
-  fo 520 415 416
-  fo 520 351 415
-  fo 521 357 411
-  fo 521 352 357
-  fo 521 349 352
-  fo 521 351 349
-  fo 521 415 351
-  fo 521 414 415
-  fo 521 412 414
-  fo 521 411 412
-  fo 522 431 434
-  fo 522 442 431
-  fo 522 360 442
-  fo 522 352 360
-  fo 522 356 352
-  fo 522 410 356
-  fo 522 434 410
-  fo 523 336 427
-  fo 523 335 336
-  fo 523 399 335
-  fo 523 432 399
-  fo 523 438 432
-  fo 523 428 438
-  fo 523 427 428
-  fo 526 525 524
-  fo 526 527 525
-  fo 526 331 527
-  fo 526 330 331
-  fo 526 332 330
-  fo 526 337 332
-  fo 526 524 337
-  fo 529  90 528
-  fo 529  98  90
-  fo 529 530  98
-  fo 529 525 530
-  fo 529 524 525
-  fo 529 337 524
-  fo 529 422 337
-  fo 529 421 422
-  fo 529 528 421
-  fo 531 307 309
-  fo 531  90 307
-  fo 531 528  90
-  fo 531 421 528
-  fo 531 506 421
-  fo 531 309 506
-  fo 502 503 310
-  fo  79 504  75
-  fo  84 381 379
-  fo 379 532  84
-  fo 507 532 379
-  fo 503 532 507
-  fo  80  83 532
-  fo  83  84 532
-  fo 533 504  79
-  fo 533 503 504
-  fo 533 532 503
-  fo 533  80 532
-  fo 533  79  80
-  fo 535 534  68
-  fo 535 321 534
-  fo 535 505 321
-  fo 535 504 505
-  fo 535  75 504
-  fo 535  68  75
-  fo 536 322  66
-  fo 536 318 322
-  fo 536 320 318
-  fo 536 321 320
-  fo 536 534 321
-  fo 536  68 534
-  fo 536  67  68
-  fo 536  66  67
-  fo 380 537 379
-  fo 380 377 537
-  fo 380 381 377
-  fo 537 419 379
-  fo 538 419 537
-  fo 538 539 419
-  fo 540 506 507
-  fo 540 421 506
-  fo 540 420 421
-  fo 540 419 420
-  fo 540 379 419
-  fo 540 507 379
-  fo 541 418 419
-  fo 541 542 418
-  fo 541 542 542
-  fo 541 424 542
-  fo 541 543 424
-  fo 541 539 543
-  fo 541 419 539
-  fo 543 544 424
-  fo 543 400 544
-  fo 545 544 544
-  fo 545 424 544
-  fo 545 546 424
-  fo 545 428 546
-  fo 545 440 428
-  fo 545 401 440
-  fo 545 400 401
-  fo 545 544 400
-  fo 547 402 509
-  fo 547 401 402
-  fo 547 437 401
-  fo 547 410 437
-  fo 547 409 410
-  fo 547 508 409
-  fo 547 509 508
-  fo 548 508 477
-  fo 548 413 508
-  fo 548 412 413
-  fo 548 414 412
-  fo 548 417 414
-  fo 548 515 417
-  fo 548 478 515
-  fo 548 477 478
-  fo 549 479 489
-  fo 549 478 479
-  fo 549 482 478
-  fo 549 481 482
-  fo 549 486 481
-  fo 549 489 486
-  fo 550 510 511
-  fo 550 477 510
-  fo 550 479 477
-  fo 550 489 479
-  fo 550 490 489
-  fo 550 499 490
-  fo 550 511 499
-  fo 552 551 325
-  fo 552 511 551
-  fo 552 499 511
-  fo 552 388 499
-  fo 552 325 388
-  fo 553 543 539
-  fo 553 400 543
-  fo 553 402 400
-  fo 553 509 402
-  fo 553 511 509
-  fo 553 551 511
-  fo 553 554 551
-  fo 553 539 554
-  fo 555 377 377
-  fo 555 537 377
-  fo 555 538 537
-  fo 555 539 538
-  fo 555 554 539
-  fo 555 551 554
-  fo 555 325 551
-  fo 555 387 325
-  fo 555 384 387
-  fo 555 383 384
-  fo 555 377 383
+outline   3   2   1
+outline   6   5   4
+outline   7   6   4
+outline   8   7   4
+outline   9   8   4
+outline  10   9   4
+outline  11  10   4
+outline  12  11   4
+outline  13  12   4
+outline  14  13   4
+outline   5  14   4
+outline   5   5   4
+outline  11  12  15
+outline  10  11  15
+outline  16  10  15
+outline  17  16  15
+outline  18  17  15
+outline  19  18  15
+outline  20  19  15
+outline  12  20  15
+outline  22   9  21
+outline  23  22  21
+outline  16  23  21
+outline  10  16  21
+outline   9  10  21
+outline  23  16  24
+outline  25  23  24
+outline  26  25  24
+outline  27  26  24
+outline  28  27  24
+outline  29  28  24
+outline  16  29  24
+outline  31  26  30
+outline  32  31  30
+outline  33  32  30
+outline  34  33  30
+outline  27  34  30
+outline  26  27  30
+outline  34  28  35
+outline  36  34  35
+outline  37  36  35
+outline  38  37  35
+outline  39  38  35
+outline  40  39  35
+outline  41  40  35
+outline  28  41  35
+outline  41  17  42
+outline  43  41  42
+outline  44  43  42
+outline  45  44  42
+outline  46  45  42
+outline  18  46  42
+outline  17  18  42
+outline  19  48  47
+outline  46  19  47
+outline  49  46  47
+outline  50  49  47
+outline  51  50  47
+outline  52  51  47
+outline  48  52  47
+outline  48  48  47
+outline  48  19  20
+outline  52  48  20
+outline  12  54  53
+outline  20  12  53
+outline  52  20  53
+outline  55  52  53
+outline  55  55  53
+outline  56  55  53
+outline  54  56  53
+outline  59  58  57
+outline  54  59  57
+outline  60  54  57
+outline  61  60  57
+outline  62  61  57
+outline  58  62  57
+outline  54  12  13
+outline  14  54  13
+outline  59  54  14
+outline   5  64  63
+outline  14   5  63
+outline  59  14  63
+outline  67  66  65
+outline  68  67  65
+outline  69  68  65
+outline  70  69  65
+outline  71  70  65
+outline  72  71  65
+outline  73  72  65
+outline  66  73  65
+outline  75  68  74
+outline  76  75  74
+outline  77  76  74
+outline  70  77  74
+outline  69  70  74
+outline  68  69  74
+outline  80  79  78
+outline  81  80  78
+outline  82  81  78
+outline  76  82  78
+outline  79  76  78
+outline  81  84  83
+outline  81  83  80
+outline  58  81  82
+outline  59  81  58
+outline  84  81  59
+outline  59  64  84
+outline  75  76  79
+outline  86  82  85
+outline  62  88  87
+outline  61  62  87
+outline  89  61  87
+outline  90  89  87
+outline  91  90  87
+outline  88  91  87
+outline  61  89  92
+outline  93  61  92
+outline  94  93  92
+outline  95  94  92
+outline  96  95  92
+outline  97  96  92
+outline  98  97  92
+outline  90  98  92
+outline  89  90  92
+outline  94  95  99
+outline 100  94  99
+outline 101 100  99
+outline 102 101  99
+outline 103 102  99
+outline  96 103  99
+outline  95  96  99
+outline  50 105 104
+outline 106  50 104
+outline 107 106 104
+outline 108 107 104
+outline 109 108 104
+outline 110 109 104
+outline 105 110 104
+outline  44 112 111
+outline 113  44 111
+outline 114 113 111
+outline 115 114 111
+outline 116 115 111
+outline 117 116 111
+outline 112 117 111
+outline  39 119 118
+outline  38  39 118
+outline 120  38 118
+outline 121 120 118
+outline 122 121 118
+outline 114 122 118
+outline 123 114 118
+outline 119 123 118
+outline 120 121 124
+outline 125 120 124
+outline 126 125 124
+outline 127 126 124
+outline 128 127 124
+outline 129 128 124
+outline 121 129 124
+outline 132 131 130
+outline 133 132 130
+outline 134 133 130
+outline 135 134 130
+outline 136 135 130
+outline 137 136 130
+outline 138 137 130
+outline 131 138 130
+outline 131 131 130
+outline 140 135 139
+outline 141 140 139
+outline 142 141 139
+outline 144 143 139
+outline 145 144 139
+outline 146 145 139
+outline 135 146 139
+outline 149 148 147
+outline 150 149 147
+outline 151 150 147
+outline 152 151 147
+outline 153 152 147
+outline 154 153 147
+outline 155 154 147
+outline 158 157 156
+outline 159 158 156
+outline 140 159 156
+outline 135 140 156
+outline 134 135 156
+outline 133 134 156
+outline 160 133 156
+outline 157 160 156
+outline 162  34 161
+outline 163 162 161
+outline 164 163 161
+outline 165 164 161
+outline 160 165 161
+outline 166 160 161
+outline 126 166 161
+outline 125 126 161
+outline  37 125 161
+outline  36  37 161
+outline  34  36 161
+outline 127 166 126
+outline 133 166 127
+outline 133 160 166
+outline 157 165 160
+outline 162  33  34
+outline  41  28  29
+outline  29  17  41
+outline  17  29  16
+outline 119  39  40
+outline  43  40  41
+outline  58  82  88
+outline  88  62  58
+outline  82  86  88
+outline 169 168 167
+outline 170 169 167
+outline 171 170 167
+outline  72 171 167
+outline  77  70 167
+outline 172  77 167
+outline  85 172 167
+outline  86  85 167
+outline 173  86 167
+outline 168 173 167
+outline  77 172  76
+outline 172  82  76
+outline 172  85  82
+outline 176 175 174
+outline 177 176 174
+outline 178 177 174
+outline 179 178 174
+outline 180 179 174
+outline 181 180 174
+outline 175 181 174
+outline 184 183 182
+outline 185 184 182
+outline 186 185 182
+outline 187 186 182
+outline 175 187 182
+outline  25 175 182
+outline  23  25 182
+outline  22  23 182
+outline 183  22 182
+outline 184 185 188
+outline 191 190 189
+outline 192 191 189
+outline 193 192 189
+outline 194 193 189
+outline 163 194 189
+outline 162 163 189
+outline  33 162 189
+outline 190  33 189
+outline 197 196 195
+outline 198 197 195
+outline 199 198 195
+outline 200 199 195
+outline 201 200 195
+outline 202 201 195
+outline 196 202 195
+outline 165 196 194
+outline 202 196 165
+outline 165 201 202
+outline 157 201 165
+outline  26 181 175
+outline 175  25  26
+outline  31 181  26
+outline 180 181  31
+outline  31 179 180
+outline  32 179  31
+outline 190 179  32
+outline 179 204 203
+outline 179 190 204
+outline 179 203 178
+outline 204 190 191
+outline 175 176 187
+outline  32  33 190
+outline 164 165 194
+outline  28  34  27
+outline 194 163 164
+outline 207 206 205
+outline 208 207 205
+outline 153 208 205
+outline 143 153 205
+outline 139 143 205
+outline 142 139 205
+outline 206 142 205
+outline 155 210 209
+outline 211 210 155
+outline 155 212 211
+outline 212 148 211
+outline 208 213 207
+outline 154 213 208
+outline 208 153 154
+outline 155 209 213
+outline 213 154 155
+outline 147 212 155
+outline 147 148 212
+outline 152 153 143
+outline 143 144 152
+outline 214 152 144
+outline 151 152 214
+outline 214 150 151
+outline 150 214 215
+outline 214 217 216
+outline 144 217 214
+outline 220 219 218
+outline 221 220 218
+outline 222 221 218
+outline 223 222 218
+outline 159 223 218
+outline 224 159 218
+outline 219 224 218
+outline 219 225 201
+outline 225 219 220
+outline 157 219 201
+outline 224 219 157
+outline 158 159 224
+outline 158 158 224 224 224 157 157 157
+outline 228 227 226
+outline 109 228 226
+outline 229 109 226
+outline 231 230 226
+outline 232 231 226
+outline 227 232 226
+outline 227 227 226
+outline 234 230 233
+outline 235 230 234
+outline 117 235 236
+outline 237 117 236
+outline 238 237 236
+outline 239 238 236
+outline 240 239 236
+outline 234 240 236
+outline 235 234 236
+outline 242 238 241
+outline 243 242 241
+outline 244 243 241
+outline 245 244 241
+outline 246 245 241
+outline 238 246 241
+outline 247 246 238
+outline 238 239 247
+outline 237 238 116
+outline 116 117 237
+outline 243 115 116
+outline 238 242 116
+outline 242 243 116
+outline  49  50 248
+outline  46  49 248
+outline  45  46 248
+outline 249  45 248
+outline 250 249 248
+outline 107 250 248
+outline 106 107 248
+outline  50 106 248
+outline 249  44  45
+outline 112  44 249
+outline 250 107 251
+outline 249 250 251
+outline 112 249 251
+outline 117 112 251
+outline 108 117 251
+outline 107 108 251
+outline 229 226 252
+outline 108 229 252
+outline 117 108 252
+outline 235 117 252
+outline 230 235 252
+outline 226 226 252
+outline 254  52 253
+outline  50 254 253
+outline 105  50 253
+outline 110 105 253
+outline 255 110 253
+outline 256 255 253
+outline 257 256 253
+outline  52 257 253
+outline 255 256  56
+outline  56  94 255
+outline  93  94  56
+outline  56  61  93
+outline  60  61  56
+outline  56  54  60
+outline 125  37  38
+outline  38 120 125
+outline  39  40  43
+outline  43 119  39
+outline 123 119  43
+outline  44 113 123
+outline 123  43  44
+outline 114 115 258
+outline 259 114 258
+outline 260 259 258
+outline 261 260 258
+outline 115 261 258
+outline 129 121 262
+outline 260 129 262
+outline 259 260 262
+outline 121 259 262
+outline 131 264 263
+outline 265 131 263
+outline 266 265 263
+outline 267 266 263
+outline 260 267 263
+outline 264 260 263
+outline 131 128 264
+outline 132 128 131
+outline 133 127 132
+outline 128 132 132 127
+outline  19  46  18
+outline 109 229 108
+outline 196 269 268
+outline 268 194 196
+outline 197 269 196
+outline 193 194 268
+outline 268 270 193
+outline 193 270 192
+outline 191 192 271
+outline 204 191 271
+outline 183 184 188
+outline 272  22 183
+outline 188 273 272
+outline   9  22 272
+outline 276 275 274
+outline 277 276 274
+outline   9 277 274
+outline   8   9 274
+outline   7   8 274
+outline 278   7 274
+outline 279 278 274
+outline 275 279 274
+outline 278 279 280
+outline 278 280 281
+outline   7 278 281
+outline   7 281 282
+outline   6   7 282
+outline   5   6 282
+outline 283   5 282
+outline 284 283 282
+outline 281 284 282
+outline 283 284 285
+outline  59  63  64
+outline  64  59  64
+outline  63  64  64
+outline 286  84  64
+outline 287 286  64
+outline 288 287  64
+outline   5 288  64
+outline  59  63  64
+outline 287 283 285
+outline 288 283 287
+outline 288   5 283
+outline 214 216 215
+outline 146 136 289
+outline 145 146 289
+outline 216 145 289
+outline 290 216 289
+outline 291 290 289
+outline 292 291 289
+outline 137 292 289
+outline 136 137 289
+outline 146 135 136
+outline 217 144 145
+outline 217 145 216
+outline 294 138 293
+outline 295 294 293
+outline 296 295 293
+outline 245 296 293
+outline 297 245 293
+outline 265 297 293
+outline 138 265 293
+outline 265 138 131
+outline 266 297 265
+outline 245 297 244
+outline 244 297 266
+outline 243 261 115
+outline 243 266 261
+outline 266 267 261
+outline 267 260 261
+outline 113 114 123
+outline 244 266 243
+outline 114 259 122
+outline 122 259 121
+outline 264 128 129
+outline 129 260 264
+outline 294 299 298
+outline 294 137 138
+outline 292 137 294
+outline 291 292 294
+outline 110 255  94
+outline 300 100 110
+outline 301 110 100
+outline 109 110 301
+outline 301 228 109
+outline 100 228 301
+outline 302 228 100
+outline 100 101 302
+outline 227 101 102
+outline 272 183 188
+outline 277 272 273
+outline 303 276 277
+outline 273 188 303
+outline 303 277 273
+outline 277   9 272
+outline  73  66 170
+outline 171  72  73
+outline  73 170 171
+outline  71 167  70
+outline  72 167  71
+outline 142 304 159
+outline 141 142 159
+outline 140 141 159
+outline 159 304 223
+outline 304 142 206
+outline 231 233 230
+outline 173  88  86
+outline  91  88 173
+outline 305  91 173
+outline 305 173 168
+outline 306  91 305
+outline  90  91 306
+outline 306 307  90
+outline 305 307 306
+outline 168 308 305
+outline 308 307 305
+outline 308 309 307
+outline 310 309 308
+outline   3 312 311
+outline 206 314 313
+outline 223 313 315
+outline 315 317 316
+outline 315 314 317
+outline 315 313 314
+outline 320 319 318
+outline 321 319 320
+outline 323 170 322
+outline 322 318 323
+outline 170  66 322
+outline 326 325 324
+outline 327 324 303
+outline 303 188 327
+outline 324 276 303
+outline 327 326 324
+outline 188 328 326
+outline 331 330 329
+outline 329 330 332
+outline 332 333 329
+outline 334 333 332
+outline 335 333 334
+outline 334 336 335
+outline 332 336 334
+outline 336 332 337
+outline 337 338 336
+outline 340 339 291
+outline 340 341 339
+outline 342 341 340
+outline 344 343 340
+outline 347 346 345
+outline 345 348 347
+outline 351 350 349
+outline 349 350 352
+outline 355 354 353
+outline 357 352 356
+outline 359 346 358
+outline 359 358 354
+outline 359 354 355
+outline 360 359 355
+outline 354 361 353
+outline 353 361 362
+outline 363 361 354
+outline 364 342 363
+outline 365 363 342
+outline 365 361 363
+outline 365 362 361
+outline 365 366 362
+outline 365 367 366
+outline 365 340 367
+outline 365 342 340
+outline 216 369 368
+outline 369 370 368
+outline 373 372 371
+outline 374 341 373
+outline 374 339 341
+outline 374 291 339
+outline 374 290 291
+outline 374 216 290
+outline 374 369 216
+outline 374 371 369
+outline 374 373 371
+outline 215 216 375
+outline 378 377 376
+outline 287 378 376
+outline 285 378 287
+outline 381 380 379
+outline 381 376 377
+outline 381 287 376
+outline 381 286 287
+outline 381  84 286
+outline 381 381 380
+outline 381 379 381
+outline 381 380 379
+outline 285 284 378
+outline 382 284 281
+outline 382 378 284
+outline 382 377 378
+outline 382 383 377
+outline 382 384 383
+outline 382 281 384
+outline 281 385 384
+outline 281 280 385
+outline 280 279 385
+outline 386 279 275
+outline 386 385 279
+outline 386 384 385
+outline 386 387 384
+outline 386 325 387
+outline 386 324 325
+outline 386 276 324
+outline 386 275 276
+outline 326 388 325
+outline 326 327 188
+outline 328 388 326
+outline 188 389 328
+outline 271 390 204
+outline 271 391 390
+outline 391 270 392
+outline 392 270 393
+outline 393 394 392
+outline 397 396 395
+outline 397 394 393
+outline 393 396 397
+outline 399 398 335
+outline 402 401 400
+outline 404 403 403 348
+outline 403 404 405
+outline 364 348 403
+outline 347 348 364
+outline 406 346 347
+outline 406 358 346
+outline 406 354 358
+outline 406 363 354
+outline 406 364 363
+outline 406 347 364
+outline 407 350 351
+outline 407 346 350
+outline 407 345 346
+outline 407 351 345
+outline 408 359 360
+outline 408 346 359
+outline 408 350 346
+outline 408 352 350
+outline 408 360 352
+outline 410 409 357
+outline 357 356 410
+outline 409 411 357
+outline 412 411 409
+outline 409 413 412
+outline 416 415 414
+outline 414 417 416
+outline 420 419 418
+outline 418 421 420
+outline 422 421 418
+outline 418 337 422
+outline 338 337 418
+outline 418 423 338
+outline 426 425 424
+outline 426 423 425
+outline 426 338 423
+outline 426 336 338
+outline 426 427 336
+outline 426 428 427
+outline 426 429 428
+outline 426 424 429
+outline   1   2   2
+outline   1 430   3
+outline   1 431 430
+outline   1 399 431
+outline   1 398 399
+outline   1   2 398
+outline 433 399 432
+outline 433 431 399
+outline 433 434 431
+outline 433 435 434
+outline 433 436 435
+outline 433 432 436
+outline 435 410 434
+outline 437 410 435
+outline 439 438 428
+outline 439 432 438
+outline 439 436 432
+outline 439 435 436
+outline 439 437 435
+outline 439 401 437
+outline 439 440 401
+outline 439 428 440
+outline 442 355 441
+outline 442 441 443
+outline 442 360 355
+outline 444 431 442
+outline 442 443 444
+outline 446 445 443
+outline 443 447 446
+outline 448 447 443
+outline 448 362 447
+outline 448 353 362
+outline 448 355 353
+outline 448 441 355
+outline 448 443 441
+outline 450 449 430
+outline 450 451 449
+outline 450 445 451
+outline 450 443 445
+outline 450 444 443
+outline 450 431 444
+outline 450 430 431
+outline 449   3 430
+outline 312   3 449
+outline   2 452 452
+outline   2 453 329
+outline   2 311 453
+outline   2   3 311
+outline   2 335 398
+outline   2 333 335
+outline   2 329 333
+outline 456 456 456 455 455 455 454 454
+outline 455 315 454
+outline 456 457 455
+outline 458 457 456
+outline 459 457 225
+outline 458 225 457
+outline 460 455 457
+outline 460 315 455
+outline 460 223 315
+outline 460 461 223
+outline 460 462 461
+outline 460 459 462
+outline 460 457 459
+outline 375 368 370
+outline 216 368 375
+outline 215 375 150
+outline 463 150 375
+outline 375 464 463
+outline 370 464 375
+outline 464 370 465
+outline 465 466 464
+outline 468 148 467
+outline 469 468 467
+outline 469 471 470
+outline 470 209 469
+outline 471 466 472
+outline 472 470 471
+outline 207 470 472
+outline 211 148 468
+outline 211 468 469
+outline 469 210 211
+outline 209 210 469
+outline 473 314 206
+outline 473 474 314
+outline 473 465 474
+outline 473 466 465
+outline 473 472 466
+outline 473 207 472
+outline 473 206 207
+outline 476 475 394
+outline 479 478 477
+outline 394 480 476
+outline 483 482 481
+outline 187 176 484
+outline 390 483 204
+outline 178 203 485
+outline 204 483 485
+outline 203 204 485
+outline 481 485 483
+outline 486 485 481
+outline 487 485 486
+outline 486 488 487
+outline 489 488 486
+outline 489 490 484
+outline 484 488 489
+outline 480 458 456
+outline 491 458 480
+outline 480 397 491
+outline 394 397 480
+outline 492 491 397
+outline 492 458 491
+outline 492 493 458
+outline 492 494 493
+outline 492 495 494
+outline 492 395 495
+outline 492 397 395
+outline 496 482 483
+outline 496 497 482
+outline 496 475 497
+outline 496 394 475
+outline 496 392 394
+outline 496 391 392
+outline 496 390 391
+outline 496 483 390
+outline 188 185 389
+outline 498 388 328
+outline 498 499 388
+outline 498 490 499
+outline 498 484 490
+outline 498 187 484
+outline 498 186 187
+outline 498 185 186
+outline 498 389 185
+outline 498 328 389
+outline 500 488 484
+outline 500 487 488
+outline 500 485 487
+outline 500 178 485
+outline 500 177 178
+outline 500 176 177
+outline 500 484 176
+outline 503 502 501
+outline 504 503 501
+outline 504 501 505
+outline 319 308 168
+outline 319 310 308
+outline 319 502 310
+outline 319 501 502
+outline 319 505 501
+outline 319 321 505
+outline 319 323 318
+outline 319 170 323
+outline 319 169 170
+outline 319 168 169
+outline 309 310 503
+outline 507 506 309
+outline 309 503 507
+outline 508 413 409
+outline 413 412 411
+outline 511 510 509
+outline 508 509 510
+outline 510 477 508
+outline 478 482 497
+outline 512 480 456
+outline 513 512 405
+outline 404 513 405
+outline 514 513 404
+outline 516 515 478
+outline 516 417 515
+outline 516 416 417
+outline 516 514 416
+outline 516 513 514
+outline 516 512 513
+outline 516 480 512
+outline 516 476 480
+outline 516 475 476
+outline 516 497 475
+outline 516 478 497
+outline 517 512 456
+outline 517 405 512
+outline 517 518 405
+outline 517 372 518
+outline 517 316 372
+outline 517 315 316
+outline 517 454 315
+outline 517 456 454
+outline 467 471 469
+outline 467 466 471
+outline 467 464 466
+outline 467 463 464
+outline 467 150 463
+outline 467 149 150
+outline 467 148 149
+outline 474 371 372
+outline 474 369 371
+outline 474 370 369
+outline 474 465 370
+outline 474 317 314
+outline 474 316 317
+outline 474 372 316
+outline 519 364 364
+outline 519 342 364
+outline 519 341 342
+outline 519 373 341
+outline 519 372 373
+outline 519 518 372
+outline 519 405 518
+outline 519 403 405
+outline 519 364 403
+outline 520 345 351
+outline 520 348 345
+outline 520 404 348
+outline 520 514 404
+outline 520 416 514
+outline 520 415 416
+outline 520 351 415
+outline 521 357 411
+outline 521 352 357
+outline 521 349 352
+outline 521 351 349
+outline 521 415 351
+outline 521 414 415
+outline 521 412 414
+outline 521 411 412
+outline 522 431 434
+outline 522 442 431
+outline 522 360 442
+outline 522 352 360
+outline 522 356 352
+outline 522 410 356
+outline 522 434 410
+outline 523 336 427
+outline 523 335 336
+outline 523 399 335
+outline 523 432 399
+outline 523 438 432
+outline 523 428 438
+outline 523 427 428
+outline 526 525 524
+outline 526 527 525
+outline 526 331 527
+outline 526 330 331
+outline 526 332 330
+outline 526 337 332
+outline 526 524 337
+outline 529  90 528
+outline 529  98  90
+outline 529 530  98
+outline 529 525 530
+outline 529 524 525
+outline 529 337 524
+outline 529 422 337
+outline 529 421 422
+outline 529 528 421
+outline 531 307 309
+outline 531  90 307
+outline 531 528  90
+outline 531 421 528
+outline 531 506 421
+outline 531 309 506
+outline 502 503 310
+outline  79 504  75
+outline  84 381 379
+outline 379 532  84
+outline 507 532 379
+outline 503 532 507
+outline  80  83 532
+outline  83  84 532
+outline 533 504  79
+outline 533 503 504
+outline 533 532 503
+outline 533  80 532
+outline 533  79  80
+outline 535 534  68
+outline 535 321 534
+outline 535 505 321
+outline 535 504 505
+outline 535  75 504
+outline 535  68  75
+outline 536 322  66
+outline 536 318 322
+outline 536 320 318
+outline 536 321 320
+outline 536 534 321
+outline 536  68 534
+outline 536  67  68
+outline 536  66  67
+outline 380 537 379
+outline 380 377 537
+outline 380 381 377
+outline 537 419 379
+outline 538 419 537
+outline 538 539 419
+outline 540 506 507
+outline 540 421 506
+outline 540 420 421
+outline 540 419 420
+outline 540 379 419
+outline 540 507 379
+outline 541 418 419
+outline 541 542 418
+outline 541 542 542
+outline 541 424 542
+outline 541 543 424
+outline 541 539 543
+outline 541 419 539
+outline 543 544 424
+outline 543 400 544
+outline 545 544 544
+outline 545 424 544
+outline 545 546 424
+outline 545 428 546
+outline 545 440 428
+outline 545 401 440
+outline 545 400 401
+outline 545 544 400
+outline 547 402 509
+outline 547 401 402
+outline 547 437 401
+outline 547 410 437
+outline 547 409 410
+outline 547 508 409
+outline 547 509 508
+outline 548 508 477
+outline 548 413 508
+outline 548 412 413
+outline 548 414 412
+outline 548 417 414
+outline 548 515 417
+outline 548 478 515
+outline 548 477 478
+outline 549 479 489
+outline 549 478 479
+outline 549 482 478
+outline 549 481 482
+outline 549 486 481
+outline 549 489 486
+outline 550 510 511
+outline 550 477 510
+outline 550 479 477
+outline 550 489 479
+outline 550 490 489
+outline 550 499 490
+outline 550 511 499
+outline 552 551 325
+outline 552 511 551
+outline 552 499 511
+outline 552 388 499
+outline 552 325 388
+outline 553 543 539
+outline 553 400 543
+outline 553 402 400
+outline 553 509 402
+outline 553 511 509
+outline 553 551 511
+outline 553 554 551
+outline 553 539 554
+outline 555 377 377
+outline 555 537 377
+outline 555 538 537
+outline 555 539 538
+outline 555 554 539
+outline 555 551 554
+outline 555 325 551
+outline 555 387 325
+outline 555 384 387
+outline 555 383 384
+outline 555 377 383
 
 

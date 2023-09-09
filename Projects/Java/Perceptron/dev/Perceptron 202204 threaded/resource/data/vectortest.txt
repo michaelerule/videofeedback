@@ -1,0 +1,50 @@
+o db
+
+v  5  5  5
+v  5  5 -5
+v  5 -5  5
+v  5 -5 -5
+v -5  5  5
+v -5  5 -5
+v -5 -5  5
+v -5 -5 -5
+
+v 6 6 6
+v -6 -6 -6
+v 0 0 0
+
+v 6 6 -6
+v 7 7 -7
+
+l 0 1
+l 0 2
+l 0 4
+l 1 3
+l 1 5
+l 2 6
+l 4 5
+l 3 7
+l 5 7
+l 6 8
+
+
+f 1 2 4 3 c 255 0 255
+f 1 2 6 5 c 0 255 255
+f 4 3 7 8 c 255 255 0
+f 6 5 7 8 c 0 255 0
+
+text 9 ONE_WORD c 255 0 255
+coloredpoint 10 255 0 0 
+pointsphere 11 255 0 0 255 10
+circle 11 25 rgbcolor 0 0 255 
+
+
+line 1 7 rgbcolor 255 255 255 
+line 2 8 rgbcolor 0 0 0 
+line 1 7 rgbcolor 255 255 255 
+thickline 2 8 5 rgbcolor 0 0 0 
+
+
+cone 12 13 10 rgbcolor 255 128 0
+
+

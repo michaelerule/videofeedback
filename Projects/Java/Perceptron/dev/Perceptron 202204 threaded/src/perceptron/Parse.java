@@ -14,6 +14,8 @@ import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import math.complex;
+import static util.Sys.serr;
+import static util.Sys.sout;
 
 /**
  *
@@ -37,18 +39,18 @@ public class Parse {
             String val = tokens[1].toLowerCase();
             if (var.equals("fractal_map")) {
                 ps.fractal_map = Map.makeMapStatic(val).toString();
-                System.out.println("set fractal_map to "+val);
+                sout("set fractal_map to "+val);
                 continue;
             } 
             Object value = bestEffortParse(val);
             try {
                 ps.getClass().getField(var).set(ps, value);
-                System.out.println("set "+var+" to "+value);
+                sout("set "+var+" to "+value);
             } catch (IllegalAccessException 
                     | IllegalArgumentException 
                     | NoSuchFieldException 
                     | SecurityException e) {
-                System.err.println("failed to assign " + value + " to " + var);
+                serr("failed to assign " + value + " to " + var);
             }
         }
     }
@@ -76,10 +78,13 @@ public class Parse {
     
     ////////////////////////////////////////////////////////////////////////////
     /** Read in the settings file.
+     * Simple format: valid key->value settings lines are two words separated
+     * by a space. Apart from "map" and "preset", valid keys include any 
+     * public field in the Perceptron class. 
      * @param P
      * @param settings_path
      * @param presets_path */
-    @SuppressWarnings({"ConvertToStringSwitch", "unchecked"})
+    @SuppressWarnings({"unchecked"})
     public static void parseSettings(Perceptron P, String settings_path, String presets_path) 
     {
         ArrayList<Settings> presets = new ArrayList<>();
@@ -87,55 +92,59 @@ public class Parse {
         try (BufferedReader in = new BufferedReader(new FileReader(settings_path))) {
             String thisLine;
             while ((thisLine = in.readLine()) != null) {
-                if (thisLine.length() > 0 && thisLine.charAt(0) != '*') {
+                if (thisLine.length() > 0 && thisLine.charAt(0) != '#') {
                     StringTokenizer token = new StringTokenizer(thisLine);
                     if (token.countTokens() >= 2) {
                         String var = token.nextToken();
                         String val = token.nextToken();
-                        if (var.equals("preset")) {
-                            System.out.println("parsing preset "+val+":");
-                            presets.add(Settings.parse(val,in));
-                        } else if (var.equals("map")) {
-                            try {
-                                P.maps.add(Map.makeMapStatic(val));
-                                System.out.println("map : "+val);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-                            //parse primitive
-                            Object value = Parse.bestEffortParse(val);
-                            if (null != value)
+                        switch (var) {
+                            case "preset":
+                                sout("parsing preset "+val+":");
+                                presets.add(Settings.parse(val,in));
+                                break;
+                            case "map":
                                 try {
+                                    P.maps.add(Map.makeMapStatic(val));
+                                    sout("map : "+val);
+                                } catch (Exception ex) {
+                                    Logger.getLogger(Perceptron.class.getName()).log(Level.WARNING,null,ex);
+                                }
+                                break;
+                            default:
+                                //parse primitive
+                                Object value = Parse.bestEffortParse(val);
+                                if (null != value) try {
                                     P.getClass().getField(var).set(P,value);
                                 } catch (NoSuchFieldException
                                         | SecurityException
                                         | IllegalArgumentException
                                         | IllegalAccessException ex) {
-                                    System.err.println("I could not set "+var+" to "+val+"; parsed as "+value);
+                                    serr("I could not set "+var+" to "+val+"; parsed as "+value);
                                     Logger.getLogger(Perceptron.class.getName()).log(Level.WARNING,null,ex);
                                 }
+                                break;
                         }
                     }
                 }
             }
         } catch (IOException ex) {
-            System.err.println("Error reading settings file");
+            serr("Error reading settings file");
             Logger.getLogger(Perceptron.class.getName()).log(Level.SEVERE,null,ex);
         }
+        
         File f = new File(presets_path);
         List<String> fileList = asList(f.list());
         sort(fileList);
         for (String name : fileList) {
             if (name.endsWith(".state")) {
                 try (BufferedReader in = new BufferedReader(new FileReader(new File(presets_path+name)))) {
-                    System.out.println("parsing preset "+name+":");
+                    sout("parsing preset "+name+":");
                     presets.add(Settings.parse(name, in));
                 } catch (FileNotFoundException ex) {
-                    System.err.println("Could not find preset file "+name);
+                    serr("Could not find preset file "+name);
                     Logger.getLogger(Perceptron.class.getName()).log(Level.SEVERE,null,ex);
                 } catch (IOException ex) {
-                    System.err.println("Error loading preset "+name);
+                    serr("Error loading preset "+name);
                     Logger.getLogger(Perceptron.class.getName()).log(Level.SEVERE,null,ex);
                 }
             }
