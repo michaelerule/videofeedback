@@ -6,8 +6,8 @@ package image;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import java.awt.image.DataBuffer;
+import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import static color.ColorUtil.fancy;
 import static color.ColorUtil.fast;
 

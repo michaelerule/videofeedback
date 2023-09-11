@@ -41,6 +41,11 @@ audio_line 0
 screen_width  854
 screen_height 480
 
+#screen_width  1280
+#screen_height 720
+#screen_width  1920
+#screen_height 1080
+
 #TREE SETTINGS
 #
 # These settings control aspects of the Tree located in the foreground

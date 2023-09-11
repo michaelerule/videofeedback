@@ -58,6 +58,7 @@ import static perceptron.Map.Mapping;
 import static perceptron.Parse.parseSettings;
 import static color.ColorUtil.colorFilter;
 import static color.ColorUtil.fast;
+import java.awt.BasicStroke;
 import static java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment;
 import util.CaptureRegion;
 import java.util.concurrent.ExecutionException;
@@ -89,23 +90,24 @@ public final class Perceptron extends javax.swing.JFrame {
     
     ////////////////////////////////////////////////////////////////////////////
     // Create two threads for running two things at once
-    ExecutorService executor = newFixedThreadPool(2);
+    private final ExecutorService executor = newFixedThreadPool(2);
     
     ////////////////////////////////////////////////////////////////////////////
-    public final DoubleBuffer buf;
-    ArrayList<Mapping>        maps;
-    Settings[]                presets;
-    ImageCache                images = null;
-    final JFileChooser        saver;
-    final Control             control;
-    final Map                 fractal;
-    final Tree3D              tree;
-    final TextMatrix          text;
-    final BlurSharpen         blursharp;
-    final Moths               moths;
-    final Microphone          mic;
-    final ScreenCap           cap;
-    final CaptureRegion       big;
+    final Control       control;
+    final Map           map;
+    final DoubleBuffer  buf;
+ 
+    ArrayList<Mapping>  maps;
+    Settings[]          presets;
+    ImageCache          images = null;
+    final JFileChooser  saver;
+    final Tree3D        tree;
+    final TextMatrix    text;
+    final BlurSharpen   blursharp;
+    final Moths         moths;
+    final Microphone    mic;
+    final ScreenCap     cap;
+    final CaptureRegion big;
     
     int image_i = 0;
     public String imdir = "resource/images/";
@@ -140,6 +142,7 @@ public final class Perceptron extends javax.swing.JFrame {
     public boolean draw_side_bars     = false;
     public boolean draw_tree          = false;
     public boolean draw_dino          = false;
+    public boolean draw_grid          = false;
     public boolean do_color_transform = true;
     public boolean hide_mouse         = false;
     public boolean capture_screen     = false;
@@ -191,7 +194,8 @@ public final class Perceptron extends javax.swing.JFrame {
     public void toggleCapFramerate()      {cap_frame_rate  = !cap_frame_rate;  }
     public void toggleAnimation()         {write_animation = !write_animation; }
     public void toggleTree()              {draw_tree       = !draw_tree;       }
-    public void toggleShowNotices()       {show_state      = !show_state;      }
+    public void toggleGrid()              {draw_grid       = !draw_grid;       }
+    public void toggleShowNotices()       {show_notices    = !show_notices;    }
     public void toggleShowHelp()          {show_state      = !show_state;      }
     public void toggleShowFramerate()     {show_monitor    = !show_monitor;    }
     public void toggleHideMouse()         {setHideMouse(!hide_mouse);}
@@ -205,7 +209,7 @@ public final class Perceptron extends javax.swing.JFrame {
             image_i = n;
             buf.set(images.get(n));
             last_image_time = 30000+currentTimeMillis();
-            fractal.cache.map_stale.set(true);
+            map.cache.map_stale.set(true);
         } catch (Exception E) {
             E.printStackTrace();
         }
@@ -223,7 +227,7 @@ public final class Perceptron extends javax.swing.JFrame {
         buf.set(images.next(n));
         image_i = images.current();
         last_image_time = image_rotate_ms+currentTimeMillis();
-        fractal.cache.map_stale.set(true);
+        map.cache.map_stale.set(true);
     }
     
     ////////////////////////////////////////////////////////////////////////////
@@ -273,7 +277,7 @@ public final class Perceptron extends javax.swing.JFrame {
         blursharp = new BlurSharpen(buf);
         imdir     = requireNonNull(imdir);
         images    = new ImageCache(imdir);
-        fractal   = new Map(buf,maps,this);
+        map   = new Map(buf,maps,this);
         moths     = new Moths(screen_width,screen_height);
         mic       = new Microphone(buf, 0);  //mic.start();
         cap       = new ScreenCap();
@@ -354,7 +358,7 @@ public final class Perceptron extends javax.swing.JFrame {
         // Start
         sout("Entering Kernel...");
         running.set(true);
-        fractal.cache.map_stale.set(true);
+        map.cache.map_stale.set(true);
         while (true) {
             if (!running.get()) {
                 try {Thread.sleep(50);} catch (InterruptedException ex) {}
@@ -383,7 +387,7 @@ public final class Perceptron extends javax.swing.JFrame {
                 if (capture_screen) {
                     cap.screenRect.setRect(big.getBounds());
                     buf.set(cap.getScreenshot());
-                    fractal.cache.map_stale.set(true);
+                    map.cache.map_stale.set(true);
                 }
 
                 // Run the (possibly multi-threaded) rendering loop
@@ -398,12 +402,12 @@ public final class Perceptron extends javax.swing.JFrame {
                     });
                     Future<Long> cacher = executor.submit(()->{
                         long start = currentTimeMillis();
-                        fractal.cache.cache();
+                        map.cache.cache();
                         return currentTimeMillis()-start;
                     });
                     render_time = runner.get();
                     cache_time  = cacher.get();
-                    fractal.cache.flip();
+                    map.cache.flip();
                 }
 
                 // Frame counters and framerate monitoring
@@ -430,7 +434,7 @@ public final class Perceptron extends javax.swing.JFrame {
      */
     private void doFrame() {
         // Apply the fractal mapping. This draws into the "buf" buffer
-        fractal.operate();
+        map.operate();
         // Exchange "out" and "buf" data buffers
         buf.flip();
         
@@ -469,9 +473,7 @@ public final class Perceptron extends javax.swing.JFrame {
             text.renderTextBuffer(buf.dsp.g2D);
             drawTextInfoOverlays(buf.dsp.g2D);
         }
-        if (!capture_cursors) {
-            control.drawAll(buf.dsp.g);
-        }
+        if (!capture_cursors) control.drawAll(buf.dsp.g);
         
         // Blit `buf.dsp.img` to screen with double buffering.
         BufferStrategy bs = getBufferStrategy();
@@ -480,7 +482,7 @@ public final class Perceptron extends javax.swing.JFrame {
         bs.show();
         
         // Update fractal's color state registers
-        fractal.updateColorRegisters();
+        map.updateColorRegisters(buf.out.buf);
         
         // Apply background-only effects and drawing.
         // All of these operate on `buf.out`.
@@ -573,7 +575,7 @@ public final class Perceptron extends javax.swing.JFrame {
     
     /**
      * Toggle window border in windowed mode.
-     * BUG TODO: removing frame changes window size incorrectly
+     * TODO: removing frame changes window size incorrectly
      */
     public void toggleFrame() {
         boolean was_running = isRunning();
@@ -612,9 +614,10 @@ public final class Perceptron extends javax.swing.JFrame {
         }
     }
     
-    /** Draw tree, moths, dinosaur, audio visualizer.
-     */
+    /** Draw tree, moths, dinosaur, audio visualizer. */
     private float tree_spinner = 0f;
+    private final BasicStroke dashed = new BasicStroke(0.5f,BasicStroke.CAP_BUTT,BasicStroke.JOIN_MITER,1.0f, new float[]{1.0f}, 0.0f);
+    private final BasicStroke solid  = new BasicStroke(0.5f);
     private void drawObjects() {
         if (draw_tree) {
             tree_spinner = wrap(tree_spinner-0.01f,2f*(float)Math.PI);
@@ -633,9 +636,52 @@ public final class Perceptron extends javax.swing.JFrame {
             o.rotatez(0.05);
         }
         mic.render();
+        
+        if (draw_grid) drawGrid();
     }
     
-    /** Register that the user has interacted and defer boredome timeout.
+    private void drawGrid() {
+        Graphics2D g = buf.out.g2D;
+        float sw = map.size.real;
+        float sh = map.size.imag;
+        int rx = (int) (this.screen_width/sw*1.0f);
+        int ry = (int) (this.screen_height/sh*1.0f);
+        g.setStroke(new BasicStroke(2));
+        g.setColor(new Color(map.bar_color));
+        g.drawOval(half_screen_w-rx, half_screen_h-ry, 2*rx, 2*ry);
+        g.drawLine(0, half_screen_h, screen_width, half_screen_h);
+        g.drawLine(half_screen_w, 0, half_screen_w, screen_height);
+        g.setFont(new Font(Font.MONOSPACED,Font.PLAIN,24)); 
+        g.drawString("ℜ", screen_width-30, half_screen_h-5);
+        g.drawString("ℑ", half_screen_w+5, 30);
+        int ix, iy;
+        for (int i=-6; i<=6; i++) {
+            for (int j=-6; j<= 6; j++) {
+                iy = (int) (this.screen_height/sh*i*0.5f + this.half_screen_h);
+                ix = (int) (this.screen_width /sw*j*0.5f + this.half_screen_w);
+                g.fillOval(ix-3, iy-3,6,6);
+                //this.text(g, String.format("%s+%si",j*.5,i*.5), ix, iy, 255);
+            }
+        }
+        g.setStroke(dashed);
+        ix = (int) (this.screen_width /sw*0*0.5f + this.half_screen_w);
+        for (int i=-6; i<=6; i++) if (i!=0) {
+            iy = (int) (this.screen_height/sh*i*0.5f + this.half_screen_h);
+            buf.out.g.setColor(new Color(map.bar_color));
+            g.drawLine(0,iy,screen_width,iy);
+            this.text(g, String.format("%si",i*.5), ix, iy, 255);
+        }
+        iy = (int) (this.screen_height/sh*0*0.5f + this.half_screen_h);
+        for (int j=-6; j<=6; j++) if (j!=0)  {
+            ix = (int) (this.screen_width /sw*j*0.5f + this.half_screen_w);
+            g.setColor(new Color(map.bar_color));
+            g.drawLine(ix,0,ix,screen_height);
+            this.text(g, String.format("%s",j*.5), ix, iy, 255);
+        }
+        g.setStroke(solid);
+    }
+    
+    /** Register that the user has interacted and defer boredom timeout.
      */
     public void poke() {
         boredom_time = currentTimeMillis()+boredome_ms;
@@ -681,7 +727,7 @@ public final class Perceptron extends javax.swing.JFrame {
     void drawBars() {
         final int BAR_WIDTH = 8;
         // Bars accentuate the frame edges for a nice effect
-        buf.out.g.setColor(new Color(fractal.bar_color));
+        buf.out.g.setColor(new Color(map.bar_color));
         if (draw_top_bars) {
             buf.out.g.fillRect(0,0,screen_width,BAR_WIDTH);
             buf.out.g.fillRect(0,screen_height - BAR_WIDTH,screen_width,BAR_WIDTH);
@@ -761,22 +807,23 @@ public final class Perceptron extends javax.swing.JFrame {
         rtext(g,framerate+"",x,y-=dy,info_α);
         rtext(g,render_time+" ms render time",x,y-=dy,info_α);
         rtext(g,cache_time+" ms cache time",x,y-=dy,info_α);
-        switch (fractal.offset_mode) {
+        switch (map.offset_mode) {
             case Map.LOCKED   -> rtext(g,"(constant locked at 0)",x,y-=dy,info_α);
-            case Map.POSITION -> rtext(g,fractal.offset+" c"     ,x,y-=dy,info_α);
-            case Map.VELOCITY -> rtext(g,fractal.offset+" dc/dt" ,x,y-=dy,info_α);
+            case Map.POSITION -> rtext(g,map.offset+" c"     ,x,y-=dy,info_α);
+            case Map.VELOCITY -> rtext(g,map.offset+" dc/dt" ,x,y-=dy,info_α);
         }
-        switch (fractal.rotate_mode) {
+        switch (map.rotate_mode) {
             case Map.LOCKED -> rtext(g,"(rotation locked at 1)",x,y-=dy,info_α);
-            case Map.POSITION -> rtext(g,fractal.rotation.over(complex.I)+" ρ",x,y-=dy,info_α);
+            case Map.POSITION -> rtext(g,map.rotation.over(complex.I)+" ρ",x,y-=dy,info_α);
             case Map.VELOCITY -> {
-                rtext(g,arg(fractal.rotation)*.01f+" dθ/dt",x,y-=dy,info_α);
-                rtext(g,mod(fractal.rotation)+" r",x,y-=dy,info_α);
+                rtext(g,arg(map.rotation)*.01f+" dθ/dt",x,y-=dy,info_α);
+                rtext(g,mod(map.rotation)+" r",x,y-=dy,info_α);
             }
+
         }
-        if (fractal.grad_mode>0) {
-            rtext(g,fractal.gslope+" grad slope",x,y-=dy,info_α);
-            rtext(g,fractal.gbias +" grad bias ",x,y-=dy,info_α);
+        if (map.grad_mode>0) {
+            rtext(g,map.gslope+" grad slope",x,y-=dy,info_α);
+            rtext(g,map.gbias +" grad bias ",x,y-=dy,info_α);
         }
         if (draw_tree) {
             rtext(g,"x="+tree.location.x+" y="+tree.location.y+" root",x,y-= dy,info_α);
@@ -832,6 +879,110 @@ public final class Perceptron extends javax.swing.JFrame {
     }
     
     public void textToMap() {
-        fractal.setMap(text.get());
+        map.setMap(text.get());
     }
 }
+
+
+/*
+This is, er, was, called perceptron. 
+It's a video feedback program from 2006. 
+That's seventeen years ago. 
+
+It's written in java. It's sort of an overgrown math homework assignment, 
+crossed with the music visualizers in the aughties, in iTunes and milkdrop. 
+
+With video feedback, 
+You can render interactive fractals without too much processing power. 
+The algorithm is simple. 
+
+You know that infinite mirror effect when you screen share the screen share
+on zoom? That's all this is. 
+To render each new frame, we copy pixels from the pervious frame. 
+
+For example, if we pull pixels from a location scaled further away, this 
+will lead to a shrunk down image on the next iteration. 
+This generates the familiar infinity mirror effect.
+We used to be able to send in video using the webcam, but this is running on 
+linux now, and I think Java Media Framework hasn't been supported in almost
+a decade? 
+
+But you can do a lot by just changing the mapping function used to pull 
+pixels from the previous frame. 
+
+This map is calculating the Julia, or should I say Fatou set, map, z^2 + c.
+It's interpreting the horizontal and vertical parts of the screen as the
+real and imaginary parts of a complex number, respectively.
+This little eyeball cursor is controlling that "c" constant offset. 
+
+So, this gives you a way of rendering some interactive fractals, wher the 
+computational complexity per frame is closer to that of one iteration, rather
+than needed to recalculate all iterations to generate the next frame. 
+
+This thing is written in ordinary Java, so back in 2006 it needed all the
+efficiency it could get. There were some extra rendering hacks in the original,
+but what you see now is close to how it looked on th efirst day. 
+The pixelation has its charm, I suppse.
+
+Computers are faster now, so it can do more, but still isn't hardware accelerated. 
+Simple settings render up to 60 FPS at 1080P, but usually it's slower. 
+At low-resolution it can sustain 20 FPS reliably. 
+It's ok, it's retro now. We'll say this is aesthetic.
+
+People liked it at the time, but some of those people were on drugs so perhaps
+we should take that with a grain of salt.
+
+It's a bit finnicky to control the software to render what you want. 
+We ended up programming lots of presets in. 
+
+There are a bunch of built in (simple) filters now. Motion blur. Sharpen. Tint.
+Drawing some retro little graphics. The precise contents have fluctuated over
+the years. 
+
+It has a slightly broken equation parser written by a less experienced student, 
+and other quirks. 
+The code has sedimentary layers. 
+The oldest I can find dates to 05 July, 2004, so nearly 20 years ago. 
+
+
+Let's take a tour of some other things we can see. 
+
+
+& Basic infinity mirror retract
+1
+
+2 + ctl g
+J
+V
+?
+[
+\ colored cosine rope 
+=  corny tree
+! Stellar cathedral
+^ Follow up with rock cathedral
+( garrish cathedeal 
+@ log-cloverleaf zoom
+# log-tiled zoom
+: Better zoom 
+% Mobius? 
+{ oh thre's a dinosaur here
+
+
+There used to be a way to use this like a music visualizer, but that han't
+worked in over a decade. 
+
+You can sorta get video via screen capture using
+the Java Robot class. It almost works.
+
+
+Solve 
+z^3 - 1 = 0
+by Newton's method.
+z <- z - (z^3 - 1)/(3z^2)
+z <- (3z^2 - z^3 + 1)/(3z)
+
+
+z <- z - (z^3 - 2z + 2)/(3z^2 - 2)
+
+
+*/

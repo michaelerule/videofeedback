@@ -37,6 +37,7 @@ public class Settings {
     public boolean tree_leaves     = false;
     public boolean tree_symmetry   = true;
     public boolean draw_dino       = false;
+    public boolean draw_grid       = false;
     public boolean mic_active      = false;
     public boolean dampen_colors   = true;
     public boolean bounds_invert   = false;
@@ -137,7 +138,7 @@ public class Settings {
      * @param P
      * @return  */
     public static String settings(Perceptron P) {
-        Map          F = P.fractal;
+        Map          F = P.map;
         DoubleBuffer B = P.buf;
         TextMatrix   T = P.text;
         Control      C = P.control;
@@ -199,6 +200,7 @@ public class Settings {
         out += GAP + "tree_leaves            " + P.tree.getLeaves() + "\n";
         out += GAP + "tree_symmetry          " + P.tree.getSymmetry() + "\n";
         out += GAP + "draw_dino              " + P.draw_dino + "\n";
+        out += GAP + "draw_grid              " + P.draw_grid + "\n";
         out += GAP + "mic_active             " + P.mic.isActive() + "\n";
         out += GAP + "mic_visualization      " + P.mic.getVis() + "\n";
         out += GAP + "mic_speed              " + P.mic.getSpeed() + "\n";
@@ -207,18 +209,18 @@ public class Settings {
         out += GAP + "image_file             " + P.images.name() + "\n";
         
         out += GAP + "XBranchingCursor       " + C.branching.x() + "\n";
-        out += GAP + "XAlphaCursor           " + C.alpha_cursor.x() + "\n";
+        //out += GAP + "XAlphaCursor           " + C.alpha_cursor.x() + "\n";
         out += GAP + "XBranchLengthCursor    " + C.branch_length.x() + "\n";
-        out += GAP + "XTreeOrientationCursor " + C.tree_orientation.x() + "\n";
+        //out += GAP + "XTreeOrientationCursor " + C.tree_orientation.x() + "\n";
         out += GAP + "XMapCursor             " + C.map_offset.x() + "\n";
         out += GAP + "XMapRotationCursor     " + C.map_rotation.x() + "\n";
         out += GAP + "XGradintCursor         " + C.gradient.x() + "\n";
         out += GAP + "XTreeLocationCursor    " + C.tree_location.x() + "\n";
         
         out += GAP + "YBranchingCursor       " + C.branching.y() + "\n";
-        out += GAP + "YAlphaCursor           " + C.alpha_cursor.y() + "\n";
+        //out += GAP + "YAlphaCursor           " + C.alpha_cursor.y() + "\n";
         out += GAP + "YBranchLengthCursor    " + C.branch_length.y() + "\n";
-        out += GAP + "YTreeOrientationCursor " + C.tree_orientation.y() + "\n";
+        //out += GAP + "YTreeOrientationCursor " + C.tree_orientation.y() + "\n";
         out += GAP + "YMapCursor             " + C.map_offset.y() + "\n";
         out += GAP + "YMapRotationCursor     " + C.map_rotation.y() + "\n";
         out += GAP + "YGradintCursor         " + C.gradient.y() + "\n";
@@ -232,7 +234,7 @@ public class Settings {
      * @return  */
     public static String helpString(Perceptron P) {
         Control C = P.control;
-        Map F = P.fractal;        
+        Map F = P.map;        
         /*
         ⌘ Command (Cmd) U+2318
         ⌥ Option (Opt or Alt) U+2325
@@ -266,8 +268,8 @@ public class Settings {
         + "\n qQ  @±fractal map     @" + F.mapping
         + "\n wW  @±outside         @" + F.outi + " " + F.outop.name
         + "\n eE  @±boundary test   @" + F.bounds_i  + " " + F.bound_op.name
-        + "\n r   @reflection       @" + P.buf.reflect + " " + Samplers.reflection_mode_names[P.buf.reflect]
-        + "\n R   @reverse bounds   @" + F.invert_bound
+        + "\n rR  @reflection       @" + P.buf.reflect + " " + Samplers.reflection_mode_names[P.buf.reflect]
+        + "\n ^R  @reverse bounds   @" + F.invert_bound
         + "\n yY  @±out color       @" + F.outcolor_i + " " + F.color_register_names[F.outcolor_i]
         + "\n iI  @±input image     @" + P.image_i + " " + P.images.name()
         + "\n \\  @auto image       @" + P.rotate_images
@@ -275,7 +277,7 @@ public class Settings {
         + "\n J   @invert input     @" + F.feedback_mask
         + "\n oO  @±offset          @" + F.offset_mode + " " + F.translate_modes[F.offset_mode]
         + "\n pP  @±rotate          @" + F.rotate_mode + " " + F.translate_modes[F.rotate_mode]
-        + "\n m   @mirror           @" + F.mirror_mode + " " + F.mirror_modes[F.mirror_mode]
+        + "\n mM  @mirror           @" + F.mirror_mode + " " + F.mirror_modes[F.mirror_mode]
         + "\n ↩   @presets          @" + (
                 C.presets_mode? "true ("+C.preset_i+"; "
                     + (C.presets.length<=0
@@ -286,16 +288,19 @@ public class Settings {
                     )
                     +")" : "false")
         + "\n 0-9 Fn 1-12: built-in presets"
+                
         + "\n"//+ + "\n─┤ OBJECTS ├───────────────────"
         + "\n T   @objects atop     @" + P.objects_on_top
         + "\n t   @draw tree        @" + P.draw_tree
         + "\n &   @tree leaves      @" + P.tree.getLeaves()
         + "\n *   @tree down        @" + P.tree.getSymmetry()
         + "\n s   @stegosaurus      @" + P.draw_dino
-        + "\n M   @moths            @" + P.draw_moths
+        + "\n ^g  @coordinates      @" + P.draw_grid
+        + "\n ⌃⌥M @moths            @" + P.draw_moths
         + "\n _   @horizon edge     @" + P.draw_top_bars
         + "\n |   @side edge        @" + P.draw_side_bars
         + "\n []  @±edge color      @" + F.barcolor_i + " " + F.color_register_names[F.barcolor_i]
+                
         + "\n"//+ + "\n─┤ TINTING ├───────────────────"
         + "\n gG  @±grad            @" + F.grad_mode + " " + F.grad_op.name 
         + "\n f   @+color 1 (g1)    @" + F.gcolor1_i + " " + F.color_register_names[F.gcolor1_i]
@@ -305,6 +310,7 @@ public class Settings {
         + "\n k   @grad within      @" + P.fore_tint
         + "\n zZ  @±tint color      @" + F.tintcolor_i + " " + F.color_register_names[F.tintcolor_i]
         + "\n xX  @±tint            @" + F.tint_level
+                
         + "\n"//+ "\n─┤ COLOR ├─────────────────────"
         + "\n K   @color adjust     @" + P.do_color_transform
         + "\n ;\' @±Δhue            @" + P.hue_rate
@@ -314,27 +320,31 @@ public class Settings {
         + "\n ()  @±noise           @" + F.noise_level
         + "\n ↑↓  @±motionblur      @" + F.motion_blur
         + "\n ←→  @sharp/blur       @" + P.blursharp_rate
+                
         + "\n"//+ + "\n─┤ CURSOR ├────────────────────" 🭼_
         + "\n ⌃m  @hide mouse       @" + P.hide_mouse
         + "\n c   @show cursors     @" + C.draw_cursors
         + "\n ^⇧C @feedback cursors @" + P.capture_cursors
-        + "\n c   @park cursors     @" + C.parked
-        + "\n v   @wander           @" + (C.current==null?"(no cursor)":s.substring(0,s.length()-4)+": "+C.current.wander)
-        + "\n V   @autopilot        @" + C.screensaver
+        + "\n ^p  @park cursors     @" + C.parked
+        + "\n ^v  @wander           @" + (C.current==null?"(no cursor)":s.substring(0,s.length()-4)+": "+C.current.wander)
+        + "\n ^⇧V @autopilot        @" + C.screensaver
         + "\n +-  @±speed           @" + (C.current==null? "(no cursor)" : C.current.speed)
         + "\n C   @dots             @" + C.draw_futures
         + "\n {}  @±dots            @" + (C.current==null? "(no cursor)" : C.current.nDots())
+                
         + "\n"//+ + "\n─┤ AUDIO ├─────────────────────"
         + "\n A   @Mic on           @" + P.mic.isActive()
         + "\n a   @+visualizer      @" + P.mic.getVis() + " " + P.mic.vis.name
         + "\n ⇞⇟  @±volume          @" + P.mic.getVolume()
         + "\n ↖↘  @±mic speed       @" + P.mic.getSpeed()
+                
         + "\n"//+ + "\n─┤ TEXT ├──────────────────────"
         + "\n ⇥   @type equation    @" + C.text_mode
         + "\n b   @show text        @" + P.text.on
         + "\n B   @text cursor      @" + P.text.cursor_on
-        + "\n ^⇧T @feedback text    @" + P.capture_text
+        + "\n ⌃⇧T @feedback text    @" + P.capture_text
         + "\n ⌃↩ or ⇧↩ @@text → equation"
+                
         + "\n"//+ + "\n─┤ WINDOW ├────────────────────"
         + "\n ?/  @show help        @" + P.show_state
         + "\n n   @toggle screencap @" + P.capture_screen
@@ -353,7 +363,7 @@ public class Settings {
      * @param P
      */
     public void set(Perceptron P) {
-        Map          F = P.fractal;
+        Map          F = P.map;
         DoubleBuffer B = P.buf;
         TextMatrix   T = P.text;
         Control      C = P.control;
@@ -416,17 +426,16 @@ public class Settings {
         T.cursor_on     = cursor_on;
         
         C.draw_futures  = draw_futures;
-        C.setFractal(true);
         C.setTree(tree_active);
         C.syncCursors();
-        C.branching.set(XBranchingCursor,YBranchingCursor);
-        C.alpha_cursor.set(XAlphaCursor,YAlphaCursor);
-        C.branch_length.set(XBranchLengthCursor,YBranchLengthCursor);
-        C.tree_orientation.set(XTreeOrientationCursor,YTreeOrientationCursor);
-        C.map_offset.set(XMapCursor,YMapCursor);
-        C.map_rotation.set(XMapRotationCursor,YMapRotationCursor);
-        C.gradient.set(XGradintCursor,YGradintCursor);
-        C.tree_location.set(XTreeLocationCursor,YTreeLocationCursor);
+        try{C.branching.set(XBranchingCursor,YBranchingCursor);} catch (Exception e){}
+        //try{C.alpha_cursor.set(XAlphaCursor,YAlphaCursor);} catch (Exception e){}
+        try{C.branch_length.set(XBranchLengthCursor,YBranchLengthCursor);} catch (Exception e){}
+        //try{C.tree_orientation.set(XTreeOrientationCursor,YTreeOrientationCursor);} catch (Exception e){}
+        try{C.map_offset.set(XMapCursor,YMapCursor);} catch (Exception e){}
+        try{C.map_rotation.set(XMapRotationCursor,YMapRotationCursor);} catch (Exception e){}
+        try{C.gradient.set(XGradintCursor,YGradintCursor);} catch (Exception e){}
+        try{C.tree_location.set(XTreeLocationCursor,YTreeLocationCursor);} catch (Exception e){}
     }
 
     @Override

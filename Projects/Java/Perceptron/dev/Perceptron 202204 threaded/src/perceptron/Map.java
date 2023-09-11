@@ -44,29 +44,24 @@ import static util.Sys.sout;
  */
 public final class Map {
        
-    // Experimental: render scanlines in parallel
-    // we limit this to two threads to avoid overloading the system
-    //ExecutorService executor = newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-    ExecutorService ex = newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-    
     // Desired rectangular span of complex plane on screen
-    // Changing this changes everything! Presets break. 
-    public static final float ZSCALE = 2.8f;//2.4f;
+    // Changing this will probably break all saved presets!
+    public static final float  ZSCALE      = 2.8f;//2.4f;
+    public static final double PI_OVER_TWO = 1.57079632679489661923132169163975;
     
     // Color model in use (experimental, keep at c24 for now).
     final static RGB rgb = RGB.c24;
     
-    Perceptron         P;
-    DoubleBuffer       B;
-    ArrayList<Mapping> maps;
-    boolean            running = false;
+    private final Perceptron         P;
+    private final DoubleBuffer       B;
+    private final ArrayList<Mapping> maps;
+    private DataBuffer buf; // image buffer after mapping
     
-    DataBuffer 
-        out, // current image on the screen
-        buf, // image buffer after mapping
-        img, // external, loaded image
-        dsp; // cursors, circles, dots
-
+    // Thread pool to  render scanlines in parallel
+    // we limit this to two threads to avoid overloading the system
+    //ExecutorService executor = newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    private final static ExecutorService ex = newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    
     // Control interpretation of translation, rotation + mirroring modes
     public int 
         offset_mode = 0,
@@ -85,28 +80,46 @@ public final class Map {
         MIRROR_QUADRANT   = 4;
     public final String [] 
         translate_modes = {"Position","Velocity","Locked"},
-        mirror_modes = {"None","Horizontal","Vertical","Turn","Quadrant"};
+        mirror_modes    = {"None","Horizontal","Vertical","Turn","Quadrant"};
     public void nextOrthoMode(int i) {offset_mode = wrap(offset_mode + i, 3);}
     public void nextPolarMode(int i) {rotate_mode = wrap(rotate_mode + 1, 3);}
     public void nexMirrorMode(int i) {mirror_mode = wrap(mirror_mode + 1, 5);}
     
-    // Mistakes were made in this design
-    final int W, H, W7, H7, W8, H8, MLEN, M2, MAXC=65535;
-    final float cW, cH, oW2, oH2, oW7, oH7, z2mapW, z2mapH, z2W, z2H;
+    final int 
+        W,    // Width in pixels
+        H,    // Height in pixels 
+        W7,   // Width in pixels  *128
+        H7,   // Height in pixels *128
+        W8,   // Width in pixels  *256
+        H8,   // Height in pixels *256
+        MLEN, // W*H
+        M2,   // 2*W*H
+        MAXC=65535;
+    final float 
+        cW, 
+        cH, 
+        oW7, 
+        oH7, 
+        z2mapW, 
+        z2mapH, 
+        z2W, 
+        z2H;
     
     /** The upper left, the lower right, and the size of the rectangle in the
-     * complex plane. These are re-initialized so these values don't
-     * matter.     */
-    public static final complex size = new complex(6f, 6f);
-    public static final complex UL   = new complex();
-    public static final complex LR   = new complex();
-    public static final double  PI_OVER_TWO = Math.PI * .5;
+     * complex plane. Contents are set in the constructor */
+    public final complex size = new complex(6f, 6f);
+    public final complex UL   = new complex();
+    public final complex LR   = new complex();
     
     // Accumulators for velocity mode
     private float dr = 0, di = 0, theta = .1f;
-    
+
     // Coordinate lookup tables
-    float [] PR,AX,AY,FW;
+    float [] 
+        PR, // Pixel radius squared
+        AX, // absolute value of x coordinate
+        AY, // absolute value of y coordinate
+        FW; // Pixel radius squared for 8-bit fixed point coordinates
     boolean [] in_circle;
     
     /** Create new FractalMap
@@ -121,7 +134,6 @@ public final class Map {
         B   = b;
         W   = b.out.img.getWidth();
         H   = b.out.img.getHeight();
-        oW2 = 2f/W;     oH2 = 2f/H;
         W7  = W<<7;     H7  = H<<7;
         oW7 = 1f/W7;    oH7 = 1f/H7;
         cW  = oW7*oW7;  cH  = oH7*oH7;
@@ -138,7 +150,7 @@ public final class Map {
         z2W = z2H = (W/size.real+H/size.imag) * .5f;
         // Initialize modular rendering functions
         bounds_i  = wrap(bounds_i, bounds.length);
-        outi = wrap(outi, outops.length);
+        outi      = wrap(outi, outops.length);
         grad_mode = wrap(grad_mode, grad_modes.length);
         syncOps();
         if (maps!=null && !maps.isEmpty()) mapping = maps.get(map_i %= maps.size());
@@ -164,7 +176,7 @@ public final class Map {
         // Prepare the buffers for the mapping f(z). 
         map     = new int[M2];
         map_buf = new int[M2];
-        zconv   = new boolean[M2];
+        zconv   = new char[M2];
         computeLookup();
         // Prepare the mapping f(z). 
         offset   = new complex();
@@ -230,14 +242,8 @@ public final class Map {
             trn_ready = new AtomicBoolean(false),
             map_ready = new AtomicBoolean(false);
         public synchronized void cache() {
-            if (map_stale.getAndSet(false) || mapc.stale()) {
-                mapb.cache();
-                map_ready.set(true);
-            }
-            if (trnc.stale()) {
-                trnb.cache();
-                trn_ready.set(true);
-            }
+            if (map_stale.getAndSet(false) || mapc.stale()) {mapb.cache();map_ready.set(true);}
+            if (trnc.stale()) {trnb.cache();trn_ready.set(true);}
         }
         public synchronized void flip() {
             if (trn_ready.getAndSet(false)) {TranslucentLayer t = trnc; trnc = trnb; trnb = t; }
@@ -305,7 +311,7 @@ public final class Map {
         public class MapCache {
             
             final int     [] fxy    = new     int[MLEN*2];
-            final int     [] rate   = new     int[MLEN];
+            final short   [] rate   = new   short[MLEN];
             final boolean [] bounds = new boolean[MLEN];
             final int     [] image  = new     int[MLEN]; 
             
@@ -334,9 +340,7 @@ public final class Map {
                 this.oldr        = getRotation();
                 this.did_image   = outi==3||outi==4||outi==8;
                 final complex R  = oldr;
-                final int 
-                        CX = this.offset[0]+W7, 
-                        CY = this.offset[1]+H7;
+                final int CX = this.offset[0]+W7, CY = this.offset[1]+H7;
                 scanMirror((a,b)->{scanline(a,b,CX,CY,R,f1);});
             }
             
@@ -360,28 +364,57 @@ public final class Map {
             }            
             
             private void scanline(int a, int b,int cx,int cy,complex r, int f1) {
+                // This caches information that is constant across frames                // 
+                // see `operate()` for code that updates fade weights
+                // see `scanline()` for code that caches crossfaded, shifted, rotated lookup
+                // see `Map.computeLookup()` for code that interprets complex map function
                 float RX = r.real, RY = r.imag, RC = r.real+r.imag;
                 for (int i=a; i<b; i++) {
-                    int j = i<<1;
-                    int real, imag;
+                    final int j = i<<1, k = j|1;
+                    int real = map[j], imag = map[k];
+                    // Cross fade map
                     if (f1 > 0) {
-                        real = map_buf[j  ] + (map[j  ]*f1 >> 8);
-                        imag = map_buf[j|1] + (map[j|1]*f1 >> 8);
+                        real += f1*(map_buf[j] - real) >> 8;
+                        imag += f1*(map_buf[k] - imag) >> 8;
                     } 
-                    else {real = map[j]; imag = map[j|1]; } 
+                    // Gauss's trick for affine transform of map
                     float x4  = imag * RX;
                     float x5  = real * RY;
                     int fx    = cx + (int)(x5 + x4 + 0.5f);
                     int fy    = cy + (int)(x5 - x4 + RC*(imag-real) + 0.5f);
-                    fxy [j  ] = fx;
-                    fxy [j|1] = fy;
+                    // Save transformed map
+                    fxy[j] = fx;
+                    fxy[k] = fy;
+                    // Boolean test for if pixel source is off-screen
                     bounds[i] = bound_op.test(fx,fy,i);
-                    rate[i]   = divergenceRate(fx,fy,i);
+                    
+                    if (Map.this.bounds_i==4) { // Newton fractal convergence active
+                        // Precomputed convergence test (prdrag's addition)
+                        // This is used for the "newton" boundary conditions, 
+                        // which assigns "off screen" to points that stay close 
+                        // together under the inverse map. This allows us to render
+                        // Newtons-method basin fractals. 
+                        // TODO: this needs to be moved to the cache so it can adapt
+                        //float delta2 = (Z.real-z.real)*(Z.real-z.real)+(Z.imag-z.imag)*(Z.imag-z.imag);
+                        int dx = (fx+127>>8) - (i%W);
+                        int dy = (fy+127>>8) - (i/W);
+                        float delta2 = (dx*dx+dy*dy)/MLEN;
+                        final float ratio = 0.001f;
+                        zconv[i] = delta2<=ratio
+                                ? (char)(255*(ratio-delta2)/ratio)
+                                : 0;
+                        rate[i] = (short)zconv[i];
+                    } else {
+                        // Integer in 0..256 related to rate of divergence
+                        rate[i] = divergenceRate(fx,fy,i);
+                    }
+                    
                     if (did_image) image[i] = B.img.get.it(fx,fy);
                 }
             }
             
-            int divergenceRate(int fx,int fy,int i) {
+            // Returns an integer in 0...256
+            short divergenceRate(int fx,int fy,int i) {
                 float pr,qr;
                 switch (Map.this.bounds_i) {
                     case 2: {// Horizon
@@ -404,8 +437,8 @@ public final class Map {
                         pr = (float)Math.sqrt(pr);
                         qr = (float)Math.sqrt(qr);
                     } break;
+                    case 4: return (short)zconv[i]; // Newton TODO
                     case 0: // Screen
-                    case 4: // Newton
                     case 5: // None
                     default: {
                         pr = (float)max(AX[i],AY[i]);
@@ -414,56 +447,40 @@ public final class Map {
                 float w1 = clip(invert_bound?pr-1:1-pr,0f,1f);
                 float w2 = clip(invert_bound?1-qr:qr-1,0f,1f);
                 w1 /= w1+w2;
-                return (int)(256f*w1+0.5f);
+                return (short)(256f*w1+0.5f);
             }
         }
     }
     
     ////////////////////////////////////////////////////////////////////////////
-    // Threading support
+    // Threading helper functions
     private void runAll(Runnable [] fn) {
         int N = fn.length;
         Future f[] = new Future[N];
         for (int i=0;i<N;i++) f[i]=ex.submit(fn[i]);
-        for (int i=0;i<N;i++) try {
-            f[i].get();
-        } catch (InterruptedException | ExecutionException ex2) {
-            fn[i].run();
-        }
+        for (int i=0;i<N;i++) try {f[i].get();} catch (InterruptedException | ExecutionException ex2) {fn[i].run();}
     }
     private void scanAll(BiConsumer<Integer,Integer> fn) {
         Runnable [] f= new Runnable[H];
-        for (int y=0; y<H; y++) {
-            final int a=y*W, b=y*W+W;
-            f[y]=()->fn.accept(a,b);
-        }
+        for (int y=0;y<H;y++) {final int a=y*W;f[y]=()->fn.accept(a,a+W);}
         runAll(f);
     }
     private void scanLeft(BiConsumer<Integer,Integer> fn) {
+        final int hW=(W+1)/2;
         Runnable [] f= new Runnable[H];
-        int hW=(W+1)/2;
-        for (int y=0; y<H; y++) {
-            final int a=y*W, b=y*W+hW;
-            f[y]=()->fn.accept(a,b);
-        }
+        for (int y=0;y<H;y++) {final int a=y*W;f[y]=()->fn.accept(a,a+hW);}
         runAll(f);
     }
     private void scanTop(BiConsumer<Integer,Integer> fn) {
         int hH=(H+1)/2;
         Runnable [] f= new Runnable[hH];
-        for (int y=0; y<hH; y++) {
-            final int a=y*W, b=y*W+W;
-            f[y]=()->fn.accept(a,b);
-        }
+        for (int y=0;y<hH;y++) {final int a=y*W;f[y]=()->fn.accept(a,a+W);}
         runAll(f);
     }
     private void scanCorner(BiConsumer<Integer,Integer> fn) {
-        int hW=(W+1)/2, hH=(H+1)/2;
+        final int hW=(W+1)/2, hH=(H+1)/2;
         Runnable [] f= new Runnable[hH];
-        for (int y=0; y<hH; y++) {
-            final int a=y*W, b=y*W+hW;
-            f[y]=()->fn.accept(a,b);
-        }
+        for (int y=0;y<hH;y++) {final int a=y*W;f[y]=()->fn.accept(a,a+hW);}
         runAll(f);
     }
     private void scanMirror(BiConsumer<Integer,Integer> fn) {
@@ -479,39 +496,36 @@ public final class Map {
     ////////////////////////////////////////////////////////////////////////////
     // Apply current map to screen raster, storing result in output raster. 
     public synchronized void operate() {
-        this.out = B.out.buf;
-        this.buf = B.buf.buf;
-        this.dsp = B.dsp.buf;
-        if (B.img != null) this.img = B.img.buf;
-        
+        // The target buffer is passed indirectly to render via the instance 
+        // variable `buff`. This is the only place where `buf` is assigned and
+        // it is behind a `synchronized` barrier.
+        buf = B.buf.buf;
         scanMirror(this::render);
+        // If a mirrored mode is active, copy the rendered result
+        // to the mirrored halves/quadrants
         if (mirror_mode==MIRROR_HORIZONTAL|mirror_mode==MIRROR_QUADRANT) 
             for (int y=0; y<H; y++) {
                 int i=y*W+W-1,j=y*W; 
-                for (int x=0;x<(W+1)/2;x++) 
-                    buf.setElem(i--,buf.getElem(j++));
+                for (int x=0;x<(W+1)/2;x++) buf.setElem(i--,buf.getElem(j++));
             }
         if (mirror_mode==MIRROR_VERTICAL |mirror_mode==MIRROR_QUADRANT) 
             for (int y=0;y<(H+1)/2;y++) {
                 int i=W*(H-1-y),j=W*y; 
-                for (int x=0;x<W;x++) 
-                    buf.setElem(i+x,buf.getElem(j+x));
+                for (int x=0;x<W;x++) buf.setElem(i+x,buf.getElem(j+x));
             }
         if (mirror_mode==MIRROR_TURN) {
             int i=MLEN-1; 
-            for (int j=0; j<(MLEN+1)/2; j++) 
-                buf.setElem(i--,buf.getElem(j));
+            for (int j=0; j<(MLEN+1)/2; j++) buf.setElem(i--,buf.getElem(j));
         }
         
-        // Update map cross-fader
+        // See private synchronized void computeLookup() for map calculation code
+        // Update map cross-fader (flip to target map if done)
         if (map_fade > 0) {
             map_fade -= .05f;
-            if (map_fade <= 0) {int[] t=map;map=map_buf;map_buf=t;}
             this.cache.map_stale.set(true);
-        } 
+        }
         
-        // Update flavor color registers
-        updateColorRegisters();
+        updateColorRegisters(buf); // Update accent colors
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -523,44 +537,32 @@ public final class Map {
             rA = 0x343FD, rC = 0x269EC3;
         
         int     [] fxy  = cache.mapc.fxy;
-        int     [] rate = cache.mapc.rate;
+        short   [] rate = cache.mapc.rate;
         boolean [] in   = cache.mapc.bounds;
         char    [] A    = cache.trnc.A;
         int     [] C    = cache.trnc.C;
         
+        boolean translucentActive = (grad_mode!=0)||(tint_level>0);
+        
         for (int i = start; i<end; i++) {
-            int fx = fxy[i*2];
-            int fy = fxy[i*2+1];
+            final int j=i<<1, k=j|1;
+            int fx = fxy[j], fy = fxy[k];
             int c;
             if (in[i]== invert_bound) {
                 // out of bounds (unless boundary test is inverted)
                 c = outop.f(fx,fy,i,rate[i]);
                 c^= color_mask;
-                if (translucentActive()) c = rgb.blendPremultiplied(c, C[i], A[i]);
+                if (translucentActive) c = rgb.blendPremultiplied(c, C[i], A[i]);
             } else {
                 // in bounds (unless boundary test is inverted)
                 c = B.out.get.it(fx, fy);
                 c^= feedback_mask;
-                if (translucentActive() && P.fore_tint) c = rgb.blendPremultiplied(c, C[i], A[i]);
+                if (translucentActive && P.fore_tint) c = rgb.blendPremultiplied(c, C[i], A[i]);
             }
-            if (noise_level>0) c = rgb.blend(c, (rn=rn*rA+rC)>>8, noise_level);
+            if (noise_level>0) c = rgb.blend(c, (rn=rn*rA+rC)>>8    , noise_level);
             if (motion_blur>0) c = rgb.blend(c, B.buf.buf.getElem(i), motion_blur);
             buf.setElem(i,c);
         }
-    }
-    
-    /**
-     * Apply gradient and tinting operations. 
-     * These operations have been separated from the main rendering loop
-     * so that we may optionally call them either before or after the mapping
-     * operation. This allows us to flip whether the gradient is drawon on
-     * top with the P.objects_on_top flag. 
-     */
-    void applyGradientAndTint() {
-        // TODO
-    }
-    boolean translucentActive() {
-        return (grad_mode!=0)||(tint_level>0);
     }
     
     ////////////////////////////////////////////////////////////////////////////
@@ -614,26 +616,18 @@ public final class Map {
     };
     public final int[] color_registers = new int[N_COLOR_REGISTERS];
     private int rotation_hue = 0;
-    public void updateColorRegisters() {
+    public void updateColorRegisters(DataBuffer buf) {
         color_registers[0] = 0x000000;
         color_registers[1] = 0xffffff;
-        int middle = buf.getElem((W/2) + W*(H/2));
-        float[] HSV = java.awt.Color.RGBtoHSB(
-                (middle >> 16) & 0xff,
-                (middle >> 8 ) & 0xff,
-                (middle      ) & 0xff,
-                new float[]{0, 0, 0});
-
+        int mid = buf.getElem((W/2) + W*(H/2));
+        float[] HSV = java.awt.Color.RGBtoHSB((mid>>16)&0xff,(mid>>8)&0xff,(mid)&0xff,new float[]{0,0,0});
         color_registers[2] = rgb.fromIntRGB(HSBtoRGB(HSV[0], 1f, 1f));
-        color_registers[3] = ~middle;
+        color_registers[3] = ~mid;
         color_registers[4] = rgb.fromIntRGB(HSBtoRGB(HSV[0]+0.2f, 1f, 1f));
-        rotation_hue++;
-        color_registers[5] = rgb.fromIntRGB(HSBtoRGB(rotation_hue*.01f, 1f, 1f));
+        color_registers[5] = rgb.fromIntRGB(HSBtoRGB((++rotation_hue)*.01f, 1f, 1f));
         color_registers[6] = out_color;
-        
         // TODO: need to also apply color transform and tint from previous frame here?
         pout_color = out_color^feedback_mask^color_mask; // needed for special edge mode
-        
         gc1        = rgb.blend(gc1,        color_registers[gcolor1_i  ],color_dampen);
         gc2        = rgb.blend(gc2,        color_registers[gcolor2_i  ],color_dampen);
         bar_color  = rgb.blend(bar_color,  color_registers[barcolor_i ],color_dampen);
@@ -680,7 +674,7 @@ public final class Map {
     public complex   offset;   // The "+c" in a Julia set iteration 
     public complex   rotation; // Rotation/scale of the complex map
     public float[]   normc;    // Offset constant in screen coordinates
-    public boolean[] zconv;    // "converged" points LUT for Newton fractals
+    public char[]    zconv;    // "converged" points LUT for Newton fractals
     public int[]     map_buf;  // Additional map LUT to use when transitioning
     public float     map_fade; // Frame counter used to transition maps smoothly
     final static ComplexContex vars = ComplexContex.standard();
@@ -699,16 +693,15 @@ public final class Map {
         if (offset == null) offset = new complex(0, 0);
         offset.real = (W - x) / z2W + UL.real;
         offset.imag = (H - y) / z2H + UL.imag;
-        //offset.imag = y / z2H + UL.imag;
         normc[0] = (float)(offset.real * z2W);
         normc[1] = (float)(offset.imag * z2H);
     }
     public void setNormalizedRotation(float x, float y) {
-        rotation.real = ((W - x) / z2W + UL.real);
-        rotation.imag = ((H - y) / z2H + UL.imag);
+        rotation.real  = (W - x) / z2W + UL.real;
+        rotation.imag  = (H - y) / z2H + UL.imag;
         inverse_radius = rotation.length();
-        radius = 1 / inverse_radius;
-        rotation = complex.polar(.5f / rotation.length() , rotation.angle());   
+        radius         = 1 / inverse_radius;
+        rotation       = complex.polar(.5f / rotation.length() , rotation.angle());   
     }
     public static Mapping makeMapStatic(final String s) {
         try {
@@ -731,42 +724,49 @@ public final class Map {
         return new Mapping(s) {public complex f(complex z) {vars.set('z'-'a',z);return e.eval(vars);}};
     }
     private synchronized void computeLookup() {
-        // If we're transition freeze this intermediate state
-        // The itermediate map will be stored in the new "map" buffer
-        // If currently interpolating: 
-        //      map_buf: map we're interpolating TO
-        //      map: FROM - TO
-        // If not interpolating:
-        //      map: current map
-        //      map_buf and map_temp: ignored
-        // When we're done here:
-        //      map: current interpolated map
-        //      map_buf: most recent map we transitions TO
         if (map_fade > 0) {
+            // If crossfading, Freeze and save current interpolated map 
             int f1 = (int) (256 * map_fade + 0.5);
-            for (int i=0; i<M2; i++) map[i] = map_buf[i] + (map[i]*f1 >> 8);
+            for (int i=0; i<M2; i++) map[i] += f1*(map_buf[i]-map[i]) >> 8;
         }
+        
+        // see `operate()` for code that updates fade weights
+        // see `scanline()` for code that caches crossfaded, shifted, rotated lookup
+        // see `computeLookup()` for code that inteprets complex map expression
         // Compute new map
         complex z = new complex();
         int i = 0, k = 0;
-        float x0 = UL.real;
-        float y0 = UL.imag;
+        // The +0.5 shift keeps mirrored modes aligned
+        float x0 = UL.real+.5f*z2mapW, y0 = UL.imag+.5f*z2mapH ;
         for (int y = 0; y < H; y++) {
             for (int x = 0; x < W; x++) {
-                z.real = x*z2mapW + x0;
-                z.imag = -(y*z2mapH + y0); // Flipped to cartesian, not image, coordinates
-                complex Z = mapping.f(z); 
-                Z = complex.conj(Z); // Flip back, cartesian <-> image coordinates
-                map[i] -= (map_buf[i] = ((int)(0x100*(z2W*(Z.real-x0)))-W7)); // FROM-TO
+                // conjugate before+after for cartesian, not image, coordinates.
+                z.real =  x*z2mapW + x0;
+                z.imag = -y*z2mapH - y0;
+                complex Z = complex.conj(mapping.f(z)); 
+                map_buf[i] = (int)(0x100*(z2W*(Z.real-x0)))-W7;
+                //map[i] -= map_buf[i]; // FROM-TO
                 i++;
-                map[i] -= (map_buf[i] = ((int)(0x100*(z2H*(Z.imag-y0)))-H7));
+                map_buf[i] = (int)(0x100*(z2H*(Z.imag-y0)))-H7;
+                //map[i] -= map_buf[i];
                 i++;
                 // Precomputed convergence test (prdrag's addition)
-                // TODO: this needs to be moved to the cache so it can adapt too
-                zconv[k++] = (Z.real-z.real)*(Z.real-z.real)+(Z.imag-z.imag)*(Z.imag-z.imag)>0.1f;
+                // This is used for the "newton" boundary conditions, 
+                // which assigns "off screen" to points that stay close 
+                // together under the inverse map. This allows us to render
+                // Newtons-method basin fractals. 
+                // TODO: this needs to be moved to the cache so it can adapt
+                float delta2 = (Z.real-z.real)*(Z.real-z.real)+(Z.imag-z.imag)*(Z.imag-z.imag);
+                zconv[k++] = delta2<=0.025f
+                        ? (char)(255*(0.025f-delta2)/0.025f)
+                        : 0;
             }
         }
         map_fade = 1.f;
+        // Flip immediately for now
+        // map contains target, map_buf contains previous map if any
+        int[] t=map;map=map_buf;map_buf=t;
+        
         if (null!=cache) cache.map_stale.set(true);
     }
     
@@ -778,10 +778,7 @@ public final class Map {
     public float   radius         = 1;     // adjust radius with map scale (mode 2)
     public float   inverse_radius = 1;     // adjust radius with map scale (mode 2)
     public void nextBound(int n) {setBound(bounds_i + n);}
-    public void setBound(int index) {
-        bound_op = bounds[bounds_i = wrap(index, bounds.length)]; 
-        cache.map_stale.set(true);
-    }
+    public void setBound(int index) {bound_op = bounds[bounds_i = wrap(index, bounds.length)]; cache.map_stale.set(true);}
     public abstract class Bound {
         public final String name;
         public Bound(String name) {this.name = name;}
@@ -792,7 +789,7 @@ public final class Map {
         new Bound("Oval")   {boolean test(int x,int y,int i) {return x<W8&&y<H8&&x>=0&&y>=0&&in_circle[wrap((x>>8)+W*(y>>8),MLEN)];}},
         new Bound("Horizon"){boolean test(int x,int y,int i) {return y>0&&y<H8;}},
         new Bound("Radius") {boolean test(int x,int y,int i) {return r1(x,y)<radius;}},
-        new Bound("Newton") {boolean test(int x,int y,int i) {return zconv[i];}},
+        new Bound("Newton") {boolean test(int x,int y,int i) {return zconv[i]>0;}},
         new Bound("None")   {boolean test(int x,int y,int i) {return false;}}};
     
     ////////////////////////////////////////////////////////////////////////////

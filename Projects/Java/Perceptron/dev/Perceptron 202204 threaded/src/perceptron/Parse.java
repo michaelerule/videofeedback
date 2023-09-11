@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import static java.util.Arrays.asList;
 import static java.util.Collections.sort;
 import java.util.List;
@@ -73,7 +74,12 @@ public class Parse {
     public static final Set<String> trueNames  = Set.of("TRUE", "YES", "Y", "T", "SI", "ON", "1");
     public static final Set<String> falseNames = Set.of("FALSE", "NO", "N", "F", "NON", "OFF", "0");
     
-    
+    // from https://stackoverflow.com/a/43953863/900749
+    private static boolean hasField(Object o, String s) {
+        if (null==o) return false;
+        if (null==s) return false;
+        return Arrays.stream(o.getClass().getFields()).anyMatch(f->f.getName().equals(s));
+    }
     
     
     ////////////////////////////////////////////////////////////////////////////
@@ -113,8 +119,13 @@ public class Parse {
                             default:
                                 //parse primitive
                                 Object value = Parse.bestEffortParse(val);
-                                if (null != value) try {
-                                    P.getClass().getField(var).set(P,value);
+                                if (null == value) break;
+                                try {
+                                    if (hasField(P,var))        {P.getClass().getField(var).set(P,value); break;}
+                                    // Note that map and control fields can't be set during initialization,
+                                    // since the settings file must be read before these instances are created. 
+                                    if (hasField(P.map,var))    {P.map.getClass().getField(var).set(P,value); break;}
+                                    if (hasField(P.control,var)){P.control.getClass().getField(var).set(P,value); break;}
                                 } catch (NoSuchFieldException
                                         | SecurityException
                                         | IllegalArgumentException

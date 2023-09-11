@@ -26,16 +26,10 @@ public class OperationEvaluation implements EvaluationOperation {
         this.right = right;
         op = opr.getToken()-1;
     }
-	
-    /**
-     *
-     * @param id
-     * @return
-     */
     @Override
-    public boolean equals(int id) {
-        return id == 3;
-    }
+    public boolean equals(int id) {return id == 3;}
+    @Override
+    public String toString() {return MathToken.masterTokens[op][0];}
 	
     /**
      *
@@ -46,15 +40,7 @@ public class OperationEvaluation implements EvaluationOperation {
     public complex operate(ComplexContex variables) {
         return binary_ops[op].execute(left.operate(variables),right.operate(variables));
     }
-	
-    /**
-     *
-     * @return
-     */
-        @Override
-    public String toString() {
-	return MathToken.masterTokens[op][0];
-    }
+    
 
     /**
      *
