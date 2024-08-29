@@ -37,10 +37,22 @@ audio_line 0
 # 854 480
 # 1280 720
 # 1920 1080
+# For 1600 x 720 HD+ low resolution
+#SWIDTH=1520
+#SHEIGHT=720
+# For 2400 x 1080 FHD+ medium resolution
+#SWIDTH=2280
+#SHEIGHT=1080
+# For 3200 x 1440 QHD+ high resolution
+#SWIDTH=3040
+#SHEIGHT=1440
 
-screen_width  854
-screen_height 480
+screen_width  1520
+screen_height 720
 
+
+#screen_width  854
+#screen_height 480
 #screen_width  1280
 #screen_height 720
 #screen_width  1920
@@ -72,11 +84,6 @@ min_tree_depth 4
 #   i = square-root of -1
 #   p = pi = 3.14159...
 #   f = golden ratio = 1.618...
-#
-#   There is a lon-standing bug in the parser with respect to unary minus
-#   applied to expressions. So things like -cos(x) might not work. I think
-#   the workaround for now is to use underscore _, so say _cost(x) instead. 
-#   or write as 0-cos(x). 1000 points if you can fix this bug (:
 
 map z*z
 map z*1.1*e^(0.1*i)
