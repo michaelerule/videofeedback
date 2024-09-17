@@ -288,9 +288,17 @@ public final class Control extends MouseAdapter implements KeyListener {
          */
         public void mouseMoved(MouseEvent e) {
             Rectangle b = P.getPerceptBounds();
+            float cx,cy;
+            if (P.is_sideways) {
+                cx = e.getY();
+                cy = e.getX();
+            } else {
+                cy = e.getY();
+                cx = e.getX();
+            }
             setDestination(
-                (int)((e.getX()-b.x)*P.screen_width /(float)b.width +.5f),
-                (int)((e.getY()-b.y)*P.screen_height/(float)b.height+.5f));
+                (int)((cx-b.x)*P.screen_width /(float)b.width +.5f),
+                (int)((cy-b.y)*P.screen_height/(float)b.height+.5f));
         }
         
         /** 
@@ -475,10 +483,18 @@ public final class Control extends MouseAdapter implements KeyListener {
         synchronized (mouse) {
             // Note: this is NOT clamped to the screen; This allows the
             // mouse-tracking circle to exit the frame if the mouse does as well.    
-            Rectangle b = P.getPerceptBounds();         
+            Rectangle b = P.getPerceptBounds();        
+            float cx,cy;
+            if (P.is_sideways) {
+                cx = e.getY();
+                cy = e.getX();
+            } else {
+                cy = e.getY();
+                cx = e.getX();
+            } 
             mouse.setLocation(
-                (int)((e.getX()-b.x)*P.screen_width /(float)b.width +.5),
-                (int)((e.getY()-b.y)*P.screen_height/(float)b.height+.5));
+                (int)((cx-b.x)*P.screen_width /(float)b.width +.5),
+                (int)((cy-b.y)*P.screen_height/(float)b.height+.5));
         }
         if (!parked) current.mouseMoved(e);
     }

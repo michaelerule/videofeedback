@@ -25,15 +25,18 @@ public class Samplers {
     
     /** Bit-masked for AARRGGBB 8-bit color data */
     final static int 
-            R  = 0xFF0000, 
-            G  = 0x00FF00, 
-            B  = 0x0000FF, 
-            M  = 0xFF00FF,
-            MR = 0x800080,
-            GR = 0x008000;
-    
-    public final int w, h, w1, h1, n;
-    public final DataBuffer buffer;
+        R  = 0xFF0000, 
+        G  = 0x00FF00, 
+        B  = 0x0000FF, 
+        M  = 0xFF00FF,
+        MR = 0x800080,
+        GR = 0x008000;
+
+
+    // Class memeber data
+    // These used to be final, making not-final for refactor
+    public int w, h, w1, h1, n;
+    public DataBuffer buffer;
     
     /** Abstract class that retrieves pixel data from a texture.
      */
@@ -45,17 +48,16 @@ public class Samplers {
          * @return RRGGBB packed color data
          */
         public abstract int it(int x, int y);
-        
         public abstract void weight(int x, int y, int [] index, int [] weight);
     }
     
     public final Sampler8Bit 
-            getWrap,  
-            getWrap8Bit,
-            getReflect, 
-            getReflect8Bit,
-            getTriangle,
-            getTriangle8Bit;
+        getWrap,  
+        getWrap8Bit,
+        getReflect, 
+        getReflect8Bit,
+        getTriangle,
+        getTriangle8Bit;
     
     /** Construct a sampler collection matching given buffered image
      * 
@@ -287,7 +289,7 @@ public class Samplers {
      * @param scale
      * @return
      */
-    public Sampler8Bit makeScaledGrabber(final Sampler8Bit original, final float scale) {
+    public Sampler8Bit makeScaledGrabber(Sampler8Bit original, float scale) {
         return new Sampler8Bit() {
             @Override
             public int it(int x, int y) {
@@ -302,9 +304,9 @@ public class Samplers {
 
     //Triangular reflected tiling
     public class Barysampler extends Sampler8Bit {
-        private final int height,base,h8,b8,h81,b81,h83,b83,xshift;
-        private final float b2h, h2b; 
-        private final Sampler8Bit orthosampler;
+        private int height,base,h8,b8,h81,b81,h83,b83,xshift;
+        private float b2h, h2b; 
+        private Sampler8Bit orthosampler;
         public Barysampler(Sampler8Bit orthosampler) {
             assert (w>=h);
             this.orthosampler = orthosampler;

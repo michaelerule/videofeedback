@@ -13,21 +13,36 @@ public class DoubleBuffer {
         buf, // Temporary buffer for rendering
         img, // Buffer to store the current input image
         fde, // Used to fade between two input images
-        dsp; // On-screen display; Contains post-processing effects.
+        dsp, // On-screen display; Contains post-processing effects.
+        rot; // Rotated 90 degrees
     
     public int     reflect     = 0;
     public boolean interpolate = true;
-    public boolean antialiased       = true;
+    public boolean antialiased = true;
+    
+    public final int W,H;
     
     public DoubleBuffer(int W, int H) {
+        this.W = W;
+        this.H = H;
         out = new ImageRenderContext(W, H, interpolate, reflect);
         buf = new ImageRenderContext(W, H, interpolate, reflect);
         img = new ImageRenderContext(W, H, interpolate, reflect);
         dsp = new ImageRenderContext(W, H, interpolate, reflect);
+        rot = new ImageRenderContext(H, W, interpolate, reflect);
+    }
+    
+    public synchronized void transpose(ImageRenderContext irc) {
+        int i=0;
+        for (int r=0; r<W; r++) {
+            for (int c=0; c<H; c++) {
+                rot.buf.setElem(i++,irc.buf.getElem(r + c*W));
+            }
+        }
     }
 
     /**
-     *
+     * Apply anti-aliased 2D drawing options
      * @param b
      */
     public synchronized void setFancy(boolean b) {
@@ -39,7 +54,7 @@ public class DoubleBuffer {
     }
 
     /**
-     *
+     * Toggle anti-aliased 2D drawing options
      */
     public synchronized void toggleAntialias() {
         antialiased = !antialiased;
@@ -50,7 +65,7 @@ public class DoubleBuffer {
     }
 
     /**
-     *
+     * Flip buffers
      */
     public synchronized void flip() {
         ImageRenderContext temp = out;

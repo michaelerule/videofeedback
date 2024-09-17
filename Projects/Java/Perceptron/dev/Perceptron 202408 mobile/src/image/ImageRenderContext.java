@@ -22,17 +22,19 @@ public class ImageRenderContext
         REFLECT_REPEAT   = 0,
         REFLECT_TRIANGLE = 0;
     
-    public BufferedImage img;
-    public Graphics2D    g0;
-    public Graphics2D    g2D;
-    public Graphics2D    g;
-    public DataBuffer    buf;
-    public Samplers      samplers;
+    public BufferedImage        img;
+    public Graphics2D           g0;
+    public Graphics2D           g2D;
+    public Graphics2D           g;
+    public DataBuffer           buf;
+    public Samplers             samplers;
     public Samplers.Sampler8Bit get;
-    public final int w, h;
     
     boolean is_scaled = false;
     float   scale = 1f;
+    
+    // These may need to be non-final to implement resolution changes?
+    public final int w, h;
 
     /**
      *

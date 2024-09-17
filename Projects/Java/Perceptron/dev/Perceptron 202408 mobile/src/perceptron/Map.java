@@ -130,7 +130,7 @@ public final class Map {
         P = parent;
         this.maps = null==maps? new ArrayList<>() : maps;
         // Screen width and height, and related constants.
-        // We need to remove most of these
+        // TODO: remove most of these
         B   = b;
         W   = b.out.img.getWidth();
         H   = b.out.img.getHeight();
@@ -743,7 +743,12 @@ public final class Map {
                 // conjugate before+after for cartesian, not image, coordinates.
                 z.real =  x*z2mapW + x0;
                 z.imag = -y*z2mapH - y0;
-                complex Z = complex.conj(mapping.f(z)); 
+                // Rotate coordinates for tall screens 
+                // (hacky mobile experiment)
+                //if (P.is_sideways) z = z.timesI();
+                complex Z = mapping.f(z); 
+                //if (P.is_sideways) Z = Z.overI();
+                Z = complex.conj(Z); 
                 map_buf[i] = (int)(0x100*(z2W*(Z.real-x0)))-W7;
                 //map[i] -= map_buf[i]; // FROM-TO
                 i++;

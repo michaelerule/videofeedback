@@ -48,9 +48,20 @@ import java.util.HashSet;
 
 import java.util.Set;
 import math.complex;
-import static java.util.Objects.requireNonNull;
+
+import java.awt.BasicStroke;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.swing.ImageIcon;
+import static java.util.Objects.requireNonNull;
+import static java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static javax.imageio.ImageIO.write;
+
+import util.CaptureRegion;
+import util.ScreenCap;
 import static math.complex.arg;
 import static math.complex.mod;
 import static perceptron.Settings.helpString;
@@ -58,27 +69,19 @@ import static perceptron.Map.Mapping;
 import static perceptron.Parse.parseSettings;
 import static color.ColorUtil.colorFilter;
 import static color.ColorUtil.fast;
-import java.awt.BasicStroke;
-import static java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment;
-import util.CaptureRegion;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import static java.util.concurrent.Executors.newFixedThreadPool;
-import java.util.concurrent.Future;
-import javax.swing.ImageIcon;
 import static util.Misc.clip;
 import static util.Misc.zip;
 import static util.Misc.wrap;
 import static util.Misc.fadeout;
 import static util.Fullscreen.changeDisplayMode;
 import static util.Fullscreen.getScreen;
+import static util.Fullscreen.getScreenSize;
 import static util.Fullscreen.setFrame;
+import static util.Fullscreen.isFullscreenWindow;
 import static util.Sys.makeFullscreen;
 import static util.Sys.CROSS;
 import static util.Sys.NONE;
 import static util.Sys.makeNotFullscreen;
-import static util.Fullscreen.isFullscreenWindow;
-import util.ScreenCap;
 import static util.Sys.centerWindow;
 import static util.Sys.serr;
 import static util.Sys.sout;
@@ -124,8 +127,12 @@ public final class Perceptron extends javax.swing.JFrame {
     public int audio_line        = -1;
     public int min_tree_depth    = 9;
     public int max_tree_depth    = 6;
+    
+    // For mobile we will replace config file with heuristic.
     public int screen_width      = 480;
     public int screen_height     = 480;
+    // Heuristic code will set this on initialiation
+    public boolean is_sideways   = false;
     
     ////////////////////////////////////////////////////////////////////////////
     // Render control flags: all public, on the honor system. 
@@ -245,10 +252,48 @@ public final class Perceptron extends javax.swing.JFrame {
         super("Perceptron (threaded)"); 
 
         // Parse the settings to retrieve the window size
-        // parseSettings modifies the screen_width and _height variables
+        // parseSettings modifies the screen_width, screen_height
         maps = new ArrayList<>();
         parseSettings(this,settings_filename,presets_filename); // apply config
         sout("Parsed screen_width="+screen_width+"; screen_height="+screen_height);
+
+        sout("Ignoring config screen size, using heuristic");
+        Dimension ss = getScreenSize(this);
+        int sys_width  = ss.width;
+        int sys_height = ss.height;
+        sout("Display sys_width="+sys_width+"; sys_height="+sys_height);
+                
+        int wantpx = 1366*768;
+        int down   = 1;
+        int lilw = sys_width ;
+        int lilh = sys_height;        
+        while (true) {
+            lilw = sys_width /down;
+            lilh = sys_height/down;
+            if (lilw*down!=sys_width || lilh*down!=sys_height) {
+                down++;
+                continue;
+            }
+            if (lilw*lilh<=wantpx) break;
+            down++;
+            if (down>=20) {
+                down = 1;
+                break;
+            }
+        }
+        sout("Display lilw="+lilw+"; lilh="+lilh);
+        // I want to allow portrait without changing most of the codebase
+        if (lilw<lilh) {
+            is_sideways   = true;
+            screen_width  = lilh;
+            screen_height = lilw;
+        } else {
+            is_sideways   = false;
+            screen_width  = lilw;
+            screen_height = lilh;
+        }
+        
+        
         half_screen_w = (short)(screen_width /2);
         half_screen_h = (short)(screen_height/2);
         
@@ -277,7 +322,7 @@ public final class Perceptron extends javax.swing.JFrame {
         blursharp = new BlurSharpen(buf);
         imdir     = requireNonNull(imdir);
         images    = new ImageCache(imdir);
-        map   = new Map(buf,maps,this);
+        map       = new Map(buf,maps,this);
         moths     = new Moths(screen_width,screen_height);
         mic       = new Microphone(buf, 0);  //mic.start();
         cap       = new ScreenCap();
@@ -305,12 +350,16 @@ public final class Perceptron extends javax.swing.JFrame {
         saver.setPreferredSize(new Dimension(800,600));
         
         // To avoid alarming the user, start in windowed mode (NOT full screen)
+        // For mobile we will start in full screen. 
         setIconImage(new ImageIcon("resource/data/icon2.png").getImage());
         setMinimumSize(new Dimension(screen_width, getHeight()));
         setResizable(false);
         pack();
         centerWindow(this);
         setVisible(true);
+        
+        // See above.
+        makeFullscreen(this,screen_width,screen_height);
         
         // Set up Double Buffering
         createBufferStrategy(2);
@@ -335,7 +384,7 @@ public final class Perceptron extends javax.swing.JFrame {
     
     ////////////////////////////////////////////////////////////////////////////
     // Locks
-    final AtomicBoolean is_fullscreen = new AtomicBoolean(false);
+    final AtomicBoolean is_fullscreen = new AtomicBoolean(true);
     final AtomicBoolean running       = new AtomicBoolean(false);
     public final boolean isFullscreen()  {return is_fullscreen.get();}
     public final boolean isRunning()     {return running.get();}
@@ -433,14 +482,12 @@ public final class Perceptron extends javax.swing.JFrame {
      * It touches both the `output` and `buffer` buffers. 
      */
     private void doFrame() {
-        // Apply the fractal mapping. This draws into the "buf" buffer
-        map.operate();
-        // Exchange "out" and "buf" data buffers
-        buf.flip();
+        map.operate(); // Apply fractal mapping; Draws into "buf"
+        buf.flip();    // Exchange "out" and "buf" data buffers
         
         // Draw tree, moths, dinosaur, audio visualizer in `buf.out`.
-        // and text overlay. These functions/objects have their own mutable
-        // state which determines whether they actually draw anything. 
+        // and text overlay. These functions/objects have their own 
+        // state that determines whether they actually draw anything. 
         if (objects_on_top) drawObjects();
         if (capture_text && text_on_top) text.renderTextBuffer(buf.out.g2D);
         
@@ -448,7 +495,7 @@ public final class Perceptron extends javax.swing.JFrame {
         control.advance((int)framerate);
         if (capture_cursors) control.drawAll(buf.out.g);
         
-        // Update state machine for changing the translucency of the text
+        // Update state machine for changing the translucency of text
         // overlays (fading in/out); Renders to `buf.out`.
         if (capture_text) drawTextInfoOverlays(buf.out.g2D);
         
@@ -462,12 +509,12 @@ public final class Perceptron extends javax.swing.JFrame {
             System.err.println("File write error in animation.");
             ex.printStackTrace();
         }
+        
         // Store rendered frame in `buf.buf`;
         // Motion blur will use this in the next frame.
         buf.buf.img.getRaster().setDataElements(0,0,buf.out.img.getRaster());
         
-        // Render any post-processing effects that are overlay-only
-        // and not fed back into the video feedback. 
+        // Render overlay-only post-processing (bypass feedback)
         buf.dsp.img.getRaster().setDataElements(0,0,buf.out.img.getRaster());
         if (!capture_text) {
             text.renderTextBuffer(buf.dsp.g2D);
@@ -478,14 +525,15 @@ public final class Perceptron extends javax.swing.JFrame {
         // Blit `buf.dsp.img` to screen with double buffering.
         BufferStrategy bs = getBufferStrategy();
         Graphics screen   = bs.getDrawGraphics();
-        paint(screen); screen.dispose();
+        paint(screen); 
+        screen.dispose();
         bs.show();
         
         // Update fractal's color state registers
         map.updateColorRegisters(buf.out.buf);
         
         // Apply background-only effects and drawing.
-        // All of these operate on `buf.out`.
+        // These operate on `buf.out` after reveal, before feedback.
         // You can see these objects through the map in the next frame, 
         // but won't see them drawn in screen coordinates on the current frame.
         if (do_color_transform) colorTransform(buf.out.buf); // in-place on `buf.out` 
@@ -510,8 +558,22 @@ public final class Perceptron extends javax.swing.JFrame {
     public void paint(Graphics g) {
         if (g instanceof Graphics2D graphics2D) g=fast(graphics2D);
         Rectangle b = getPerceptBounds();
-        if (null!=buf && null!=buf.dsp && null!=buf.dsp.img && null!=g)
+        if (null==buf || null==buf.dsp || null==buf.dsp.img || null==g) return;
+
+        try {        
+            Dimension ss = getScreenSize(this);
+            notify("Display "+ss.toString());
+            //if (is_sideways) {
+            if (ss.width<ss.height) {
+                buf.transpose(buf.dsp);
+                g.drawImage(buf.rot.img,b.y,b.x,b.height,b.width,null);
+            }
+            else
+                g.drawImage(buf.dsp.img,b.x,b.y,b.width,b.height,null);
+        } 
+        catch(Exception e) {
             g.drawImage(buf.dsp.img,b.x,b.y,b.width,b.height,null);
+        }
     }
     
     /**
@@ -724,9 +786,9 @@ public final class Perceptron extends javax.swing.JFrame {
     }
 
     ////////////////////////////////////////////////////////////////////////////
+    // Bars accentuate the frame edges; A nice effect in feedback
     void drawBars() {
         final int BAR_WIDTH = 8;
-        // Bars accentuate the frame edges for a nice effect
         buf.out.g.setColor(new Color(map.bar_color));
         if (draw_top_bars) {
             buf.out.g.fillRect(0,0,screen_width,BAR_WIDTH);
@@ -774,7 +836,7 @@ public final class Perceptron extends javax.swing.JFrame {
     private void trtext(Graphics2D g,String s,int x,int y,int a) {
         Rectangle2D b = fm.getStringBounds(s,g);
         int w = (int)round(b.getWidth()), h = (int)round(b.getHeight());
-        text(g,s,x-w,h+y,a);
+        text(g,s,x-w,y+h,a);
     }
     
     private void rtext(Graphics2D g,String s,int x,int y,int a) {
@@ -872,7 +934,7 @@ public final class Perceptron extends javax.swing.JFrame {
             e.printStackTrace();
         }
         notifications.removeAll(remove);
-        // Make room for the montior information, which has up to 11 lines
+        // Make room for up to 11 lines of information
         int monitor_height = show_monitor? LINEHEIGHT*13 : 0; 
         int max_notify = (screen_height-monitor_height-2)/LINEHEIGHT;    
         while (notifications.size()>max_notify) notifications.pop();
@@ -980,8 +1042,6 @@ z^3 - 1 = 0
 by Newton's method.
 z <- z - (z^3 - 1)/(3z^2)
 z <- (3z^2 - z^3 + 1)/(3z)
-
-
 z <- z - (z^3 - 2z + 2)/(3z^2 - 2)
 
 

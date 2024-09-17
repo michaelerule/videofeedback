@@ -9,6 +9,7 @@ import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.Dimension;
 import static java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.Rectangle;
@@ -105,8 +106,15 @@ public class Fullscreen {
             if (screen.contains(x, y)) return gd;
         }
         throw new RuntimeException("Window "+j+" is not on any screen");
-    }
+    }  
     
+    public static Dimension getScreenSize(JFrame j) {
+        GraphicsDevice gd = getScreen(j);
+        int sys_width  = gd.getDisplayMode().getWidth();
+        int sys_height = gd.getDisplayMode().getHeight();
+        return new Dimension(sys_width, sys_height);
+    } 
+   
     /**
      * If already in full-screen mode, attempt to change to a lower resolution.
      * This will be faster when possible. 

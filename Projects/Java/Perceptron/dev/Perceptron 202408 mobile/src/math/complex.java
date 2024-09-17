@@ -385,7 +385,15 @@ public class complex {
      * @return 
      */
     public complex timesI() {
-        return new complex(-imag, real);
+        return new complex(-imag,real);
+    }
+
+    /**
+     * This multiplis the complex number by +i
+     * @return 
+     */
+    public complex overI() {
+        return new complex(imag,-real);
     }
     
     public boolean equals(complex o) {return (this.real==o.real && this.imag==o.imag);}
