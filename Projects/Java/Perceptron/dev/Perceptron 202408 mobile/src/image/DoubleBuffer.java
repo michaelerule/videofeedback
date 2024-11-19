@@ -33,12 +33,10 @@ public class DoubleBuffer {
     }
     
     public synchronized void transpose(ImageRenderContext irc) {
-        int i=0;
-        for (int r=0; r<W; r++) {
-            for (int c=0; c<H; c++) {
+        int i = 0;
+        for (int r=0; r<W; r++)
+            for (int c=H-1; c>=0; c--)
                 rot.buf.setElem(i++,irc.buf.getElem(r + c*W));
-            }
-        }
     }
 
     /**

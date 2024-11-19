@@ -474,12 +474,9 @@ public class CaptureRegion {
         
         north.add(matchSize);            
         
-        
         centr.add(north,BorderLayout.NORTH);
-        
         south.add(new ResizeSPanel(selector),BorderLayout.CENTER);
         south.add(new ResizeSEPanel(selector),BorderLayout.EAST);
-
         c.add(centr,BorderLayout.CENTER);
         c.add(south,BorderLayout.SOUTH);
         c.add(new ResizeEPanel(selector),BorderLayout.EAST);

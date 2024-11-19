@@ -76,9 +76,7 @@ public class ImageRenderContext
      *
      * @param fancy
      */
-    public void setFancy(boolean fancy) {
-        g = fancy ? g2D : g0;
-    }
+    public void setFancy(boolean fancy) {g = fancy ? g2D : g0;}
 
     /**
      *

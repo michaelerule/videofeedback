@@ -536,7 +536,7 @@ public final class Perceptron extends javax.swing.JFrame {
         // These operate on `buf.out` after reveal, before feedback.
         // You can see these objects through the map in the next frame, 
         // but won't see them drawn in screen coordinates on the current frame.
-        if (do_color_transform) colorTransform(buf.out.buf); // in-place on `buf.out` 
+        if (do_color_transform) colorTransform(buf.out.buf); // in-place buf.out
         drawBars();
         if (!objects_on_top) drawObjects(); // to `buf.out`
         if (capture_text && !text_on_top) text.renderTextBuffer(buf.out.g2D);
@@ -562,11 +562,9 @@ public final class Perceptron extends javax.swing.JFrame {
 
         try {        
             Dimension ss = getScreenSize(this);
-            notify("Display "+ss.toString());
-            //if (is_sideways) {
             if (ss.width<ss.height) {
                 buf.transpose(buf.dsp);
-                g.drawImage(buf.rot.img,b.y,b.x,b.height,b.width,null);
+                g.drawImage(buf.rot.img,b.x,b.y,b.width,b.height,null);
             }
             else
                 g.drawImage(buf.dsp.img,b.x,b.y,b.width,b.height,null);
@@ -576,27 +574,44 @@ public final class Perceptron extends javax.swing.JFrame {
         }
     }
     
+    public Rectangle getRawBounds() {
+        Rectangle r;
+        if (isFullscreenWindow(this)) {
+            r = getGraphicsConfiguration().getBounds();
+            r.setLocation(0,0);
+        } else {
+            r = getRootPane().getBounds();
+        }
+        return r;
+    }
     /**
      * Drawn area of Perceptron bounds as a Rectangle.
      * BUG TODO: drawn area is wrong in undecorated windows
      * @return 
      */
     public Rectangle getPerceptBounds() {
-        Rectangle r;
-        if (isFullscreenWindow(this)) {
-            r = getGraphicsConfiguration().getBounds();
-            r.setLocation(0,0);
-        } else 
-            r = getRootPane().getBounds();
-        int factor = (r.width>=2*screen_width && r.height>=2*screen_height)
-                ? min(r.width /  screen_width,   r.height /  screen_height)
-                : 1;
-        int sw = screen_width *factor,
-            sh = screen_height*factor;
-        r.x     += (r.width - sw)/2;
-        r.y     += (r.height- sh)/2;
-        r.width  = sw;
-        r.height = sh;
+        Rectangle r = getRawBounds();
+        if (r.width>=r.height) {
+            int factor = (r.width>=2*screen_width && r.height>=2*screen_height)
+                    ? min(r.width /  screen_width,   r.height /  screen_height)
+                    : 1;
+            int sw = screen_width *factor,
+                sh = screen_height*factor;
+            r.x     += (r.width - sw)/2;
+            r.y     += (r.height- sh)/2;
+            r.width  = sw;
+            r.height = sh;
+        } else {
+            int factor = (r.width>=2*screen_height && r.height>=2*screen_width)
+                    ? min(r.width /  screen_height,   r.height /  screen_width)
+                    : 1;
+            int sw = screen_width *factor,
+                sh = screen_height*factor;
+            r.x     += (r.width - sh)/2;
+            r.y     += (r.height- sw)/2;
+            r.width  = sh;
+            r.height = sw;
+        }
         //serr("getPerceptBounds "+r);
         return r;
     }
@@ -802,7 +817,6 @@ public final class Perceptron extends javax.swing.JFrame {
     
     ////////////////////////////////////////////////////////////////////////////
     // Text drawing routines
-    
     // Larger font
     //public final Font  TEXTFONT = new Font(Font.MONOSPACED,Font.PLAIN,14);
     //public final FontMetrics fm = getFontMetrics(TEXTFONT);
@@ -832,18 +846,15 @@ public final class Perceptron extends javax.swing.JFrame {
         g.setColor(new Color(0xff,0xff,0xff,a));
         g.drawString(s,x,y);
     }
-    
     private void trtext(Graphics2D g,String s,int x,int y,int a) {
         Rectangle2D b = fm.getStringBounds(s,g);
         int w = (int)round(b.getWidth()), h = (int)round(b.getHeight());
         text(g,s,x-w,y+h,a);
     }
-    
     private void rtext(Graphics2D g,String s,int x,int y,int a) {
         int w = (int)round(fm.getStringBounds(s,g).getWidth());
         text(g,s,x-w,y,a);
     }
-    
     // Draws system state in the form of a help menu overlay. 
     private void drawState(final Graphics2D g) {
         String info = helpString(this);
@@ -852,7 +863,7 @@ public final class Perceptron extends javax.swing.JFrame {
         for (var l : info.split("\n")) {
             l = l.strip();
             y += LINEHEIGHT;
-            if (y>screen_height-1) {y = LINEHEIGHT-2; col += STATE_COLWIDTH;}
+            if (y>screen_height-1) {y=LINEHEIGHT-2; col+=STATE_COLWIDTH;}
             int tab = 0;
             for (var s:l.split("@")) 
                 text(g,s,2+col+STATE_TABS[tab++],y,state_α);
@@ -940,9 +951,7 @@ public final class Perceptron extends javax.swing.JFrame {
         while (notifications.size()>max_notify) notifications.pop();
     }
     
-    public void textToMap() {
-        map.setMap(text.get());
-    }
+    public void textToMap() {map.setMap(text.get());}
 }
 
 
@@ -1006,31 +1015,7 @@ and other quirks.
 The code has sedimentary layers. 
 The oldest I can find dates to 05 July, 2004, so nearly 20 years ago. 
 
-
-Let's take a tour of some other things we can see. 
-
-
-& Basic infinity mirror retract
-1
-
-2 + ctl g
-J
-V
-?
-[
-\ colored cosine rope 
-=  corny tree
-! Stellar cathedral
-^ Follow up with rock cathedral
-( garrish cathedeal 
-@ log-cloverleaf zoom
-# log-tiled zoom
-: Better zoom 
-% Mobius? 
-{ oh thre's a dinosaur here
-
-
-There used to be a way to use this like a music visualizer, but that han't
+There used to be a way to use this like a music visualizer, but that hasn't
 worked in over a decade. 
 
 You can sorta get video via screen capture using

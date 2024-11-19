@@ -103,8 +103,10 @@ public final class Control extends MouseAdapter implements KeyListener {
         try {robot = new Robot();} catch (AWTException e) {}
         
         // Cursors: Map affine transform
-        all.add(map_offset   = new Cursor("offset.png"  ,(x,y)->{P.map.setNormalizedConstant(x, y);}));
-        all.add(map_rotation = new Cursor("rotation.jpg",(x,y)->{P.map.setNormalizedRotation(x, y);}));
+        all.add(map_offset   = new Cursor(
+            "offset.png"  ,(x,y)->{P.map.setNormalizedConstant(x, y);}));
+        all.add(map_rotation = new Cursor(
+            "rotation.jpg",(x,y)->{P.map.setNormalizedRotation(x, y);}));
         // Start the rotation cursor at (0,1) since (0,0) is singular
         map_rotation.to.x = (int) (P.map.W - P.map.z2W - P.map.UL.real);
         map_rotation.to.y = P.halfScreenHeight();
@@ -288,17 +290,22 @@ public final class Control extends MouseAdapter implements KeyListener {
          */
         public void mouseMoved(MouseEvent e) {
             Rectangle b = P.getPerceptBounds();
+            Rectangle r = P.getRawBounds();
+            boolean is_sideways = r.width<r.height;
             float cx,cy;
-            if (P.is_sideways) {
+            if (is_sideways) {
                 cx = e.getY();
                 cy = e.getX();
+                setDestination(
+                    (int)((cx-b.x)*P.screen_width /(float)b.height +.5f),
+                    (int)((cy-b.y)*P.screen_height/(float)b.width+.5f));
             } else {
                 cy = e.getY();
                 cx = e.getX();
+                setDestination(
+                    (int)((cx-b.x)*P.screen_width /(float)b.width +.5f),
+                    (int)((cy-b.y)*P.screen_height/(float)b.height+.5f));
             }
-            setDestination(
-                (int)((cx-b.x)*P.screen_width /(float)b.width +.5f),
-                (int)((cy-b.y)*P.screen_height/(float)b.height+.5f));
         }
         
         /** 
@@ -311,13 +318,11 @@ public final class Control extends MouseAdapter implements KeyListener {
             try {
                 // Mouse location
                 Point m = getPointerInfo().getLocation();
-
                 // Bounds of perceptron JFrame; absolute screen-pixel coordinates
                 // ( Don't move if mouse outside window )
                 Rectangle b = P.getBounds();
                 b.setLocation(P.getLocationOnScreen());
                 if (careful) if (!b.contains(m)) return;
-
                 // True screen position of Cursor (move to here)
                 // - Ensure cursor is clipped to screen area
                 // - Account for any scaling of the screen area (always integer)
@@ -325,16 +330,14 @@ public final class Control extends MouseAdapter implements KeyListener {
                 // - Offset relative to location of Perceptron JFrame (b)
                 // The padding by 3 is to prevent us from moving outside the window
                 Rectangle p = P.getPerceptBounds();
-                int mx = clip(to.x,3,P.screen_width -3)*(p.width /P.screen_width )+p.x+b.x;
-                int my = clip(to.y,3,P.screen_height-3)*(p.height/P.screen_height)+p.y+b.y;
-
+                int mx = clip(to.x,3,P.screen_width -3)
+                    *(p.width /P.screen_width )+p.x+b.x;
+                int my = clip(to.y,3,P.screen_height-3)
+                    *(p.height/P.screen_height)+p.y+b.y;
                 // Don't move if the mouse is in the right spot
                 if (m.x==mx && m.y==my) return;
-
                 moveMouse(mx,my);
-            
             } catch (IllegalComponentStateException e) {
-                //Logger.getLogger(Control.class.getName()).log(Level.WARNING,null,e);
             }
         }
 
@@ -424,8 +427,10 @@ public final class Control extends MouseAdapter implements KeyListener {
      * Ensure that cursor state is synchronize with Perceptron's state. 
      * Only cursors that control active rendering operation should be shown.
      */
-    private void setActive(Cursor      c, boolean a) {if (a) on.add(c);    else on.remove(c);}
-    private void setActive(Set<Cursor> c, boolean a) {if (a) on.addAll(c); else on.removeAll(c);}
+    private void setActive(Cursor      c, boolean a) {
+        if (a) on.add(c);    else on.remove(c);}
+    private void setActive(Set<Cursor> c, boolean a) {
+        if (a) on.addAll(c); else on.removeAll(c);}
     public synchronized void syncCursors() {
         Map F = P.map;
         setActive(map_rotation, F.rotate_mode != Map.LOCKED);
@@ -451,7 +456,7 @@ public final class Control extends MouseAdapter implements KeyListener {
         for (Cursor c :on) c.draw(g);
         if (!screensaver) {
             // Draw a ring around the current mouse position
-            g.drawImage(cursor_ring,(int)(mouse.x)-32,(int)(mouse.y)-32,null);
+            //g.drawImage(cursor_ring,(int)(mouse.x)-32,(int)(mouse.y)-32,null);
             // Draw a smaller ring around the active cursor
             if (current != null) 
                 g.drawImage(focus,(int)current.x-11,(int)current.y-11,null);
