@@ -263,7 +263,7 @@ public final class Perceptron extends javax.swing.JFrame {
         int sys_height = ss.height;
         sout("Display sys_width="+sys_width+"; sys_height="+sys_height);
                 
-        int wantpx = 1366*768;
+        int wantpx = 1366*768*2;
         int down   = 1;
         int lilw = sys_width ;
         int lilh = sys_height;        

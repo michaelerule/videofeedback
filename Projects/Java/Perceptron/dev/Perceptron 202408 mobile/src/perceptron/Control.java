@@ -295,7 +295,7 @@ public final class Control extends MouseAdapter implements KeyListener {
             float cx,cy;
             if (is_sideways) {
                 cx = e.getY();
-                cy = e.getX();
+                cy = b.width - e.getX();
                 setDestination(
                     (int)((cx-b.x)*P.screen_width /(float)b.height +.5f),
                     (int)((cy-b.y)*P.screen_height/(float)b.width+.5f));
