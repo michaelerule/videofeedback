@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+acme --format cbm -o hello.prg perceptron.asm && /usr/local/bin/x64sc -autostartprgmode 1 hello.prg
