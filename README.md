@@ -8,7 +8,6 @@ Video-feedback fractal hobby code. Most things slightly broken. Some things beau
  - [Jython explorations](https://michaelerule.github.io/videofeedback/Projects/Jython/index.html)
  - [Java Perceptron](https://michaelerule.github.io/videofeedback/Projects/Java/index.html)
  - [Perceptron webgl](https://michaelerule.github.io/videofeedback/Projects/Javascript/webgl/index.html)
- - [Commodore 64]()
 
 Some outputs
 
