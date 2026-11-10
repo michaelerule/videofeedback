@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+python3 ./make_table.py && 
+python3 ./make_timer_table.py && 
+python3 ./make_text.py  && 
+python3 ./make_sprite.py  && 
+python3 ./make_zpallet.py  && 
+acme --format cbm -o perceptron.prg perceptron.asm 2>&1 \
+| sed 's/Warning - File //' \
+| sed 's/, line//' \
+| awk -F'\\(Zone ' 'NF==2 { printf "%-20s(%s\n", $1, $2 } NF!=2 { print }' \
+| awk -F'!warn:' 'NF==2 { printf "%-35s%s\n", $1, $2 } NF!=2 { print }' \
+ && \
+/usr/local/bin/x64sc -autostartprgmode 1  -directory /home/$USER/Desktop/Github/64/vice/data/ perceptron.prg 2>&1 1>/dev/null
+
+#| grep -v -E "^(DriveROM|Joystick|OpenGL)"
+#| sed "/called from here/d" \
+#| sed '/oversized/d' \
+# Not needed
+#c1541 -format "my perceptron,0" d64 perceptron.d64 -write perceptron.prg "perceptron"
+
